@@ -285,7 +285,7 @@ export default {
         this.currentWorkflow.id
       ).then(({ status }) => {
         if (status === mutationStatus.SUCCEEDED) {
-          this.expecting.stop = WorkflowState.STOPPING
+          this.expecting.stop = !this.isStopped
         }
       })
     },
