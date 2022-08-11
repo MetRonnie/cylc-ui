@@ -149,6 +149,7 @@ import {
   mdiStop,
   mdiViewList
 } from '@mdi/js'
+import { upperFirst } from 'lodash'
 import toolbar from '@/mixins/toolbar'
 import WorkflowState from '@/model/WorkflowState.model'
 
@@ -211,7 +212,7 @@ export default {
       )
     },
     statusMsg () {
-      return this.currentWorkflow.statusMsg || ''
+      return upperFirst(this.currentWorkflow.statusMsg)
     },
     enabled () {
       // object holding the states of controls that are supposed to be enabled
