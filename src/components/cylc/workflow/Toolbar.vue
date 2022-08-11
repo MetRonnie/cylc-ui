@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           v-if="!isRunning"
           @click="onClickPlay"
         >
-          {{ svgPaths.run }}
+          {{ svgPaths.play }}
         </v-icon>
 
         <v-icon
@@ -69,9 +69,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           color="#5E5E5E"
           :disabled="!enabled.pauseToggle"
           v-if="isRunning"
-          @click="onClickReleaseHold"
+          @click="onClickPlayPause"
         >
-          {{ isPaused ? svgPaths.run : svgPaths.hold }}
+          {{ isPaused ? svgPaths.play : svgPaths.pause }}
         </v-icon>
 
         <v-icon
@@ -125,8 +125,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <!-- displayed only when extended===true -->
     <template v-slot:extension v-if="extended">
       <span style="margin-left: 260px;">
-        <a @click="onClickPause">
-          <v-icon color="#5E5E5E">{{ svgPaths.hold }}</v-icon>
+        <a @click="onClickPlayPause">
+          <v-icon color="#5E5E5E">{{ svgPaths.pause }}</v-icon>
         </a>
 
         <a @click="onClickStop">
@@ -172,10 +172,10 @@ export default {
     // FIXME: remove local state once we have this data in the workflow - https://github.com/cylc/cylc-ui/issues/221
     svgPaths: {
       add: mdiPlusBoxMultiple,
-      hold: mdiPause,
+      pause: mdiPause,
       list: mdiViewList,
       menu: mdiMicrosoftXboxControllerMenu,
-      run: mdiPlay,
+      play: mdiPlay,
       stop: mdiStop
     },
     expecting: {
@@ -263,18 +263,18 @@ export default {
       this.$workflowService.mutate(
         'play',
         this.currentWorkflow.id
-      ).then(ret => {
-        if (ret[0] === mutationStatus.SUCCEEDED) {
+      ).then(({ status }) => {
+        if (status === mutationStatus.SUCCEEDED) {
           this.expecting.play = !this.isRunning
         }
       })
     },
-    onClickReleaseHold () {
+    onClickPlayPause () {
       this.$workflowService.mutate(
         this.isPaused ? 'resume' : 'pause',
         this.currentWorkflow.id
-      ).then(response => {
-        if (response.status === mutationStatus.SUCCEEDED) {
+      ).then(({ status }) => {
+        if (status === mutationStatus.SUCCEEDED) {
           this.expecting.paused = !this.isPaused
         }
       })
@@ -283,8 +283,8 @@ export default {
       this.$workflowService.mutate(
         'stop',
         this.currentWorkflow.id
-      ).then(response => {
-        if (response.status === mutationStatus.SUCCEEDED) {
+      ).then(({ status }) => {
+        if (status === mutationStatus.SUCCEEDED) {
           this.expecting.stop = WorkflowState.STOPPING
         }
       })
