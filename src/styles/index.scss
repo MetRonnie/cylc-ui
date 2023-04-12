@@ -94,3 +94,15 @@ html {
 .mw-100 {
   max-width: 100%;
 }
+
+// Disable specific transitions if user turned them off
+.no-transition {
+  .scale-transition-enter-active,
+  .scale-transition-leave-active,
+  .scale-transition-move,
+  .scale-transition-enter-from,
+  .scale-transition-leave-from,
+  .scale-transition-leave-to {
+    transition: none !important;
+  }
+}
