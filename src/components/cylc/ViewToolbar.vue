@@ -36,8 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           :disabled="iControl.disabled"
           :color="iControl.color"
           @click="iControl.callback"
+          :size="size"
         >
-          <v-icon size="large">{{ iControl.icon }}</v-icon>
+          <v-icon size="x-large">{{ iControl.icon }}</v-icon>
           <v-tooltip
             activator="parent"
             location="bottom"
@@ -59,6 +60,11 @@ export default {
   ],
 
   props: {
+    size: {
+      required: false,
+      type: String,
+      default: 'default',
+    },
     groups: {
       required: true,
       type: Array

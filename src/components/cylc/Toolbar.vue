@@ -25,7 +25,7 @@ component. Note: this is not used for the workflow view, see
     id="core-app-bar"
     density="compact"
     flat
-    class="c-toolbar"
+    class="c-appbar"
     v-if="showNavBtn"
   >
     <v-toolbar-title
@@ -42,7 +42,7 @@ component. Note: this is not used for the workflow view, see
         <v-icon>{{ svgPaths.list }}</v-icon>
       </v-btn>
       <!-- title -->
-      <span class="c-toolbar-title">{{ title }}</span>
+      <span class="c-appbar-title">{{ title }}</span>
     </v-toolbar-title>
   </v-toolbar>
 </template>

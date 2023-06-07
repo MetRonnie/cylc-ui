@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <ViewToolbar
       :groups="groups"
       @setOption="setOption"
+      size="small"
     />
 
     <!-- the graph -->

@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     id="core-app-bar"
     density="compact"
     flat
-    class="c-toolbar"
+    class="c-appbar"
     color="grey-lighten-4"
   >
     <!-- TODO: duplicated in workflow/Toolbar.vue and cylc/Toolbar.vue -->
@@ -38,7 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </v-btn>
     <!-- title -->
     <v-toolbar-title
-      class="c-toolbar-title text-md-h6 text-subtitle-1 font-weight-medium text-primary"
+      class="c-appbar-title text-md-h6 text-subtitle-1 font-weight-medium text-primary"
       :class="showNavBtn ? 'ml-0' : null"
     >
       {{ title }}

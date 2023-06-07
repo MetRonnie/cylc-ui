@@ -22,52 +22,41 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       class="pa-2"
     >
       <!-- Filters -->
-      <v-row no-gutters>
-        <v-col
-          cols="12"
-          md="4"
-          class="pr-md-2 mb-2 mb-md-0"
-        >
-          <v-text-field
-            id="c-analysis-filter-task-name"
-            clearable
-            hide-details
-            placeholder="Filter by task name"
-            v-model.trim="tasksFilter.name"
-            ref="filterNameInput"
-          />
-        </v-col>
-        <v-col
-          cols="12"
-          md="4"
-          class="mb-2 mb-md-0"
-        >
-          <v-select
-            id="c-analysis-filter-task-timings"
-            :items="timingOptions"
-            hide-details
-            prefix="Displaying:"
-            v-model="tasksFilter.timingOption"
-          />
-        </v-col>
-        <v-col
-          cols="12"
-          md="4"
-          class="pl-md-2 mb-2 mb-md-0"
-        >
-          <v-select
-            id="c-analysis-filter-task-platforms"
-            :items="platformOptions"
-            hide-details
-            prefix="Platform:"
-            v-model="tasksFilter.platformOption"
-          />
-        </v-col>
-      </v-row>
-      <ViewToolbar :groups="groups" />
+      <div
+        class="c-toolbar d-flex align-center flex-wrap"
+      >
+        <v-text-field
+          id="c-analysis-filter-task-name"
+          clearable
+          hide-details
+          placeholder="Filter by task name"
+          v-model.trim="tasksFilter.name"
+          ref="filterNameInput"
+        />
+        <v-select
+          id="c-analysis-filter-task-timings"
+          :items="timingOptions"
+          hide-details
+          prefix="Displaying:"
+          v-model="tasksFilter.timingOption"
+        />
+        <v-select
+          id="c-analysis-filter-task-platforms"
+          :items="platformOptions"
+          hide-details
+          prefix="Platform:"
+          v-model="tasksFilter.platformOption"
+        />
+        <ViewToolbar
+          :groups="groups"
+          size="small"
+          class="pa-0"
+        />
+      </div>
       <AnalysisTable
         :tasks="filteredTasks"
         :timingOption="tasksFilter.timingOption"
+        class="mt-2"
       />
     </v-container>
   </div>
@@ -247,3 +236,13 @@ export default {
   }
 }
 </script>
+
+<style scoped lang="scss">
+.c-toolbar {
+  gap: 8px;
+
+  > .v-input {
+    flex-basis: 250px;
+  }
+}
+</style>
