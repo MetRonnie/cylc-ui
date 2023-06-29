@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           data-cy="gscan-filter-btn"
         >
           <v-icon size="x-large">
-            {{ $options.icons.mdiFilter }}
+            {{ $options.icons.mdiFilterVariant }}
           </v-icon>
         </v-btn>
       </v-badge>
@@ -116,7 +116,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { mdiFilter, mdiFolderRefresh } from '@mdi/js'
+import { mdiFilterVariant, mdiFolderRefresh } from '@mdi/js'
 import { TaskStateNames } from '@/model/TaskState.model'
 import { WorkflowState } from '@/model/WorkflowState.model'
 import Tree from '@/components/cylc/tree/Tree.vue'
@@ -219,7 +219,7 @@ export default {
 
   // Misc options
   icons: {
-    mdiFilter,
+    mdiFilterVariant,
     mdiFolderRefresh
   },
   /**

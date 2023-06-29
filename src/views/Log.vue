@@ -144,7 +144,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import {
-  mdiClockOutline,
+  mdiTimelineClockOutline,
   mdiFileAlertOutline,
   mdiFolderRefresh,
   mdiPowerPlugOff,
@@ -298,7 +298,7 @@ export default {
           controls: [
             {
               title: 'Timestamps',
-              icon: mdiClockOutline,
+              icon: mdiTimelineClockOutline,
               action: 'toggle',
               value: true,
               key: 'timestamps'

@@ -43,7 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               size="small"
               data-cy="expand-all"
             >
-              <v-icon size="x-large">{{ $options.icons.mdiPlus }}</v-icon>
+              <v-icon size="x-large">{{ $options.icons.mdiArrowExpandVertical }}</v-icon>
               <v-tooltip>Expand all</v-tooltip>
             </v-btn>
             <v-btn
@@ -53,7 +53,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               size="small"
               data-cy="collapse-all"
             >
-              <v-icon size="x-large">{{ $options.icons.mdiMinus }}</v-icon>
+              <v-icon size="x-large">{{ $options.icons.mdiArrowCollapseVertical }}</v-icon>
               <v-tooltip>Collapse all</v-tooltip>
             </v-btn>
           </div>
@@ -83,7 +83,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import { mapState, mapGetters } from 'vuex'
-import { mdiPlus, mdiMinus } from '@mdi/js'
+import {
+  mdiArrowCollapseVertical,
+  mdiArrowExpandVertical,
+} from '@mdi/js'
 import gql from 'graphql-tag'
 import { getPageTitle } from '@/utils/index'
 import graphqlMixin from '@/mixins/graphql'
@@ -292,8 +295,8 @@ export default {
   },
 
   icons: {
-    mdiPlus,
-    mdiMinus,
+    mdiArrowCollapseVertical,
+    mdiArrowExpandVertical,
   },
 }
 </script>

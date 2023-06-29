@@ -160,10 +160,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { mapState } from 'vuex'
 import {
   mdiCog,
-  mdiMicrosoftXboxControllerMenu,
+  mdiListBox,
   mdiPause,
   mdiPlay,
-  mdiPlusBoxMultiple,
+  mdiTabPlus,
   mdiStop,
   mdiViewList,
   mdiAccount
@@ -320,10 +320,10 @@ export default {
   },
 
   icons: {
-    add: mdiPlusBoxMultiple,
+    add: mdiTabPlus,
     hold: mdiPause,
     list: mdiViewList,
-    menu: mdiMicrosoftXboxControllerMenu,
+    menu: mdiListBox,
     run: mdiPlay,
     stop: mdiStop,
     mdiCog,

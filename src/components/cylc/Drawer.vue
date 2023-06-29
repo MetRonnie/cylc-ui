@@ -34,7 +34,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           to="/"
         >
           <template v-slot:prepend>
-            <v-icon style="opacity: 1;">{{ $options.icons.mdiHome }}</v-icon>
+            <v-icon style="opacity: 1;">{{ $options.icons.mdiHomeVariant }}</v-icon>
           </template>
           <v-list-item-title>Dashboard</v-list-item-title>
         </v-list-item>
@@ -71,7 +71,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import Header from '@/components/cylc/Header.vue'
 import { mapMutations, mapState } from 'vuex'
 import Workflows from '@/views/Workflows.vue'
-import { mdiHome, mdiGraphql } from '@mdi/js'
+import { mdiHomeVariant, mdiGraphql } from '@mdi/js'
 import pkg from '@/../package.json'
 
 export const initialWidth = 260
@@ -153,7 +153,7 @@ export default {
   },
 
   icons: {
-    mdiHome,
+    mdiHomeVariant,
     mdiGraphql,
   },
   mode: import.meta.env.MODE,

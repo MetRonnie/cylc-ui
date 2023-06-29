@@ -28,21 +28,23 @@ import {
   print
 } from 'graphql'
 import {
+  mdiAccessPoint,
   mdiBullhorn,
   mdiCloseCircle,
   mdiCog,
-  mdiCursorPointer,
   mdiDelete,
-  mdiEmail,
   mdiFileDocumentOutline,
+  mdiGestureDoubleTap,
   mdiGraph,
+  mdiMessageTextOutline,
   mdiMinusCircleOutline,
+  mdiMotionPauseOutline,
+  mdiMotionPlayOutline,
   mdiPause,
   mdiPauseCircleOutline,
   mdiPlay,
   mdiPlayCircleOutline,
   mdiPlaylistEdit,
-  mdiRefreshCircle,
   mdiReload,
   mdiStop
 } from '@mdi/js'
@@ -128,17 +130,19 @@ export const mutationIcons = {
   hold: mdiPauseCircleOutline, // to distinguish from pause
   kill: mdiCloseCircle,
   log: mdiFileDocumentOutline,
-  message: mdiEmail,
+  message: mdiMessageTextOutline,
   pause: mdiPause,
   play: mdiPlay,
-  poll: mdiRefreshCircle,
+  poll: mdiAccessPoint,
   release: mdiPlayCircleOutline, // to distinguish from play
   reload: mdiReload,
   remove: mdiMinusCircleOutline,
   resume: mdiPlay,
+  setHoldPoint: mdiMotionPauseOutline,
+  releaseHoldPoint: mdiMotionPlayOutline,
   setOutputs: mdiGraph,
   stop: mdiStop,
-  trigger: mdiCursorPointer
+  trigger: mdiGestureDoubleTap,
 }
 
 /**
