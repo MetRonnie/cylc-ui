@@ -16,6 +16,9 @@
  */
 
 .markdown {
+  + .markdown {
+    margin-top: 0.8em;
+  }
   p, ul, ol {
     &:not(:last-child) {
       margin-bottom: 0.8em;

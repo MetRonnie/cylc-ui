@@ -35,16 +35,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <v-icon>{{ $options.icons.mdiClose }}</v-icon>
       </v-btn>
     </template>
-    {{ alert.text }}
+    <ShowMore max-height="12em">
+      {{ alert.text }}
+    </ShowMore>
   </v-snackbar>
 </template>
 
 <script>
 import { mdiClose } from '@mdi/js'
 import { mapActions, mapState } from 'vuex'
+import ShowMore from '@/components/core/ShowMore.vue'
 
 export default {
   name: 'Alert',
+
+  components: {
+    ShowMore,
+  },
 
   computed: {
     ...mapState(['alert'])

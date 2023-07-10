@@ -23,29 +23,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       </h3>
 
       <!-- the mutation description -->
-      <v-expansion-panels
-        variant="accordian"
-        v-bind="extendedDescription ? { hover: true } : { readonly: true }"
-      >
-        <v-expansion-panel
-          class="mutation-desc"
-          elevation="0"
+      <ShowMore class="my-2">
+        <Markdown :markdown="shortDescription"/>
+        <template
+          v-slot:extended
+          v-if="extendedDescription"
         >
-          <v-expansion-panel-title
-            v-bind="extendedDescription ? {} : {
-              expandIcon: null,
-              style: {
-                cursor: 'default'
-              }
-            }"
-          >
-            <Markdown :markdown="shortDescription"/>
-          </v-expansion-panel-title>
-          <v-expansion-panel-text v-if="extendedDescription">
-            <Markdown :markdown="extendedDescription"/>
-          </v-expansion-panel-text>
-        </v-expansion-panel>
-      </v-expansion-panels>
+          <Markdown :markdown="extendedDescription"/>
+        </template>
+      </ShowMore>
 
       <v-divider />
       <EditRuntimeForm
@@ -132,6 +118,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import FormGenerator from '@/components/graphqlFormGenerator/FormGenerator.vue'
 import EditRuntimeForm from '@/components/graphqlFormGenerator/EditRuntimeForm.vue'
 import Markdown from '@/components/Markdown.vue'
+import ShowMore from '@/components/core/ShowMore.vue'
 import {
   getMutationShortDesc,
   getMutationExtendedDesc,
@@ -145,7 +132,8 @@ export default {
   components: {
     EditRuntimeForm,
     FormGenerator,
-    Markdown
+    Markdown,
+    ShowMore,
   },
 
   props: {
