@@ -63,6 +63,10 @@ import {
   mdiSortVariant,
 } from '@mdi/js'
 import { upperFirst } from 'lodash'
+import {
+  formatDuration,
+  formatSeconds
+} from '@/utils/tasks'
 
 export default {
   name: 'BoxPlot',
@@ -174,6 +178,35 @@ export default {
             },
           },
         },
+        tooltip: {
+          custom: function ({ seriesIndex, dataPointIndex, w }) {
+            const max = formatSeconds(w.globals.seriesCandleC[seriesIndex][dataPointIndex])
+            const q3 = formatSeconds(w.globals.seriesCandleL[seriesIndex][dataPointIndex])
+            const med = formatSeconds(w.globals.seriesCandleM[seriesIndex][dataPointIndex])
+            const q1 = formatSeconds(w.globals.seriesCandleH[seriesIndex][dataPointIndex])
+            const min = formatSeconds(w.globals.seriesCandleO[seriesIndex][dataPointIndex])
+            console.log(w)
+            return (
+              '<div class="apexcharts-tooltip-candlestick">' +
+              '<div>Maximum: <span class="value">' +
+              max +
+              '</span></div>' +
+              '<div>Q3: <span class="value">' +
+              q3 +
+              '</span></div>' +
+              '<div>Median: <span class="value">' +
+              med +
+              '</span></div>' +
+              '<div>Q1: <span class="value">' +
+              q1 +
+              '</span></div>' +
+              '<div>Minimum: <span class="value">' +
+              min +
+              '</span></div>' +
+              '</div>'
+            )
+          },
+        },
         plotOptions: {
           bar: {
             horizontal: true,
@@ -187,7 +220,12 @@ export default {
         },
         xaxis: {
           title: {
-            text: 'Time (s)',
+            text: upperFirst(this.timingOption) + ' time',
+          },
+          labels: {
+            formatter: function (value) {
+              return formatDuration(value, true)
+            }
           },
         },
       }
