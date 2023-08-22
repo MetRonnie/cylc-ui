@@ -63,10 +63,7 @@ import {
   mdiSortVariant,
 } from '@mdi/js'
 import { upperFirst } from 'lodash'
-import {
-  formatDuration,
-  formatSeconds
-} from '@/utils/tasks'
+import { formatDuration } from '@/utils/tasks'
 
 export default {
   name: 'BoxPlot',
@@ -180,12 +177,11 @@ export default {
         },
         tooltip: {
           custom: function ({ seriesIndex, dataPointIndex, w }) {
-            const max = formatSeconds(w.globals.seriesCandleC[seriesIndex][dataPointIndex])
-            const q3 = formatSeconds(w.globals.seriesCandleL[seriesIndex][dataPointIndex])
-            const med = formatSeconds(w.globals.seriesCandleM[seriesIndex][dataPointIndex])
-            const q1 = formatSeconds(w.globals.seriesCandleH[seriesIndex][dataPointIndex])
-            const min = formatSeconds(w.globals.seriesCandleO[seriesIndex][dataPointIndex])
-            console.log(w)
+            const max = formatDuration(w.globals.seriesCandleC[seriesIndex][dataPointIndex], true)
+            const q3 = formatDuration(w.globals.seriesCandleL[seriesIndex][dataPointIndex], true)
+            const med = formatDuration(w.globals.seriesCandleM[seriesIndex][dataPointIndex], true)
+            const q1 = formatDuration(w.globals.seriesCandleH[seriesIndex][dataPointIndex], true)
+            const min = formatDuration(w.globals.seriesCandleO[seriesIndex][dataPointIndex], true)
             return (
               '<div class="apexcharts-tooltip-candlestick">' +
               '<div>Maximum: <span class="value">' +
