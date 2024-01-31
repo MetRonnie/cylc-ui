@@ -27,11 +27,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     >
       <!-- the node's left icon; used for expand/collapse -->
       <svg
-        v-if="renderExpandCollapseBtn"
+        v-if="renderExpandCollapseBtn && hasChildren"
         aria-label="Expand/collapse"
         class="node-expand-collapse-button flex-shrink-0"
         @click="toggleExpandCollapse"
-        :style="expandCollapseBtnStyle"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
         role="img"
@@ -271,8 +270,14 @@ export default {
         : getNodeChildren(this.node, this.cyclePointsOrderDesc)
     },
     nodeStyle () {
+      let depth = this.depth
+      if (this.renderExpandCollapseBtn && !this.hasChildren) {
+        // indent the node by an extra unit that would be taken up by the
+        // expand/collapse button
+        depth++
+      }
       return {
-        'padding-left': getIndent(this.depth)
+        'padding-left': getIndent(depth),
       }
     },
     nodeClass () {
@@ -283,12 +288,6 @@ export default {
     },
     nodeDataClass () {
       return ['node-data', `node-data-${this.node.type}`]
-    },
-    expandCollapseBtnStyle () {
-      return {
-        // set visibility 'hidden' to ensure element takes up space
-        visibility: this.hasChildren ? null : 'hidden'
-      }
     },
     jobMessageOutputs () {
       return jobMessageOutputs(this.node)
