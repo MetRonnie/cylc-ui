@@ -160,7 +160,7 @@ import {
   initialOptions,
   updateInitialOptionsEvent,
   useInitialOptions
-} from '@/views/initialOptions'
+} from '@/utils/initialOptions'
 import LogComponent from '@/components/cylc/log/Log.vue'
 import SubscriptionQuery from '@/model/SubscriptionQuery.model'
 import { Tokens } from '@/utils/uid'
@@ -401,7 +401,7 @@ export default {
       if (this.jobLog) {
         try {
           const taskTokens = new Tokens(this.relativeID, true)
-          if (!taskTokens?.task) {
+          if (!taskTokens || !taskTokens.task) {
             return null
           }
           return this.workflowTokens.clone({ cycle: taskTokens.cycle, task: taskTokens.task, job: taskTokens.job }).id
