@@ -225,22 +225,19 @@ export default {
 
   setup (props, { emit }) {
     /**
-     * The selection expand/collapse option.
-     * @type {import('vue').Ref<string>}
-     */
-    const expandAll = useInitialOptions('expandAll', { props, emit }, ref(null))
-
-    /**
      * The job id input and selected task filter state.
-     * @type {import('vue').Ref<string>}
+     * @type {import('vue').Ref<Object>}
      */
     const tasksFilter = useInitialOptions('tasksFilter', { props, emit }, ref({ id: null, states: null }))
 
     return {
-      expandAll,
       tasksFilter
     }
   },
+
+  data: () => ({
+    expandAll: null,
+  }),
 
   computed: {
     ...mapState('workflows', ['cylcTree']),

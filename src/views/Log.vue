@@ -401,7 +401,7 @@ export default {
       if (this.jobLog) {
         try {
           const taskTokens = new Tokens(this.relativeID, true)
-          if (!taskTokens || !taskTokens.task) {
+          if (!taskTokens?.task) {
             return null
           }
           return this.workflowTokens.clone({ cycle: taskTokens.cycle, task: taskTokens.task, job: taskTokens.job }).id
