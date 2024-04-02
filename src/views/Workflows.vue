@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <script>
 import { mapState } from 'vuex'
 import GScan from '@/components/cylc/gscan/GScan.vue'
+import { taskStates } from '@/components/cylc/tree/GScanTreeItem.vue'
 import { getPageTitle } from '@/utils/index'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
 import SubscriptionQuery from '@/model/SubscriptionQuery.model'
@@ -65,13 +66,7 @@ fragment WorkflowData on Workflow {
   host
   port
   stateTotals
-  latestStateTasks(states: [
-    "failed",
-    "preparing",
-    "submit-failed",
-    "submitted",
-    "running"
-  ])
+  latestStateTasks(states: ${JSON.stringify(taskStates)})
 }
 `
 

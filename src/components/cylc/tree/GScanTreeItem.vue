@@ -46,13 +46,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             </v-tooltip>
           </span>
         </div>
-        <div class="d-flex text-right c-gscan-workflow-states flex-grow-0">
+        <div
+          v-if="descendantTaskInfo.latestTasks.size"
+          class="d-flex text-right c-gscan-workflow-states flex-grow-0"
+        >
           <!-- task summary tooltips -->
           <!-- a v-tooltip does not work directly set on Cylc job component, so we use a div to wrap it -->
           <div
-            v-for="[state, tasks] in Object.entries(descendantTaskInfo.latestTasks)"
+            v-for="state in taskStates"
             :key="`${node.id}-${state}`"
-            :class="getTaskStateClass(descendantTaskInfo.stateTotals, state)"
+            :class="taskStateClass(state)"
             class="ma-0 pa-0"
             min-width="0"
             min-height="0"
@@ -62,10 +65,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <v-tooltip location="top">
               <!-- tooltip text -->
               <div class="text-grey-lighten-1">
-                {{ descendantTaskInfo.stateTotals[state] ?? 0 }} {{ state }}. Recent {{ state }} tasks:
+                {{ stateSummaryText(state) }}
               </div>
-              <div v-for="(task, index) in tasks.slice(0, $options.maxTasksDisplayed)" :key="index">
-                {{ task }}<br v-if="index !== tasks.length - 1" />
+              <div
+                v-for="task in recentTasks(state)"
+                :key="task"
+              >
+                {{ task }}
               </div>
             </v-tooltip>
           </div>
@@ -90,17 +96,33 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import Job from '@/components/cylc/Job.vue'
 import WorkflowIcon from '@/components/cylc/gscan/WorkflowIcon.vue'
 import TreeItem from '@/components/cylc/tree/TreeItem.vue'
-import { JobStateNames } from '@/model/JobState.model'
+import { TaskState } from '@/model/TaskState.model'
 import { WorkflowState } from '@/model/WorkflowState.model'
 
 /**
- * Get aggregated task state totals and latest task states for all descendents of a node.
+ * @typedef {Object} DescendantTaskInfo
+ * @property {Map<string, number>} stateTotals - Task state totals for all descendants of a node.
+ * @property {Map<string, string[]>} latestTasks - Latest task states for all descendants of a node.
+ */
+
+export const taskStates = [
+  TaskState.SUBMIT_FAILED.name,
+  TaskState.FAILED.name,
+  TaskState.RUNNING.name,
+  TaskState.SUCCEEDED.name,
+]
+
+const maxRecentTasksDisplayed = 5
+
+/**
+ * Get aggregated task state totals and latest task states for all descendants of a node.
  *
  * @param {Object} node
- * @param {Record<string, number>} stateTotals
- * @param {Record<string, string[]>} latestTasks
+ * @param {Map<string, number>} stateTotals
+ * @param {Map<string, string[]>} latestTasks
+ * @returns {DescendantTaskInfo}
  */
-function traverseChildren (node, stateTotals = {}, latestTasks = {}) {
+function traverseChildren (node, stateTotals = new Map(), latestTasks = new Map()) {
   // if we aren't at the end of the node tree, continue recurse until we hit something other then a workflow part
   if (node.type === 'workflow-part' && node.children) {
     // at every branch, recurse all child nodes
@@ -109,19 +131,18 @@ function traverseChildren (node, stateTotals = {}, latestTasks = {}) {
     }
   } else if (node.type === 'workflow' && node.node.stateTotals) {
     // if we are at the end of a node (or at least, hit a workflow node), stop and merge the latest state tasks from this node with all the others from the tree
-    for (const [state, totals] of Object.entries(node.node.stateTotals)) {
-      if (JobStateNames.includes(state)) { // filter only valid states
-        // (cast as numbers so they dont get concatenated as strings)
-        stateTotals[state] = (stateTotals[state] ?? 0) + parseInt(totals)
-      }
+    for (const state of taskStates) {
+      // Note: more efficient to iterate over taskStates as its length is < stateTotals
+      stateTotals.set(state, (stateTotals.get(state) ?? 0) + node.node.stateTotals[state])
     }
     for (const [state, taskNames] of Object.entries(node.node.latestStateTasks)) {
-      if (JobStateNames.includes(state)) {
+      // Note: more efficient to iterate over latestStateTasks as its length is mostly <= taskStates
+      if (taskStates.includes(state)) {
         // concat the new tasks in where they don't already exist
-        latestTasks[state] = [
-          ...(latestTasks[state] ?? []),
+        latestTasks.set(state, [
+          ...(latestTasks.get(state) ?? []),
           ...taskNames,
-        ].sort().reverse() // cycle point descending order
+        ].sort().reverse()) // cycle point descending order
       }
     }
   }
@@ -155,6 +176,12 @@ export default {
     },
   },
 
+  setup () {
+    return {
+      taskStates,
+    }
+  },
+
   computed: {
     workflowLink () {
       return this.node.type === 'workflow'
@@ -162,7 +189,7 @@ export default {
         : ''
     },
 
-    /** Task state totals and latest states for all descendents of this node. */
+    /** Task state totals and latest states for all descendants of this node. */
     descendantTaskInfo () {
       return traverseChildren(this.node)
     },
@@ -177,18 +204,37 @@ export default {
       return {
         'c-workflow-stopped': this.node.node?.status === WorkflowState.STOPPED.name,
       }
-    }
+    },
   },
 
   methods: {
-    getTaskStateClass (stateTotals, state) {
+    taskStateClass (state) {
       return {
-        'empty-state': !stateTotals[state]
+        'empty-state': !this.descendantTaskInfo.stateTotals.get(state)
       }
+    },
+
+    /**
+     * @param {string} state
+     * @returns {string}
+     */
+    stateSummaryText (state) {
+      const { stateTotals, latestTasks } = this.descendantTaskInfo
+      const num = stateTotals.get(state)
+      let ret = `${num} active ${state} task${num === 1 ? '' : 's'}.`
+      if (latestTasks.get(state)?.length) ret += ' Recent:'
+      return ret
+    },
+
+    /**
+     * @param {string} state
+     * @returns {string[]}
+     */
+    recentTasks (state) {
+      return this.descendantTaskInfo.latestTasks.get(state)?.slice(0, maxRecentTasksDisplayed) ?? []
     },
   },
 
   nodeTypes: ['workflow-part', 'workflow'],
-  maxTasksDisplayed: 5,
 }
 </script>

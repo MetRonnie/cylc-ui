@@ -78,9 +78,8 @@
           },
           "latestStateTasks": {
             "failed": [],
-            "preparing": [],
             "submit-failed": [],
-            "submitted": [],
+            "succeeded": [],
             "running": []
           },
           "__typename": "Workflow"
