@@ -101,12 +101,12 @@
       "schedule": ["on sunday"]
     },
     {
-      "groupName": "analysis view packages",
-      "matchPackageNames": [
-          "apexcharts",
-          "vue3-apexcharts"
-      ],
-      "addLabels": ["analysis view"]
+      "matchPackageNames": ["apexcharts"],
+      "addLabels": ["data workflows team"]
+    },
+    {
+      "matchPackageNames": ["vue3-apexcharts"],
+      "addLabels": ["data workflows team"]
     }
   ],
   "vulnerabilityAlerts": {
