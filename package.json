@@ -31,7 +31,7 @@
     "@mdi/js": "7.4.47",
     "@unhead/vue": "1.9.4",
     "@vueuse/core": "10.9.0",
-    "apexcharts": "3.41.0",
+    "apexcharts": "3.49.0",
     "axios": "1.6.8",
     "dedent": "1.5.3",
     "enumify": "2.0.0",

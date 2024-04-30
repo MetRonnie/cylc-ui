@@ -2650,6 +2650,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@yr/monotone-cubic-spline@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "@yr/monotone-cubic-spline@npm:1.0.3"
+  checksum: 10c0/6098d2138dcf8b722c80f2e9167d24a064184c37fb5b3276e34c717351b496735777b71f7e69c3fa6b94f8a81eba309c4a1e37349a26b8541113b1afa84d7bf8
+  languageName: node
+  linkType: hard
+
 "abbrev@npm:1":
   version: 1.1.1
   resolution: "abbrev@npm:1.1.1"
@@ -2802,17 +2809,18 @@ __metadata:
   languageName: node
   linkType: hard
 
-"apexcharts@npm:3.41.0":
-  version: 3.41.0
-  resolution: "apexcharts@npm:3.41.0"
+"apexcharts@npm:3.49.0":
+  version: 3.49.0
+  resolution: "apexcharts@npm:3.49.0"
   dependencies:
+    "@yr/monotone-cubic-spline": "npm:^1.0.3"
     svg.draggable.js: "npm:^2.2.2"
     svg.easing.js: "npm:^2.0.0"
     svg.filter.js: "npm:^2.0.2"
     svg.pathmorphing.js: "npm:^0.1.3"
     svg.resize.js: "npm:^1.4.3"
     svg.select.js: "npm:^3.0.1"
-  checksum: 10c0/b6c5ab14d6247f81de392c71fd160a59c9467cda8e07725d6ee3e10ba8013e69807ac57e35e62f9e81e772cfe8dc928c7a76e032619f19c90ad8cb7b5dfb9eba
+  checksum: 10c0/eff5e56efcd555b3aeadb3c4ebe4798e97ad33244695f172eccfb7c7b51dcdf63944fd3577ddf96927aa4f11a3b1cf346373b8ba92e6503596ca3aef99825930
   languageName: node
   linkType: hard
 
@@ -3832,7 +3840,7 @@ __metadata:
     "@vitest/coverage-istanbul": "npm:1.5.2"
     "@vue/test-utils": "npm:2.4.5"
     "@vueuse/core": "npm:10.9.0"
-    apexcharts: "npm:3.41.0"
+    apexcharts: "npm:3.49.0"
     axios: "npm:1.6.8"
     concurrently: "npm:8.2.2"
     cross-fetch: "npm:4.0.0"
