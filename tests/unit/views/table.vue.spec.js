@@ -24,7 +24,7 @@ import WorkflowService from '@/services/workflow.service'
 import User from '@/model/User.model'
 import { nextTick } from 'vue'
 import { simpleTableTasks } from '@/../tests/unit/components/cylc/table/table.data'
-import TaskState from '@/model/TaskState.model'
+import { TaskState } from '@/model/TaskState.model'
 
 chai.config.truncateThreshold = 0
 
@@ -134,7 +134,7 @@ describe('Table view', () => {
     it('should filter by task state', async () => {
       wrapper.vm.tasksFilter = {
         states: [
-          TaskState.WAITING.name
+          TaskState.WAITING
         ]
       }
       await nextTick()
@@ -145,7 +145,7 @@ describe('Table view', () => {
       wrapper.vm.tasksFilter = {
         id: 'taskA',
         states: [
-          TaskState.WAITING.name
+          TaskState.WAITING
         ]
       }
       await nextTick()

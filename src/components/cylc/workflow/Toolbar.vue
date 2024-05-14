@@ -214,7 +214,7 @@ import {
 import { startCase } from 'lodash'
 import { until } from '@/utils'
 import { useToolbar, toolbarHeight } from '@/utils/toolbar'
-import WorkflowState from '@/model/WorkflowState.model'
+import { WorkflowState } from '@/model/WorkflowState.model'
 import graphql from '@/mixins/graphql'
 import {
   mutationStatus
@@ -315,25 +315,21 @@ export default {
       return this.cylcTree.$index[this.workflowId]
     },
     isRunning () {
-      return (
-        this.currentWorkflow &&
-        (
-          this.currentWorkflow.node.status === WorkflowState.RUNNING.name ||
-          this.currentWorkflow.node.status === WorkflowState.PAUSED.name ||
-          this.currentWorkflow.node.status === WorkflowState.STOPPING.name
-        )
-      )
+      return [
+        WorkflowState.RUNNING,
+        WorkflowState.PAUSED,
+        WorkflowState.STOPPING
+      ].includes(this.currentWorkflow?.node.status)
     },
     isPaused () {
       return (
-        this.currentWorkflow &&
-        this.currentWorkflow.node.status === WorkflowState.PAUSED.name
+        this.currentWorkflow?.node.status === WorkflowState.PAUSED
       )
     },
     isStopped () {
       return (
         !this.currentWorkflow ||
-        this.currentWorkflow.node.status === WorkflowState.STOPPED.name
+        this.currentWorkflow.node.status === WorkflowState.STOPPED
       )
     },
     statusMsg () {
@@ -356,7 +352,7 @@ export default {
           // the play/pause button
           !this.isStopped &&
           !this.expecting.stop &&
-          this.currentWorkflow.node.status !== WorkflowState.STOPPING.name &&
+          this.currentWorkflow.node.status !== WorkflowState.STOPPING &&
           (
             this.expecting.paused === null ||
             this.expecting.paused === this.isPaused
@@ -428,7 +424,7 @@ export default {
         this.currentWorkflow.id
       ).then(response => {
         if (response.status === mutationStatus.SUCCEEDED) {
-          this.expecting.stop = WorkflowState.STOPPING
+          this.expecting.stop = WorkflowState.STOPPING // Huh?
         }
       })
     },

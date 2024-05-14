@@ -254,7 +254,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import TaskState from '@/model/TaskState.model'
+import { TaskState } from '@/model/TaskState.model'
 
 export default {
   name: 'SVGTask',
@@ -279,7 +279,7 @@ export default {
   methods: {
     getRunningStyle () {
       if (
-        this.task.state === TaskState.RUNNING.name &&
+        this.task.state === TaskState.RUNNING &&
         this.startTime &&
         this.task.task?.meanElapsedTime
       ) {
