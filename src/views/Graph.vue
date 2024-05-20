@@ -390,7 +390,42 @@ export default {
           ]
         }
       ]
-    }
+    },
+
+    nodes () {
+      return this.workflows.flatMap(
+        (workflow) => workflow.children.flatMap(
+          (cycle) => cycle.children
+        )
+      )
+    },
+
+    edges () {
+      return this.workflows.flatMap(
+        (workflow) => workflow.$edges || []
+      )
+    },
+
+    /**
+     * The nodes binned by cycle point
+     *
+     * @returns {{ [dateTime: string]: Object[] }=} mapping of cycle points to nodes
+     */
+    cycles () {
+      if (!this.groupCycle) return
+      return this.nodes.reduce((x, y) => {
+        (x[y.tokens.cycle] ||= []).push(y)
+        return x
+      }, {})
+    },
+
+    hash () {
+      // generate a hash for this list of nodes and edges
+      return nonCryptoHash(
+        this.nodes.reduce((acc, { id }) => acc + id) +
+        this.edges.reduce((acc, { id }) => acc + id, 1)
+      )
+    },
   },
 
   methods: {
@@ -465,28 +500,6 @@ export default {
       // decrease graph layout node spacing by 10%
       this.spacing = this.spacing * (10 / 11)
     },
-    getGraphNodes () {
-      // list graph nodes from the store (non reactive list)
-      const ret = []
-      for (const workflow of this.workflows) {
-        for (const cycle of workflow.children) {
-          for (const task of cycle.children) {
-            ret.push(task)
-          }
-        }
-      }
-      return ret
-    },
-    getGraphEdges () {
-      // list graph edges from the store (non reactive list)
-      const ret = []
-      for (const workflow of this.workflows) {
-        for (const edge of workflow.$edges || []) {
-          ret.push(edge)
-        }
-      }
-      return ret
-    },
     /**
      * Get the dimensions of currently rendered graph nodes
      * (we feed these dimensions into the GraphViz dot code to improve layout).
@@ -507,19 +520,6 @@ export default {
         ret[node.id] = bbox
       }
       return ret
-    },
-    /**
-     * Get the nodes binned by cycle point
-     *
-     * @param {Object[]} nodes
-     * @returns {{ [dateTime: string]: Object[] }=} mapping of cycle points to nodes
-     */
-    getCycles (nodes) {
-      if (!this.groupCycle) return
-      return nodes.reduce((x, y) => {
-        (x[y.tokens.cycle] ||= []).push(y)
-        return x
-      }, {})
     },
     getDotCode (nodeDimensions, nodes, edges, cycles) {
       // return GraphViz dot code for the given nodes, edges and dimensions
@@ -603,13 +603,6 @@ export default {
       ret.push('}')
       return ret.join('\n')
     },
-    hashGraph (nodes, edges) {
-      // generate a hash for this list of nodes and edges
-      return nonCryptoHash(
-        nodes.map(n => n.id).reduce((x, y) => { return x + y }) +
-        (edges || []).map(n => n.id).reduce((x, y) => { return x + y }, 1)
-      )
-    },
     reset () {
       // pan / zoom so that the graph is centered and in frame
       this.panZoomTo(
@@ -647,25 +640,15 @@ export default {
       }
       this.updating = true
 
-      // extract the graph (non reactive lists of nodes & edges)
-      const nodes = await this.waitFor(() => {
-        const nodes = this.getGraphNodes()
-        return nodes.length ? nodes : false
-      })
-      const edges = this.getGraphEdges()
-
-      if (!nodes || !nodes.length) {
+      if (!this.nodes.length) {
         // we can't graph this, reset and wait for something to draw
         this.graphID = null
         this.updating = false
         return
       }
 
-      const cycles = this.getCycles(nodes)
-
-      // compute the graph ID
-      const graphID = this.hashGraph(nodes, edges)
-      if (this.graphID === graphID) {
+      // check the graph ID
+      if (this.graphID === this.hash) {
         // the graph has not changed => do nothing
         this.updating = false
         return
@@ -675,21 +658,21 @@ export default {
       // wipe old graph edges
       this.graphEdges = [] // wipe old graph edges
       // wipe old node transformations
-      const nodeIds = nodes.map((n) => n.id)
+      const nodeIds = this.nodes.map((n) => n.id)
       for (const id in this.nodeTransformations) {
         if (!nodeIds.includes(id)) { // this node has been removed
           delete this.nodeTransformations[id]
         }
       }
       // wipe old nodes
-      this.graphNodes = nodes
+      this.graphNodes = this.nodes
 
       // obtain the node dimensions to use in the layout
       // NOTE: need to wait for the nodes to all be rendered before we can
       // measure them
       const nodeDimensions = await this.waitFor(() => {
         try {
-          return this.getNodeDimensions(nodes) // all nodes rendered
+          return this.getNodeDimensions(this.nodes) // all nodes rendered
         } catch {
           return false // one or more nodes awaiting render
         }
@@ -707,7 +690,7 @@ export default {
 
       // layout the graph
       try {
-        await this.layout(nodes, edges, nodeDimensions, cycles)
+        await this.layout(this.nodes, this.edges, nodeDimensions, this.cycles)
       } catch (e) {
         // something went wrong, allow the layout to retry later
         this.graphID = null
@@ -720,7 +703,7 @@ export default {
       // re-center the SVG if this was the first layout or if the orientation
       // was changed
       if (!this.graphID) {
-        const lastEdgeID = `edge-${edges.length - 1}`
+        const lastEdgeID = `edge-${this.edges.length - 1}`
         await this.waitFor(() => {
           // wait for the last edge of the graph to be rendered
           const lastEdge = this.$refs[lastEdgeID]
@@ -729,7 +712,7 @@ export default {
         this.reset()
       }
 
-      this.graphID = graphID
+      this.graphID = this.hash
       this.updating = false
     },
     async waitFor (callback, retries = 10) {
