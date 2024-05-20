@@ -44,7 +44,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </marker>
       </defs>
       <g
-        class="svg-pan-zoom_viewport job_theme--default"
+        ref="graphGroup"
+        class="job_theme--default"
       >
         <!-- the nodes -->
         <g
@@ -240,6 +241,10 @@ export default {
   props: { initialOptions },
 
   setup (props, { emit }) {
+    // compile & instantiate graphviz wasm
+    /** @type {Promise<Graphviz>} */
+    const graphviz = Graphviz.load()
+
     /**
      * The transpose toggle state.
      * If true layout is left-right, else top-bottom
@@ -268,6 +273,7 @@ export default {
     const groupCycle = useInitialOptions('groupCycle', { props, emit }, false)
 
     return {
+      graphviz,
       jobTheme: useJobTheme(),
       transpose,
       autoRefresh,
@@ -303,15 +309,8 @@ export default {
   },
 
   mounted () {
-    // compile & instantiate graphviz wasm
-    /** @type {Promise<Graphviz>} */
-    this.graphviz = Graphviz.load()
-    // allow render to happen before we go configuring svgPanZoom
-    this.$nextTick(() => {
-      this.refresh()
-      this.updateTimer()
-    })
-    this.mountSVGPanZoom()
+    this.refresh()
+    this.updateTimer()
   },
 
   beforeUnmount () {
@@ -392,6 +391,7 @@ export default {
       ]
     },
 
+    /** @type {Object[]} */
     nodes () {
       return this.workflows.flatMap(
         (workflow) => workflow.children.flatMap(
@@ -400,6 +400,7 @@ export default {
       )
     },
 
+    /** @type {Object[]} */
     edges () {
       return this.workflows.flatMap(
         (workflow) => workflow.$edges || []
@@ -430,23 +431,9 @@ export default {
 
   methods: {
     mountSVGPanZoom () {
-      // Check the SVG is ready:
       // * The SVG document must be rendered with something in it before we can
       //   mount the svgPanZoom widget (because it needs to determine the
       //   documents dimensions).
-      const children = this.$refs.graph.children
-      if (
-        // there should be at least two children (defs and one group)
-        children.length < 2 ||
-        // the first item (after defs) should have measurable dimensions
-        !children[1].getBBox() ||
-        // and it's dimensions should be non-zero
-        children[1].getBBox().width === 0
-      ) {
-        // the SVG is not ready yet, give it time, we'll re-try when the
-        // graph layout changes
-        return
-      }
 
       // Initialise the svgPanZoom component:
       // * Initiating svgPanZoom may result in some "violation" warnings
@@ -454,11 +441,11 @@ export default {
       this.panZoomWidget = svgPanZoom(
         this.$refs.graph,
         {
-          // NOTE: fix must be false otherwise it's trying to measure up before
+          // NOTE: fit must be false otherwise it's trying to measure up before
           // the viewport is loaded or something like that which causes
           // NaN values to end up in the transformation matrix
           // TODO: enable the "thumbnail" viewer (i.e. minimap, see svg-pan-zoom)
-          viewportSelector: '.svg-pan-zoom_viewport',
+          viewportSelector: this.$refs.graphGroup,
           panEnabled: true,
           controlIconsEnabled: false,
           zoomEnabled: true,
@@ -605,9 +592,7 @@ export default {
     },
     reset () {
       // pan / zoom so that the graph is centered and in frame
-      this.panZoomTo(
-        this.$refs.graph.getElementsByClassName('svg-pan-zoom_viewport')[0]
-      )
+      this.panZoomTo(this.$refs.graphGroup)
     },
     panZoomTo (ele) {
       // pan / zoom so that the provided SVG element is centered and in frame
@@ -644,6 +629,16 @@ export default {
         // we can't graph this, reset and wait for something to draw
         this.graphID = null
         this.updating = false
+        const unwatch = this.$watch(
+          'nodes',
+          (nodes) => {
+            if (nodes.length) {
+              unwatch()
+              this.refresh()
+            }
+          },
+          { immediate: true }
+        )
         return
       }
 
@@ -707,7 +702,7 @@ export default {
         await this.waitFor(() => {
           // wait for the last edge of the graph to be rendered
           const lastEdge = this.$refs[lastEdgeID]
-          return lastEdge && lastEdge[0] && lastEdge[0].getBBox()
+          return lastEdge?.[0]?.getBBox()
         })
         this.reset()
       }
@@ -738,8 +733,9 @@ export default {
       const dotCode = this.getDotCode(nodeDimensions, nodes, edges, cycles)
 
       // run the layout algorithm
-      const jsonString = (await this.graphviz).layout(dotCode, 'json')
-      const json = JSON.parse(jsonString)
+      const json = JSON.parse(
+        (await this.graphviz).layout(dotCode, 'json')
+      )
 
       this.subgraphs = {}
       // update graph node positions
