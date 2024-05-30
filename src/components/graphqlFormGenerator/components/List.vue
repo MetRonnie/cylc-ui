@@ -16,7 +16,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
 <template>
-  <v-list density="compact">
+  <v-fade-transition
+    tag="v-list"
+    group
+    density="compact"
+  >
     <v-list-item
       v-for="(item, index) in modelValue"
       :key="index"
@@ -44,7 +48,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </template>
       </FormInput>
     </v-list-item>
-    <v-list-item>
+    <v-list-item key="add">
       <v-btn
         @click="add()"
         variant="text"
@@ -54,7 +58,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         Add Item
       </v-btn>
     </v-list-item>
-  </v-list>
+  </v-fade-transition>
 </template>
 
 <script>
