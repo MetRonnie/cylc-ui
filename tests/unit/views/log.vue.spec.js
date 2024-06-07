@@ -23,7 +23,6 @@ import { createVuetify } from 'vuetify'
 import sinon from 'sinon'
 import Log, { getDefaultFile } from '@/views/Log.vue'
 import WorkflowService from '@/services/workflow.service'
-import User from '@/model/User.model'
 
 describe('getDefaultFile()', () => {
   it.each([
@@ -98,7 +97,7 @@ describe('Log view', () => {
     store = createStore(storeOptions)
     store.commit(
       'user/SET_USER',
-      new User({ username: 'cylc', permissions: [], owner })
+      { username: 'cylc', permissions: [], owner }
     )
     $workflowService = sinon.createStubInstance(WorkflowService)
     $workflowService.apolloClient = {

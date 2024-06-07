@@ -17,6 +17,7 @@
 
 import { Widget } from '@lumino/widgets'
 import { eventBus } from '@/services/eventBus'
+import { type Message } from '@lumino/messaging'
 
 /**
  * This is a valid Lumino widget, that contains only a dummy div
@@ -31,16 +32,17 @@ import { eventBus } from '@/services/eventBus'
 export default class LuminoWidget extends Widget {
   /**
    * Create a LuminoWidget object.
-   * @param {string} id - unique ID of the widget
-   * @param {string} name - text displayed in the widget tab
-   * @param {boolean} closable - flag that controls whether the tab can be
-   * closed or not
+   * @param id - unique ID of the widget
+   * @param name - text displayed in the widget tab
+   * @param closable - flag that controls whether the tab can be closed or not
    */
-  constructor (id, name, closable = true) {
+  constructor (
+    id: string,
+    public name: string,
+    public readonly closable: boolean = true
+  ) {
     super({ node: LuminoWidget.createNode(id) })
     this.id = id
-    this.name = name
-    this.closable = closable
     // classes and flags
     this.setFlag(Widget.Flag.DisallowLayout)
     this.addClass('content')
@@ -48,16 +50,15 @@ export default class LuminoWidget extends Widget {
 
   /**
    * Return a dummy div to be used as parent for the Vue component element.
-   * @param {string} id - widget id
-   * @return {HTMLElement}
+   * @param id - widget id
    */
-  static createNode (id) {
+  static createNode (id: string): HTMLElement {
     const div = document.createElement('div')
     div.setAttribute('id', id)
     return div
   }
 
-  onBeforeAttach (msg) {
+  onBeforeAttach (msg: Message) {
     // Set tab title as this is not handled automatically for some reason.
     // NOTE: We do this in the onBeforeAttach hook rather than in the constructor
     // because the constructor does not get called when we restore layout to the
@@ -76,13 +77,13 @@ export default class LuminoWidget extends Widget {
   //   super.onActivateRequest(msg)
   // }
 
-  onCloseRequest (msg) {
+  onCloseRequest (msg: Message) {
     // Emit an event so that the Vue component knows that it needs to be removed too
     eventBus.emit('lumino:deleted', this.id)
     super.onCloseRequest(msg)
   }
 
-  onAfterShow (msg) {
+  onAfterShow (msg: Message) {
     // Emit an event so that the Vue component knows that this widget is visible again
     eventBus.emit(`lumino:show:${this.id}`)
     super.onAfterShow(msg)

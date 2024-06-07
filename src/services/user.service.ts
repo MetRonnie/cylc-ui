@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) NIWA & British Crown (Met Office) & Contributors.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,25 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-export const state = () => ({
-  user: null,
-})
+import axios from 'axios'
+import { type User } from '@/model/User.model'
+import { createUrl, getCylcHeaders } from '@/utils/urls'
 
-export const mutations = {
-  SET_USER (state, user) {
-    state.user = user
+export class UserService {
+  /**
+   * Gets the user profile from the backend server.
+   */
+  async getUserProfile (): Promise<User> {
+    const { data } = await axios.get(
+      createUrl('userprofile'),
+      { headers: getCylcHeaders() }
+    )
+    return data
   }
-}
-
-export const actions = {
-  setUser ({ commit }, user) {
-    commit('SET_USER', user)
-  }
-}
-
-export const user = {
-  namespaced: true,
-  state,
-  mutations,
-  actions
 }

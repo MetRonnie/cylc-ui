@@ -20,7 +20,6 @@ import { createVuetify } from 'vuetify'
 import sinon from 'sinon'
 import storeOptions from '@/store/options'
 import Tree from '@/views/Tree.vue'
-import User from '@/model/User.model'
 import WorkflowService from '@/services/workflow.service'
 import CommandMenuPlugin from '@/components/cylc/commandMenu/plugin'
 import { Tokens } from '@/utils/uid'
@@ -82,7 +81,7 @@ describe('Tree view', () => {
   let mountFunction
   beforeEach(() => {
     const store = createStore(storeOptions)
-    const user = new User({ username: 'cylc', permissions: [], owner: 'owner' })
+    const user = { username: 'cylc', permissions: [], owner: 'owner' }
     store.commit('user/SET_USER', user)
     mountFunction = (options) => mount(Tree, {
       global: {

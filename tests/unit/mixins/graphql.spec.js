@@ -17,14 +17,13 @@
 
 import { shallowMount } from '@vue/test-utils'
 import { createStore } from 'vuex'
-import User from '@/model/User.model'
 import storeOptions from '@/store/options'
 import graphqlMixin from '@/mixins/graphql'
 
 describe('GraphQL mixin', () => {
   const store = createStore(storeOptions)
   it('should create the GraphQL Query variables', () => {
-    const user = new User({ username: 'cylc', permissions: [], owner: 'owner' })
+    const user = { username: 'cylc', permissions: [], owner: 'owner' }
     store.commit('user/SET_USER', user)
     const workflowName = 'test'
     const Component = {

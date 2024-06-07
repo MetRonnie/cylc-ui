@@ -79,12 +79,10 @@ function createUrl (path, websockets = false, baseOnly = false) {
  */
 function getCylcHeaders () {
   const xsrfToken = document.cookie.match('\\b_xsrf=([^;]*)\\b')
-  const cylcHeaders = {}
-  if (Array.isArray(xsrfToken) && xsrfToken.length > 0) {
+  return {
     // pick the last match
-    cylcHeaders['X-XSRFToken'] = xsrfToken.splice(-1)
+    'X-XSRFToken': xsrfToken?.pop()
   }
-  return cylcHeaders
 }
 
 export {

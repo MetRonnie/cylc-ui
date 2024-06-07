@@ -15,16 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** Alert model */
-export class Alert {
-  /**
-   * @param {Error|string} err - original thrown error to log if possible, or an error message.
-   * @param {string} color - color of the displayed alert.
-   * @param {?string} msg - a custom message to display in the alert instead of err.
-   */
-  constructor (err, color, msg = null) {
-    this.err = err
-    this.text = msg || err
-    this.color = color
+import { type User } from '@/model/User.model'
+
+type State = {
+  user: User | null
+}
+
+export const state = (): State => ({
+  user: null,
+})
+
+export const mutations = {
+  SET_USER (state: State, user: User) {
+    state.user = user
   }
+}
+
+export const actions = {
+  setUser ({ commit }, user: User) {
+    commit('SET_USER', user)
+  }
+}
+
+export const user = {
+  namespaced: true,
+  state,
+  mutations,
+  actions
 }

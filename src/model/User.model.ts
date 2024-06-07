@@ -15,20 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import axios from 'axios'
-import User from '@/model/User.model'
-import { createUrl, getCylcHeaders } from '@/utils/urls'
-
-export default class UserService {
+export interface User {
   /**
-   * Gets the user profile from the backend server.
-   * @returns {Promise<User>} - a promise that dispatches Vuex action
+   * The authenticated user
    */
-  async getUserProfile () {
-    const { data } = await axios.get(
-      createUrl('userprofile'),
-      { headers: getCylcHeaders() }
-    )
-    return new User(data)
-  }
+  username: string
+  /**
+   * The UIS owner (i.e. the user who's workflows we are looking at)
+   * (this might not be the authenticated user for multi-user setups)
+   */
+  owner: string
+  /**
+   * List of permissions
+   */
+  permissions: string[]
+  /**
+   * Single or multi user mode
+   */
+  mode: 'single user' | 'multi user'
+  /**
+   * User initials
+   */
+  initials: string
+  /**
+   * User avatar color if set
+   */
+  color: string | null
 }

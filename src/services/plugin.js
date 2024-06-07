@@ -17,7 +17,7 @@
 
 import { createSubscriptionClient, createGraphQLUrls } from '@/graphql'
 import SubscriptionWorkflowService from '@/services/workflow.service'
-import UserService from '@/services/user.service'
+import { UserService } from '@/services/user.service'
 
 /**
  * A plugin that loads the application services.
