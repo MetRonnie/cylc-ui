@@ -1,0 +1,41 @@
+{
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.vue",
+        // "tests/**/*"
+    ],
+    "exclude": [
+        "src/services/mock/json/*"
+    ],
+    "compilerOptions": {
+        // "checkJs": true,
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+
+        "allowJs": true,
+
+        // Disable errors about implicit stuff during migration to TS:
+        "noImplicitAny": false,
+        "noImplicitReturns": false,
+
+        // Vue/Vite recommended settings:
+        "isolatedModules": true,
+        "strict": true,
+        "types": [
+            "vite/client"
+        ],
+
+        "target": "ES2020",
+        "skipLibCheck": true,
+
+        "module": "ES2020",
+        "moduleResolution": "node"
+    },
+    "watchOptions": {
+        "excludeDirectories": [
+            "**/node_modules",
+            "dist"
+        ]
+    }
+}

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 const { defineConfig } = require('cypress')
 const vitePreprocessor = require('cypress-vite')
 const path = require('path')
@@ -29,7 +30,7 @@ module.exports = defineConfig({
       on(
         'file:preprocessor',
         vitePreprocessor({
-          configFile: path.resolve(__dirname, './vite.config.js'),
+          configFile: path.resolve(__dirname, './vite.config.ts'),
           mode: 'development',
         })
       )

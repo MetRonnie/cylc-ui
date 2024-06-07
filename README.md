@@ -126,7 +126,7 @@ The project was originally created with [vue-cli](https://cli.vuejs.org/), but
 has switched to [Vite](https://vitejs.dev/) with the upgrade from Vue 2 to 3.
 
 The configuration for how the app is served and built is defined in
-[`vite.config.js`](vite.config.js).
+[`vite.config.ts`](vite.config.ts).
 
 We are currently using the [Vuetify component library](https://vuetifyjs.com/en/).
 Its configuration is defined in [`src/plugins/vuetify.js`](src/plugins/vuetify.js).
@@ -211,9 +211,21 @@ testing the development version much easier.
 
 ### TypeScript
 
-TypeScript is most likely the future for us. It can be adopted gradually.
-At the moment we only have JSDoc comments which can provide type information
+We are starting to adopt TypeScript, so have a mixture of `.ts` and `.js` files.
+Vue single-file-components can use `<script lang="ts">` to enable TypeScript.
+There are also JSDoc comments in `.js` files which can provide type information
 in your IDE.
+
+> [!NOTE]
+> Vite performs transpilation of TypeScript but does not perform type checking.
+> It assumes type checking is taken care of by your IDE or a tool such as
+> [`vue-tsc`](https://github.com/vuejs/language-tools/tree/master/packages/tsc)
+> e.g. `vue-tsc --noEmit --watch`.
+
+Useful resources:
+- [Using Vue with TypeScript](https://vuejs.org/guide/typescript/overview.html)
+- [Vite features - TypeScript](https://vitejs.dev/guide/features#typescript)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
 
 ## How The Data Is Provisioned
 

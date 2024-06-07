@@ -21,7 +21,8 @@
     "test:component": "cypress open --component",
     "test:e2e": "yarn run serve e2e:open",
     "test:unit": "vitest",
-    "test": "vitest run && yarn run serve cy:run"
+    "test": "vitest run && yarn run serve cy:run",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@apollo/client": "3.10.5",
@@ -54,6 +55,9 @@
   },
   "devDependencies": {
     "@cypress/code-coverage": "3.12.39",
+    "@types/lodash-es": "4.17.12",
+    "@typescript-eslint/eslint-plugin": "7.1.0",
+    "@typescript-eslint/parser": "7.1.0",
     "@vitejs/plugin-vue": "5.0.5",
     "@vitest/coverage-istanbul": "1.6.0",
     "@vue/test-utils": "2.4.6",
@@ -81,11 +85,13 @@
     "sass": "1.77.6",
     "sinon": "18.0.0",
     "standard": "17.1.0",
+    "typescript": "5.3.3",
     "vite": "5.3.2",
     "vite-plugin-eslint": "1.8.1",
     "vite-plugin-istanbul": "6.0.2",
     "vite-plugin-vuetify": "2.0.3",
-    "vitest": "1.6.0"
+    "vitest": "1.6.0",
+    "vue-tsc": "2.0.6"
   },
   "peerDependenciesMeta": {
     "react": {
