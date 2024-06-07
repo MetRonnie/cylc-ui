@@ -18,21 +18,17 @@
 /**
  * Comparator function for sorting datetime strings.
  *
- * @param {string} a - The first element for comparison.
- * @param {string} b - The second element for comparison.
- * @return {number} A number > 0 if a > b, or < 0 if a < b, or 0 if a === b
+ * @param a - The first element for comparison.
+ * @param b - The second element for comparison.
+ * @return A number > 0 if a > b, or < 0 if a < b, or 0 if a === b
  */
-export function datetimeComparator (a, b) {
-  return new Date(a) - new Date(b)
+export function datetimeComparator (a: string | number, b: string | number): number {
+  return new Date(a).valueOf() - new Date(b).valueOf()
 }
 
 /**
  * Comparator function for sorting numbers.
- *
- * @param {number} a
- * @param {number} b
- * @returns {number}
  */
-export function numberComparator (a, b) {
+export function numberComparator (a: number, b: number): number {
   return a - b
 }
