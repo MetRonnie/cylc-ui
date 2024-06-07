@@ -246,34 +246,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   </g>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { computed, inject, ref } from 'vue'
 import { TaskState } from '@/model/TaskState.model'
+import { animResetKey } from '@/utils/injectionKeys'
 
-const props = defineProps({
-  task: {
-    required: true
-  },
-  startTime: {
-    // The start time as an ISO8601 date-time string in expanded format
-    // e.g. 2022-10-26T13:43:45Z
-    // TODO: aim to remove this in due course
-    // (we should be able to obtain this directly from the task)
-    type: String,
-    required: false
-  },
-  modifierSize: {
-    // Scale the size of the task state modifier
-    type: Number,
-    default: 0.7
-  },
+interface Props {
+  task: any
+  /**
+   * The start time as an ISO8601 date-time string in expanded format
+   * e.g. 2022-10-26T13:43:45Z
+   *
+   * TODO: aim to remove this in due course
+   * (we should be able to obtain this directly from the task)
+   */
+  startTime?: string
+  /**
+   * Scale the size of the task state modifier
+   */
+  modifierSize?: number
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  modifierSize: 0.7
 })
 
 /**
- * @type {import('vue').Ref<number>}
  * @see @/components/cylc/workspace/Widget.vue
  */
-const animResetTime = inject('animResetTime', () => ref(0), true)
+const animResetTime = inject(animResetKey, () => ref(0), true)
 
 const runningStyle = computed(() => {
   if (

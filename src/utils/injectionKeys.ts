@@ -15,36 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import mitt from 'mitt'
+import {
+  type InjectionKey,
+  type Ref,
+} from 'vue'
 
-/**
- * Mitt event for adding a view to the workspace.
- */
-export interface AddViewEvent {
-  /** The view to add */
-  name: string
-  /** Prop passed to the view component */
-  initialOptions?: Record<string, unknown>
-}
+// Place to define keys for provide/inject in Vue components
+// @see https://vuejs.org/guide/typescript/composition-api.html#typing-provide-inject
 
-/**
- * Mitt event for showing the mutations menu.
- */
-export interface ShowMutationsMenuEvent {
-  node: any, // TODO
-  target: HTMLElement,
-}
-
-type Events = {
-  'add-view': AddViewEvent,
-  'show-mutations-menu': ShowMutationsMenuEvent,
-  'lumino:deleted': string,
-  'lumino:show': string,
-}
-
-/**
- * Global event bus for the app.
- *
- * @see https://github.com/developit/mitt
- */
-export const eventBus = mitt<Events>()
+export const animResetKey = Symbol('time of animation reset') as InjectionKey<Ref<number>>

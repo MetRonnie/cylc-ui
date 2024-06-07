@@ -85,7 +85,7 @@ export default class LuminoWidget extends Widget {
 
   onAfterShow (msg: Message) {
     // Emit an event so that the Vue component knows that this widget is visible again
-    eventBus.emit(`lumino:show:${this.id}`)
+    eventBus.emit('lumino:show', this.id)
     super.onAfterShow(msg)
   }
 }

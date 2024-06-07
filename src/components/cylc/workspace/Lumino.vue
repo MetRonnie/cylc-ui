@@ -24,15 +24,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     :id="id"
   >
     <component
-      :is="props.allViews.get(name).component"
+      :is="props.allViews.get(name)!.component"
       :workflow-name="workflowName"
-      v-model:initial-options="views.get(id).initialOptions"
+      v-model:initial-options="views.get(id)!.initialOptions"
       class="h-100"
     />
   </WidgetComponent>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import {
   nextTick,
   onBeforeUnmount,
@@ -45,8 +45,14 @@ import WidgetComponent from '@/components/cylc/workspace/Widget.vue'
 import LuminoWidget from '@/components/cylc/workspace/lumino-widget'
 import { BoxPanel, DockPanel, Widget } from '@lumino/widgets'
 import { when } from '@/utils'
-import { useDefaultView } from '@/views/views'
-import { eventBus } from '@/services/eventBus'
+import {
+  useDefaultView,
+  type CylcView
+} from '@/views/views'
+import {
+  eventBus,
+  type AddViewEvent
+} from '@/services/eventBus'
 
 /*
  * A component to wrap the Lumino application.
@@ -58,47 +64,25 @@ import { eventBus } from '@/services/eventBus'
  * works, but there could be alternative approaches too.
  */
 
-/**
- * Mitt event for adding a view to the workspace.
- * @typedef {Object} AddViewEvent
- * @property {string} name - the view to add
- * @property {Record<string,*>} initialOptions - prop passed to the view component
- */
-
 const $store = useStore()
 
-const props = defineProps({
-  workflowName: {
-    type: String,
-    required: true
-  },
-  /**
-   * All possible view component classes that can be rendered
-   *
-   * @type {Map<string, import('@/views/views').CylcView>}
-   */
-  allViews: {
-    type: Map,
-    required: true
-  },
-})
+const props = defineProps<{
+  workflowName: string
+  /** All possible view component classes that can be rendered */
+  allViews: Map<string, CylcView>
+}>()
 
 const emit = defineEmits([
   'emptied'
 ])
 
-/**
- * Template ref
- * @type {import('vue').Ref<HTMLElement>}
- */
-const mainDiv = ref(null)
+/** Template ref */
+const mainDiv = ref<HTMLElement>()
 
 /**
  * Mapping of widget ID to the name of view component and its initialOptions prop.
- *
- * @type {import('vue').Ref<Map<string, AddViewEvent>>}
  */
-const views = ref(new Map())
+const views = ref(new Map<string, AddViewEvent>())
 
 const defaultView = useDefaultView()
 
@@ -113,11 +97,14 @@ const resizeObserver = new ResizeObserver(() => {
   boxPanel.update()
 })
 
-onMounted(() => {
+when(mainDiv, (div) => {
   // Attach box panel to DOM:
-  Widget.attach(boxPanel, mainDiv.value)
+  Widget.attach(boxPanel, div)
   // Watch for resize of the main element to trigger relayout:
-  resizeObserver.observe(mainDiv.value)
+  resizeObserver.observe(div)
+})
+
+onMounted(() => {
   eventBus.on('add-view', addView)
   eventBus.on('lumino:deleted', onWidgetDeleted)
   getLayout(props.workflowName)
@@ -135,13 +122,13 @@ onBeforeUnmount(() => {
 
 /**
  * Create a widget and add it to the dock.
- *
- * @param {AddViewEvent} event
- * @param {boolean} onTop
  */
-const addView = ({ name, initialOptions = {} }, onTop = true) => {
+const addView = (
+  { name, initialOptions = {} }: AddViewEvent,
+  onTop: boolean = true
+) => {
   const id = uniqueId('widget')
-  const luminoWidget = new LuminoWidget(id, startCase(name), /* closable */ true)
+  const luminoWidget = new LuminoWidget(id, startCase(name))
   dockPanel.addWidget(luminoWidget, { mode: 'tab-after' })
   // give time for Lumino's widget DOM element to be created
   nextTick(() => {
@@ -164,10 +151,8 @@ const closeAllViews = () => {
 /**
  * Get the saved layout (if there is one) for the given workflow,
  * else add the default view.
- *
- * @param {string} workflowName
  */
-const getLayout = (workflowName) => {
+const getLayout = (workflowName: string) => {
   restoreLayout(workflowName) || addView({ name: defaultView.value })
 }
 
@@ -185,10 +170,9 @@ const saveLayout = () => {
 /**
  * Restore the layout for this workflow from the store, if it was saved.
  *
- * @param {string} workflowName
- * @returns {boolean} true if the layout was restored, false otherwise
+ * @returns true if the layout was restored, false otherwise
  */
-const restoreLayout = (workflowName) => {
+const restoreLayout = (workflowName: string): boolean => {
   const stored = $store.state.app.workspaceLayouts.get(workflowName)
   if (stored) {
     dockPanel.restoreLayout(stored.layout)
@@ -205,9 +189,9 @@ const restoreLayout = (workflowName) => {
 /**
  * Save & close the current layout and open the one for the given workflow.
  *
- * @param {string} workflowName
+ * @param workflowName
  */
-const changeLayout = (workflowName) => {
+const changeLayout = (workflowName: string) => {
   saveLayout()
   closeAllViews()
   // Wait if necessary for the workflowName prop to be updated to the new value:
@@ -220,9 +204,9 @@ const changeLayout = (workflowName) => {
 /**
  * React to a deleted event.
  *
- * @param {string} id - widget ID
+ * @param id - widget ID
  */
-const onWidgetDeleted = (id) => {
+const onWidgetDeleted = (id: string) => {
   views.value.delete(id)
   if (!views.value.size) {
     emit('emptied')

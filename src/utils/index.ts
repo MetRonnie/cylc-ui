@@ -26,17 +26,17 @@ import {
  *
  * Immediate by default.
  */
-export function when (
-  source: WatchSource<boolean>,
-  callback: () => void,
+export function when<T> (
+  source: WatchSource<T>,
+  callback: (value: NonNullable<T>) => unknown,
   options: WatchOptions = {}
 ): void {
   const unwatch = watch(
     source,
-    (ready) => {
-      if (ready) {
+    (value) => {
+      if (value) {
         unwatch()
-        callback()
+        callback(value)
       }
     },
     { immediate: true, ...options }

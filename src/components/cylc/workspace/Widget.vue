@@ -24,16 +24,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { onBeforeUnmount, provide, readonly, ref } from 'vue'
 import { eventBus } from '@/services/eventBus'
+import { animResetKey } from '@/utils/injectionKeys'
 
-const props = defineProps({
-  id: {
-    type: String,
-    required: true,
-  },
-})
+const props = defineProps<{
+  id: string
+}>()
 
 /**
  * Ref used to indicate to children that the widget has become unhidden, and
@@ -45,13 +43,17 @@ const props = defineProps({
  * @see https://stackoverflow.com/a/37671302/3217306
  */
 const animResetTime = ref(Date.now())
-provide('animResetTime', readonly(animResetTime))
+provide(animResetKey, readonly(animResetTime))
 
-eventBus.on(`lumino:show:${props.id}`, () => {
-  animResetTime.value = Date.now()
-})
+function onWidgetShow (id: string) {
+  if (id === props.id) {
+    animResetTime.value = Date.now()
+  }
+}
+
+eventBus.on('lumino:show', onWidgetShow)
 
 onBeforeUnmount(() => {
-  eventBus.off(`lumino:show:${props.id}`)
+  eventBus.off('lumino:show', onWidgetShow)
 })
 </script>
