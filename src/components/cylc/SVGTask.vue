@@ -248,7 +248,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script setup>
 import { computed, inject, ref } from 'vue'
-import TaskState from '@/model/TaskState.model'
+import { TaskState } from '@/model/TaskState.model'
 
 const props = defineProps({
   task: {
@@ -277,7 +277,7 @@ const animResetTime = inject('animResetTime', () => ref(0), true)
 
 const runningStyle = computed(() => {
   if (
-    props.task.state === TaskState.RUNNING.name &&
+    props.task.state === TaskState.RUNNING &&
     props.startTime &&
     props.task.task?.meanElapsedTime
   ) {

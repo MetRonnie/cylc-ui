@@ -122,7 +122,7 @@ import {
   mdiPencil
 } from '@mdi/js'
 import { mapGetters, mapState } from 'vuex'
-import WorkflowState from '@/model/WorkflowState.model'
+import { WorkflowState } from '@/model/WorkflowState.model'
 import { eventBus } from '@/services/eventBus'
 
 export default {
@@ -233,7 +233,7 @@ export default {
         const nodeReturned = this.getNodes('workflow', [this.node.tokens.workflowID])
         status = nodeReturned.length
           ? nodeReturned[0].node.status
-          : WorkflowState.RUNNING.name
+          : WorkflowState.RUNNING
       }
       return !mutation._validStates.includes(status)
     },

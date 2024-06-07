@@ -27,7 +27,7 @@ import 'cross-fetch/polyfill'
 import Subscription from '@/model/Subscription.model'
 import SubscriptionQuery from '@/model/SubscriptionQuery.model'
 import WorkflowService from '@/services/workflow.service'
-import ViewState from '@/model/ViewState.model'
+import { ViewState } from '@/model/ViewState.model'
 import { TreeCallback, WorkflowCallback } from './testCallback'
 
 const sandbox = sinon.createSandbox()

@@ -143,9 +143,10 @@ import { mapState, mapGetters } from 'vuex'
 import { mdiBook, mdiBookMultiple, mdiBookOpenVariant, mdiCog, mdiHubspot, mdiTable } from '@mdi/js'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
 import { createUrl } from '@/utils/urls'
-import { WorkflowState, WorkflowStateOrder } from '@/model/WorkflowState.model'
+import { WorkflowStateNames, getWorkflowStateOrder } from '@/model/WorkflowState.model'
 import SubscriptionQuery from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
+import { upperFirst } from 'lodash'
 
 const QUERY = gql`
 subscription App {
@@ -217,12 +218,12 @@ export default {
           acc[state] = (acc[state] || 0) + 1
           return acc
         }, {})
-      return WorkflowState.enumValues
-        .sort((left, right) => WorkflowStateOrder.get(left) - WorkflowStateOrder.get(right))
+      return WorkflowStateNames
+        .sort((left, right) => getWorkflowStateOrder(left) - getWorkflowStateOrder(right))
         .map(state => {
           return {
-            text: state.name.charAt(0).toUpperCase() + state.name.slice(1),
-            count: count[state.name] || 0
+            text: upperFirst(state),
+            count: count[state] || 0
           }
         })
     },

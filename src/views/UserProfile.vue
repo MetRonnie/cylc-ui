@@ -208,7 +208,7 @@ import { useCyclePointsOrderDesc, useJobTheme, useReducedAnimation } from '@/com
 import { decreaseFontSize, getCurrentFontSize, increaseFontSize, resetFontSize } from '@/utils/font-size'
 import { allViews, useDefaultView } from '@/views/views'
 import Job from '@/components/cylc/Job.vue'
-import JobState from '@/model/JobState.model'
+import { JobStateNames } from '@/model/JobState.model'
 import { upperFirst } from 'lodash-es'
 
 // TODO: update where user preferences are stored after #335
@@ -249,7 +249,7 @@ export default {
     },
   },
 
-  jobStates: JobState.enumValues.map(state => state.name),
+  jobStates: JobStateNames,
 
   jobThemes: [
     'default',
