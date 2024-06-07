@@ -23,8 +23,12 @@ import { VTextarea } from 'vuetify/components/VTextarea'
 import { VTextField } from 'vuetify/components/VTextField'
 import colors from 'vuetify/util/colors'
 import { mdiClose } from '@mdi/js'
+import {
+  type VuetifyOptions,
+  type DefaultsInstance,
+} from 'vuetify'
 
-const inputDefaults = Object.fromEntries([
+const inputDefaults: DefaultsInstance = Object.fromEntries([
   VAutocomplete,
   VCombobox,
   VSelect,
@@ -40,10 +44,7 @@ const inputDefaults = Object.fromEntries([
   }
 ]))
 
-/**
- * @type {import('vuetify').VuetifyOptions}
- */
-export const vuetifyOptions = {
+export const vuetifyOptions: VuetifyOptions = {
   theme: {
     defaultTheme: 'light',
     themes: {

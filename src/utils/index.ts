@@ -15,18 +15,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { watch } from 'vue'
+import {
+  watch,
+  type WatchOptions,
+  type WatchSource,
+} from 'vue'
 
 /**
  * Watch source until it is truthy, then call the callback (and stop watching).
  *
  * Immediate by default.
- *
- * @param {import('vue').WatchSource} source
- * @param {import('vue').WatchCallback} callback
- * @param {import('vue').WatchOptions?} options
  */
-export function when (source, callback, options = {}) {
+export function when (
+  source: WatchSource<boolean>,
+  callback: () => void,
+  options: WatchOptions = {}
+): void {
   const unwatch = watch(
     source,
     (ready) => {
@@ -43,12 +47,11 @@ export function when (source, callback, options = {}) {
  * Return a promise that resolves when the source becomes truthy.
  *
  * Awaitable version of when().
- *
- * @param {import('vue').WatchSource} source
- * @param {import('vue').WatchOptions?} options
- * @returns {Promise<void>}
  */
-export function until (source, options = {}) {
+export function until (
+  source: WatchSource,
+  options: WatchOptions = {}
+): Promise<void> {
   return new Promise((resolve) => {
     when(source, resolve, options)
   })
