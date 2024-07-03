@@ -34,7 +34,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <v-icon>{{ $options.icons.mdiClose }}</v-icon>
       </v-btn>
     </template>
-    {{ alert.text }}
+    <!-- Use explicit template to avoid leading whitespace in .text-pre-wrap element: -->
+    <template v-slot>{{ alert.text }}</template>
   </v-snackbar>
 </template>
 

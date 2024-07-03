@@ -904,7 +904,7 @@ async function _mutateError (mutationName, err, response) {
   // open a user alert
   await store.dispatch(
     'setAlert',
-    new Alert(err, 'error', `Command failed: ${mutationName} - ${err}`)
+    new Alert(err, 'error', `Command failed: ${mutationName}\n${err}`)
   )
 
   // format a response
@@ -942,6 +942,10 @@ export async function mutate (mutation, variables, apolloClient, cylcID) {
     })
   } catch (err) {
     // mutation failed (client-server error e.g. variable format, syntax error)
+    const gqlErrs = err.networkError?.result?.errors?.map((e) => e.message)
+    if (gqlErrs?.length) {
+      return _mutateError(mutation.name, gqlErrs.join('\n'), err.message)
+    }
     return _mutateError(mutation.name, err, null)
   }
 
