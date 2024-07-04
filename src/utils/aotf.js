@@ -46,6 +46,7 @@ import {
   mdiReload,
   mdiStop
 } from '@mdi/js'
+import { isBoolean } from 'lodash-es'
 
 import { Alert } from '@/model/Alert.model'
 import { store } from '@/store/index'
@@ -956,19 +957,31 @@ export async function mutate (mutation, variables, apolloClient, cylcID) {
 
   try {
     const { result } = response.data[mutation.name]
-    if (Array.isArray(result) && result.length === 2) {
-      // regular [commandSucceeded, message] format
-      if (result[0] === true) {
+    if (isResponseTuple(result)) {
+      // single [commandSucceeded, message] format
+      if (result[0]) {
         // success
         return _mutateSuccess(result[1])
       }
       // failure (Cylc error, e.g. could not find workflow <x>)
       return _mutateError(mutation.name, result[1], response)
     }
-    // command in a different format (e.g. info command)
+    if (Array.isArray(result)) {
+      // const responses = result.map(({ response }) => response)
+      // const bad = responses.find((res) => isResponseTuple(res) && !res[0])
+      const failMessages = []
+      for (const { response, id } of result) {
+        if (isResponseTuple(response) && !response[0]) {
+          const msg = response[1]
+          failMessages.push(id ? `${id}: ${msg}` : `${msg}`)
+        }
+      }
+      if (failMessages.length) return _mutateError(mutation.name, failMessages.join('\n'), result)
+    }
+    // command in a different format (sloppy, but let it pass)
     return _mutateSuccess(result)
-  } catch (error) {
-    return _mutateError(mutation.name, 'invalid response', response)
+  } catch (err) {
+    return _mutateError(mutation.name, `invalid response ${err}`, response)
   }
 }
 
@@ -995,4 +1008,14 @@ export async function query (query, variables, apolloClient) {
     variables
   })
   return response.data
+}
+
+/**
+ * Check if a response is in the tuple format: [status, message].
+ *
+ * @param {any} res
+ * @returns {boolean}
+ */
+function isResponseTuple (res) {
+  return Array.isArray(res) && res.length === 2 && isBoolean(res[0])
 }
