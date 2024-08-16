@@ -246,20 +246,20 @@ describe('Info component', () => {
 
     it('shows outputs', () => {
       cy.get('.outputs-panel.v-expansion-panel--active').should('be.visible')
-        .find('.condition')
+        .find('[data-cy=output-chip]')
         .should('have.length', 4)
         .then((selector) => {
           expect(selector[0]).to.contain('started')
-          expect(selector[0].classList.toString()).to.equal('condition satisfied')
+          expect(selector[0]).not.to.have.class('text-grey')
 
           expect(selector[1]).to.contain('succeeded')
-          expect(selector[1].classList.toString()).to.equal('condition')
+          expect(selector[1]).to.have.class('text-grey')
 
           expect(selector[2]).to.contain('failed')
-          expect(selector[2].classList.toString()).to.equal('condition')
+          expect(selector[2]).not.to.have.class('text-grey')
 
           expect(selector[3]).to.contain('x')
-          expect(selector[3].classList.toString()).to.equal('condition satisfied')
+          expect(selector[3]).to.have.class('text-grey')
         })
     })
 
