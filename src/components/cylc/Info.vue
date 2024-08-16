@@ -221,10 +221,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           <v-expansion-panel-text>
             <ul>
               <li v-for="output in outputs" :key="output.label">
-                <span
-                  class="condition"
-                  :class="{satisfied: output.satisfied}"
-                >{{ output.label }}</span>
+                <v-chip
+                  :text="output.label"
+                  variant="text"
+                  v-bind="output.satisfied ? {
+                    prependIcon: mdiCheckCircleOutline,
+                  } : {
+                    prependIcon: mdiProgressHelper,
+                    class: 'text-grey',
+                  }"
+                  data-cy="output-chip"
+                />
               </li>
             </ul>
           </v-expansion-panel-text>
@@ -269,6 +276,8 @@ import { useJobTheme } from '@/composables/localStorage'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import { formatCompletion } from '@/utils/outputs'
 import {
+  mdiCheckCircleOutline,
+  mdiProgressHelper,
   mdiSkipForward,
   mdiChatQuestion,
   mdiGhostOutline,
@@ -365,20 +374,6 @@ const xtriggers = computed(() => {
     }
     .condition.satisfied, .condition.blank {
       opacity: 1;
-    }
-
-    // prefixes a tick or cross before the entry
-    .condition:before {
-      display: inline-block;
-      content: '\25CB'; /* empty circle */
-      width: 1.5em;
-      color: rgb(0, 0, 0);
-    }
-    .condition.satisfied:before {
-      content: '\25CF'; /* filled circle */
-    }
-    .condition.blank:before {
-      content: ''; /* blank */
     }
 
     // for prerequisite task "aliases" (used in conditional expressions)
