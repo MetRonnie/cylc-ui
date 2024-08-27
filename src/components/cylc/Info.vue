@@ -92,21 +92,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <v-expansion-panel-text>
           <ul>
             <li v-for="prereq in prerequisites" :key="prereq.expression">
-              <span
-                class="prerequisite-alias condition"
-                :class="{satisfied: prereq.satisfied}"
-              >{{ prereq.expression.replace(/c/g, '') }}</span>
+              <v-chip
+                :text="prereq.expression.replace(/c/g, '')"
+                color="success"
+                density="comfortable"
+                v-bind="prereq.satisfied ? {
+                  prependIcon: icons.mdiCheck,
+                  class: 'font-weight-medium',
+                }: {
+                  prependIcon: icons.mdiProgressHelper,
+                  color: 'grey',
+                }"
+              />
               <ul>
                 <li
                   v-for="condition in prereq.conditions"
                   :key="condition.taskAlias"
                 >
-                  <span
-                    class="prerequisite-alias condition"
-                    :class="{satisfied: condition.satisfied}"
-                  >
-                    {{ condition.exprAlias.replace(/c/, '') }}
-                  </span>
+                <v-chip
+                  :text="condition.exprAlias.replace(/c/g, '')"
+                  color="success"
+                  density="comfortable"
+                  v-bind="condition.satisfied ? {
+                    prependIcon: icons.mdiCheck,
+                    class: 'font-weight-medium',
+                  }: {
+                    prependIcon: icons.mdiProgressHelper,
+                    color: 'grey',
+                  }"
+                />
                   <span style="margin-left: 0.5em">
                     {{ condition.taskId }}:{{ condition.reqState }}
                   </span>
@@ -148,6 +162,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import {
+  mdiCheck,
   mdiCheckCircleOutline,
   mdiProgressHelper,
 } from '@mdi/js'
@@ -177,6 +192,7 @@ export default {
       icons: {
         mdiProgressHelper,
         mdiCheckCircleOutline,
+        mdiCheck,
       },
     }
   },
