@@ -185,14 +185,14 @@ import {
 } from '@mdi/js'
 import { btnProps } from '@/utils/viewToolbar'
 import { workflowName, useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   updateInitialOptionsEvent,
   useInitialOptions
 } from '@/utils/initialOptions'
 import LogComponent from '@/components/cylc/log/Log.vue'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import { Tokens } from '@/utils/uid'
 import gql from 'graphql-tag'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
@@ -308,10 +308,6 @@ class LogsCallback extends DeltasCallback {
 export default {
   name: 'Log',
 
-  mixins: [
-    subscriptionComponentMixin
-  ],
-
   components: {
     LogComponent,
     ViewToolbar
@@ -329,6 +325,7 @@ export default {
     const store = useStore()
 
     const { workflowID, variables } = useGraphQL(props)
+    const { uid, viewState } = useComponentSubscription() // TODO
 
     /**
      * The task/job ID input.
@@ -392,6 +389,8 @@ export default {
       debouncedUpdateRelativeID,
       toolbarBtnSize,
       toolbarBtnProps: btnProps(toolbarBtnSize),
+      uid,
+      viewState,
       workflowID,
       variables
     }
@@ -483,7 +482,7 @@ export default {
       this.query = new SubscriptionQuery(
         LOGS_SUBSCRIPTION,
         { id: this.id, file: this.file },
-        `log-query-${this._uid}`,
+        `log-query-${this.uid}`,
         [
           new LogsCallback(this.results)
         ],

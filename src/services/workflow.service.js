@@ -45,6 +45,7 @@ import CylcTreeCallback from '@/services/treeCallback'
 /** @typedef {import('@/utils/aotf').Mutation} Mutation */
 /** @typedef {import('@/utils/aotf').MutationResponse} MutationResponse */
 /** @typedef {import('@/utils/aotf').Query} Query */
+/** @typedef {import('@/model/SubscriptionQuery.model').SubscriptionQuery} SubscriptionQuery */
 
 /**
  * @typedef {Object} IntrospectionObj
@@ -59,7 +60,7 @@ import CylcTreeCallback from '@/services/treeCallback'
  * @property {Function} error
  */
 
-class WorkflowService {
+export class WorkflowService {
   /**
    * @constructor
    * @param {string} httpUrl
@@ -223,14 +224,15 @@ class WorkflowService {
   }
 
   /**
-   * @param {View} componentOrView
+   * @param {string} uid - The component/view's unique ID
+   * @param {SubscriptionQuery} query - The component/view's subscription query.
    */
-  subscribe (componentOrView) {
+  subscribe (uid, query) {
     // First we retrieve the existing, or create a new subscription (and add to the pool).
-    const subscription = this.getOrCreateSubscription(componentOrView.query)
-    if (!subscription.subscribers[componentOrView._uid]) {
+    const subscription = this.getOrCreateSubscription(query)
+    if (!subscription.subscribers[uid]) {
       // NOTE: make sure to remove it afterwards to avoid memory leaks!
-      subscription.subscribers[componentOrView._uid] = componentOrView
+      subscription.subscribers[uid] = query
       // Then we recompute the query, checking if variables match, and action name is set.
       this.recompute(subscription)
       // regardless of whether this results in a restart, we take this opportunity to preset the componentOrView store if needed
@@ -240,12 +242,13 @@ class WorkflowService {
         // if any of the views currently using this subscription have an init hook, trigger it (which will check if its needed)
         if (callback.init) {
           callback.init(store, errors)
-          for (const error of errors) {
-            store.commit('SET_ALERT', new Alert(error[0], 'error'), { root: true })
-            // eslint-disable-next-line no-console
-            console.warn(...error)
-            subscription.handleViewState(ViewState.ERROR, error('Error presetting view state'))
-          }
+          // // TODO: this error handling is unused and possibly broken.
+          // for (const error of errors) {
+          //   store.commit('SET_ALERT', new Alert(error[0], 'error'), { root: true })
+          //   // eslint-disable-next-line no-console
+          //   console.warn(...error)
+          //   subscription.handleViewState(ViewState.ERROR, error('Error presetting view state'))
+          // }
         }
       }
     }
@@ -268,7 +271,7 @@ class WorkflowService {
    *
    * @param {Subscription} subscription
    */
-  startSubscription (subscription) {
+  async startSubscription (subscription) {
     if (this.debug) {
       // eslint-disable-next-line no-console
       console.debug(
@@ -276,7 +279,8 @@ class WorkflowService {
         subscription
       )
     }
-    subscription.handleViewState(ViewState.LOADING, null)
+    subscription.handleViewState(ViewState.LOADING)
+    // await new Promise(resolve => setTimeout(resolve, 2000))
 
     // Stop if already running.
     if (subscription.observable !== null) {
@@ -311,7 +315,7 @@ class WorkflowService {
         )
         this.subscriptions[subscription.query.name] = subscription
         // All done!
-        subscription.handleViewState(ViewState.COMPLETE, null)
+        subscription.handleViewState(ViewState.COMPLETE)
         subscription.reload = false
       } catch (e) {
         subscription.handleViewState(ViewState.ERROR, e)
@@ -369,7 +373,7 @@ class WorkflowService {
         )
         this.subscriptions[subscription.query.name] = subscription
         // All done!
-        subscription.handleViewState(ViewState.COMPLETE, null)
+        subscription.handleViewState(ViewState.COMPLETE)
         subscription.reload = false
       } catch (e) {
         subscription.handleViewState(ViewState.ERROR, e)
@@ -417,10 +421,10 @@ class WorkflowService {
   /**
    * Remove subscriber and stop subscription.
    *
-   * @param {SubscriptionQuery} query - The component/view's subscription query.
    * @param {string} uid - The unique ID for the component/view.
+   * @param {SubscriptionQuery} query - The component/view's subscription query.
    */
-  unsubscribe (query, uid) {
+  unsubscribe (uid, query) {
     const subscription = this.subscriptions[query.name]
     if (!subscription) {
       // eslint-disable-next-line no-console
@@ -485,8 +489,8 @@ class WorkflowService {
    * @param {Subscription} subscription
    */
   recompute (subscription) {
-    const subscribers = Object.values(subscription.subscribers)
-    if (subscribers.length === 0) {
+    const subscriberQueries = Object.values(subscription.subscribers)
+    if (subscriberQueries.length === 0) {
       throw new Error('Error recomputing subscription: No Subscribers.')
     }
 
@@ -495,28 +499,28 @@ class WorkflowService {
     /**
      * @type {Vue}
      */
-    const baseSubscriber = subscribers[0]
+    const baseSubscriberQuery = subscriberQueries[0]
 
     // Reset.
     const initialQuery = subscription.query.query
     let finalQuery = cloneDeep(initialQuery)
-    // subscription.query.query = baseSubscriber.query.query
-    subscription.callbacks = baseSubscriber.query.callbacks
+    // subscription.query.query = baseSubscriber.query
+    subscription.callbacks = baseSubscriberQuery.callbacks
 
-    for (const subscriber of subscribers.slice(1)) {
+    for (const query of subscriberQueries.slice(1)) {
       // NB: We can remove this check if we so want, as the library used to
       // combine queries supports merging variables too. Only issue would be
       // the possibility of merging subscriptions for different workflows by
       // accident...
-      if (!isEqual(subscriber.query.variables, baseSubscriber.query.variables)) {
+      if (!isEqual(query.variables, baseSubscriberQuery.variables)) {
         throw new Error('Error recomputing subscription: Query variables do not match.')
       }
-      finalQuery = mergeQueries(finalQuery, subscriber.query.query)
+      finalQuery = mergeQueries(finalQuery, query.query)
       // Combine the arrays of callbacks, creating an array of unique
       // callbacks.  The callbacks are compared by their class/constructor
       // name.
 
-      for (const callback of subscriber.query.callbacks) {
+      for (const callback of query.callbacks) {
         // comparing by constructor name does not work as the minifier
         // normalizer these names and because we have two subscriptions and the
         // normalized callback names are assigned to these independently, from
@@ -554,5 +558,3 @@ class WorkflowService {
     }
   }
 }
-
-export default WorkflowService

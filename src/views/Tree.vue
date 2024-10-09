@@ -82,17 +82,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import { mdiPlus, mdiMinus } from '@mdi/js'
 import gql from 'graphql-tag'
 import { workflowName, useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   useInitialOptions
 } from '@/utils/initialOptions'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import TaskFilter from '@/components/cylc/TaskFilter.vue'
 import TreeComponent from '@/components/cylc/tree/Tree.vue'
 import { matchID, matchState } from '@/components/cylc/common/filter'
@@ -204,10 +204,6 @@ fragment JobData on Job {
 export default {
   name: 'Tree',
 
-  mixins: [
-    subscriptionComponentMixin
-  ],
-
   components: {
     TaskFilter,
     TreeComponent
@@ -221,6 +217,16 @@ export default {
   setup (props, { emit }) {
     const { workflowIDs, variables } = useGraphQL(props)
 
+    const query = computed(() => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+      [],
+      { isDelta: true, isGlobalCallback: true },
+    ))
+
+    const { viewState } = useComponentSubscription('Tree', query)
+
     /**
      * The job id input and selected task filter state.
      * @type {import('vue').Ref<Object>}
@@ -230,8 +236,8 @@ export default {
     return {
       expandAll: ref(null),
       tasksFilter,
+      viewState,
       workflowIDs,
-      variables,
     }
   },
 
@@ -241,17 +247,6 @@ export default {
 
     workflows () {
       return this.getNodes('workflow', this.workflowIDs)
-    },
-
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
     },
 
     filterState () {

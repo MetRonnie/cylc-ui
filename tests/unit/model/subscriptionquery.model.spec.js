@@ -17,7 +17,7 @@
 
 import gql from 'graphql-tag'
 import DeltasCallback from '@/services/callbacks'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 describe('SubscriptionQuery model', () => {
   describe('constructor', () => {

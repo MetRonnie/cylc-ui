@@ -103,12 +103,12 @@ import gql from 'graphql-tag'
 import { mapGetters } from 'vuex'
 import { useJobTheme } from '@/composables/localStorage'
 import { workflowName, useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   useInitialOptions
 } from '@/utils/initialOptions'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 // import CylcTreeCallback from '@/services/treeCallback'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import GraphSubgraph from '@/components/cylc/GraphSubgraph.vue'
@@ -128,6 +128,7 @@ import {
   mdiFileRotateRight,
   mdiVectorSelection
 } from '@mdi/js'
+import { computed } from 'vue'
 
 // NOTE: Use TaskProxies not nodesEdges{nodes} to list nodes as this is what
 // the tree view uses which allows the requests to overlap with this and other
@@ -219,10 +220,6 @@ fragment PrunedDelta on Pruned {
 export default {
   name: 'Graph',
 
-  mixins: [
-    subscriptionComponentMixin
-  ],
-
   components: {
     GraphNode,
     GraphSubgraph,
@@ -235,6 +232,18 @@ export default {
   },
 
   setup (props, { emit }) {
+    const { workflowIDs, variables } = useGraphQL(props)
+
+    const query = computed(() => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+      [],
+      { isDelta: true, isGlobalCallback: true },
+    ))
+
+    const { viewState } = useComponentSubscription('Graph', query)
+
     /**
      * The transpose toggle state.
      * If true layout is left-right, else top-bottom
@@ -262,8 +271,6 @@ export default {
      */
     const groupCycle = useInitialOptions('groupCycle', { props, emit }, false)
 
-    const { workflowIDs, variables } = useGraphQL(props)
-
     return {
       jobTheme: useJobTheme(),
       transpose,
@@ -271,7 +278,7 @@ export default {
       spacing,
       groupCycle,
       workflowIDs,
-      variables,
+      viewState,
     }
   },
 
@@ -319,16 +326,6 @@ export default {
 
   computed: {
     ...mapGetters('workflows', ['getNodes']),
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
-    },
     workflows () {
       return this.getNodes('workflow', this.workflowIDs)
     },

@@ -25,8 +25,8 @@ import gql from 'graphql-tag'
 // need the polyfill as otherwise ApolloClient fails to be imported as it checks for a global fetch object on import...
 import 'cross-fetch/polyfill'
 import Subscription from '@/model/Subscription.model'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
-import WorkflowService from '@/services/workflow.service'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { WorkflowService } from '@/services/workflow.service'
 import ViewState from '@/model/ViewState.model'
 import { TreeCallback, WorkflowCallback } from './testCallback'
 
@@ -335,12 +335,12 @@ describe('WorkflowService', () => {
   describe('unsubscribe', () => {
     it('should warn about queries that do not exist', () => {
       const stub = sandbox.stub(console, 'warn')
-      service.unsubscribe({ name: 'missing' }, 'irrelevant_uid')
+      service.unsubscribe('irrelevant_uid', { name: 'missing' })
       expect(stub.calledOnce).to.equal(true)
     })
     it('should call unsubscribe if last subscriber is unsubscribed', () => {
       const stub = sandbox.stub(service, 'stopSubscription')
-      service.unsubscribe(view.query, view._uid)
+      service.unsubscribe(view._uid, view.query)
       expect(stub.calledOnce).to.equal(true)
     })
     it('should NOT call unsubscribe if there are still subscribers left', () => {
@@ -350,7 +350,7 @@ describe('WorkflowService', () => {
       }
       service.subscribe(anotherView)
       const stub = sandbox.stub(service, 'stopSubscription')
-      service.unsubscribe(view.query, view._uid)
+      service.unsubscribe(view._uid, view.query)
       expect(stub.calledOnce).to.equal(false)
     })
   })

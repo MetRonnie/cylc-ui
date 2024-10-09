@@ -22,7 +22,7 @@ import storeOptions from '@/store/options'
 import { createVuetify } from 'vuetify'
 import sinon from 'sinon'
 import Log, { getDefaultFile } from '@/views/Log.vue'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import User from '@/model/User.model'
 
 describe('getDefaultFile()', () => {

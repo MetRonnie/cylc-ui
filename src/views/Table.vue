@@ -57,7 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <script>
 import { mapState, mapGetters } from 'vuex'
 import { workflowName, useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   updateInitialOptionsEvent,
@@ -66,8 +66,9 @@ import {
 import { matchNode } from '@/components/cylc/common/filter'
 import TableComponent from '@/components/cylc/table/Table.vue'
 import TaskFilter from '@/components/cylc/TaskFilter.vue'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
+import { computed } from 'vue'
 
 const QUERY = gql`
 subscription Workflow ($workflowId: ID) {
@@ -152,10 +153,6 @@ export default {
   // eslint-disable-next-line vue/no-reserved-component-names
   name: 'Table',
 
-  mixins: [
-    subscriptionComponentMixin
-  ],
-
   components: {
     TableComponent,
     TaskFilter
@@ -170,6 +167,18 @@ export default {
 
   setup (props, { emit }) {
     const { workflowIDs, variables } = useGraphQL(props)
+
+    const query = computed(() => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      // we really should consider giving these unique names, as technically they are just use as the subscription names
+      // By using a unique name, we can avoid callback merging errors like the one documented in workflow.service.js
+      'workflow',
+      [],
+      { isDelta: true, isGlobalCallback: true },
+    ))
+
+    const { viewState } = useComponentSubscription('Table', query)
 
     /**
      * The job id input and selected task filter state.
@@ -186,8 +195,8 @@ export default {
     return {
       dataTableOptions,
       tasksFilter,
+      viewState,
       workflowIDs,
-      variables,
     }
   },
 
@@ -211,19 +220,6 @@ export default {
         }
       }
       return ret
-    },
-
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        // we really should consider giving these unique names, as technically they are just use as the subscription names
-        // By using a unique name, we can avoid callback merging errors like the one documented line 350 in the workflow.service.js file
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
     },
 
     filteredTasks () {

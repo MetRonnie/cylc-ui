@@ -19,6 +19,8 @@ import { toRaw } from 'vue'
 import ViewState from '@/model/ViewState.model'
 import { Alert } from '@/model/Alert.model'
 
+/** @typedef {import('@/model/SubscriptionQuery.model').SubscriptionQuery} SubscriptionQuery */
+
 /**
  * @typedef {Vue} View
  * @property {ViewState} viewState
@@ -51,7 +53,7 @@ class Subscription {
      */
     this.observable = null
     /**
-     * @type {{ [componentOrViewUID: string]: View }}
+     * @type {{ [componentOrViewUID: string]: SubscriptionQuery }}
      */
     this.subscribers = {}
     /**
@@ -64,9 +66,9 @@ class Subscription {
 
   /**
    * @param {ViewState} viewState
-   * @param {*} context
+   * @param {{ message?: Error | string }} context
    */
-  handleViewState (viewState, context) {
+  handleViewState (viewState, context = {}) {
     if (toRaw(viewState) !== ViewState.ERROR) {
       Object.values(this.subscribers).forEach((subscriber) => {
         subscriber.viewState = viewState
@@ -74,7 +76,7 @@ class Subscription {
     } else {
       Object.values(this.subscribers).forEach((subscriber) => {
         subscriber.viewState = viewState
-        subscriber.setAlert(new Alert(context.message, 'error'))
+        // subscriber.setAlert(new Alert(context.message, 'error'))
         if (this.debug) {
           // eslint-disable-next-line no-console
           console.debug(`Subscription error: ${context.message}`, toRaw(viewState), context)

@@ -104,11 +104,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
+import { computed } from 'vue'
 import gql from 'graphql-tag'
 import { mapState, mapGetters } from 'vuex'
 import { workflowName, useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 // Any fields that our view will use (e.g. TaskProxy.status) must be requested
 // in the query.
@@ -186,11 +187,6 @@ fragment JobData on Job {
 export default {
   name: 'SimpleTree',
 
-  // These mixins enable various functionalities.
-  mixins: [
-    subscriptionComponentMixin
-  ],
-
   props: {
     workflowName,
   },
@@ -199,9 +195,19 @@ export default {
     // This is a helper function that provides us with some computed properties.
     const { workflowIDs, variables } = useGraphQL(props)
 
+    // This registers the query with the WorkflowService, once registered, the
+    // WorkflowService promises to make the data defined by the query available
+    // in the store and to keep it up to date.
+    const query = computed(
+      () => new SubscriptionQuery(QUERY, variables.value, 'workflow', [])
+    )
+
+    // This is another helper function that enables various functionalities:
+    const { viewState } = useComponentSubscription('SimpleTree', query)
+
     return {
+      viewState,
       workflowIDs,
-      variables,
     }
   },
 
@@ -219,13 +225,6 @@ export default {
       // this.workflowIDs
       return this.getNodes('workflow', this.workflowIDs)
     },
-
-    // This registers the query with the WorkflowService, once registered, the
-    // WorkflowService promises to make the data defined by the query available
-    // in the store and to keep it up to date.
-    query () {
-      return new SubscriptionQuery(QUERY, this.variables, 'workflow', [])
-    }
   }
 
 }

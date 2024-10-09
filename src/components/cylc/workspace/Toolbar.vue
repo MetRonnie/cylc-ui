@@ -216,10 +216,11 @@ import { useGraphQL, workflowName } from '@/mixins/graphql'
 import {
   mutationStatus
 } from '@/utils/aotf'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import { eventBus } from '@/services/eventBus'
+import { computed } from 'vue'
 
 const QUERY = gql(`
 subscription Workflow ($workflowId: ID) {
@@ -266,6 +267,16 @@ export default {
   setup (props) {
     const { variables, workflowID } = useGraphQL(props)
 
+    const query = computed(() => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+      [],
+      { isDelta: true, isGlobalCallback: true }
+    ))
+
+    const { viewState } = useComponentSubscription('Toolbar', query)
+
     const { showNavBtn } = useNavBtn()
     const { toggleDrawer } = useDrawer()
 
@@ -274,14 +285,10 @@ export default {
       showNavBtn,
       toggleDrawer,
       toolbarHeight,
-      variables,
+      viewState,
       workflowID,
     }
   },
-
-  mixins: [
-    subscriptionComponentMixin
-  ],
 
   props: {
     /**
@@ -312,16 +319,6 @@ export default {
     ...mapState('app', ['title']),
     ...mapState('user', ['user']),
     ...mapState('workflows', ['cylcTree']),
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
-    },
     currentWorkflow () {
       return this.cylcTree.$index[this.workflowID]
     },

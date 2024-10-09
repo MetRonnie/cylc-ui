@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) NIWA & British Crown (Met Office) & Contributors.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @typedef {import('graphql').DocumentNode} DocumentNode */
-
 /**
  * A subscription query. It is part of a Subscription, and contains query and auxiliary data
  * such as query name, variables, and callbacks.
@@ -29,23 +27,20 @@
  *
  * @see Subscription
  */
-class SubscriptionQuery {
+export class SubscriptionQuery {
   /**
-   * @param {DocumentNode} query
-   * @param {Object.<String, String>} variables
-   * @param {String} name
-   * @param {Array<DeltasCallback>} callbacks
-   * @param {boolean} isDelta
-   * @param {boolean} isGlobalCallback
+   * @param {import('graphql').DocumentNode} query
+   * @param {Record<string, string>} variables
+   * @param {string} name
+   * @param {DeltasCallback[]} callbacks
+   * @param {{ isDelta: boolean, isGlobalCallback: boolean }} opts
    */
-  constructor (query, variables, name, callbacks, isDelta, isGlobalCallback) {
+  constructor (query, variables, name, callbacks, opts = {}) {
     this.query = query
     this.variables = variables
     this.name = name
     this.callbacks = callbacks
-    this.isDelta = isDelta
-    this.isGlobalCallback = isGlobalCallback
+    this.isDelta = opts.isDelta
+    this.isGlobalCallback = opts.isGlobalCallback
   }
 }
-
-export default SubscriptionQuery

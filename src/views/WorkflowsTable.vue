@@ -75,8 +75,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { mapState, mapGetters } from 'vuex'
 import { i18n } from '@/i18n'
 import { mdiTable } from '@mdi/js'
-import subscriptionMixin from '@/mixins/subscription'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useViewState } from '@/mixins/subscription'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import WorkflowIcon from '@/components/cylc/gscan/WorkflowIcon.vue'
 import gql from 'graphql-tag'
 
@@ -112,12 +112,17 @@ fragment WorkflowData on Workflow {
 export default {
   name: 'WorkflowsTable',
 
-  mixins: [
-    subscriptionMixin
-  ],
-
   components: {
     WorkflowIcon
+  },
+
+  setup () {
+    const { viewState, isLoading } = useViewState()
+
+    return {
+      isLoading,
+      viewState,
+    }
   },
 
   data: () => ({
@@ -126,8 +131,7 @@ export default {
       {},
       'root',
       [],
-      true,
-      true
+      { isDelta: true, isGlobalCallback: true },
     ),
   }),
 

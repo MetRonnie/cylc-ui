@@ -19,7 +19,7 @@ import { mount } from '@vue/test-utils'
 import sinon from 'sinon'
 import { createVuetify } from 'vuetify'
 import { analysisTaskQuery } from '@/services/mock/json/index.cjs'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import AnalysisTable from '@/components/cylc/analysis/AnalysisTable.vue'
 
 const vuetify = createVuetify()

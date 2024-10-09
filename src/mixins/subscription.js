@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) NIWA & British Crown (Met Office) & Contributors.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import ViewState from '@/model/ViewState.model'
-import { toRaw } from 'vue'
-import { mapActions } from 'vuex'
 
-/**
+import { computed, ref } from 'vue'
+import ViewState from '@/model/ViewState.model'
+
+/*
  * A mixin for data common to views and components with a view state. Useful
  * when you load data for the view, and have loading state such as NO_STATE,
  * LOADING, ERROR, COMPLETE, etc.
@@ -28,20 +28,13 @@ import { mapActions } from 'vuex'
  * @see ViewState
  * @see Alert
  */
-export default {
-  data () {
-    return {
-      viewState: ViewState.NO_STATE
-    }
-  },
-  computed: {
-    isLoading () {
-      // Note: this.viewState is Proxy object so comparison
-      // doesn't work without toRaw()
-      return toRaw(this.viewState) === ViewState.LOADING
-    }
-  },
-  methods: {
-    ...mapActions(['setAlert'])
+
+export function useViewState () {
+  const viewState = ref(ViewState.NO_STATE)
+  const isLoading = computed(() => viewState.value === ViewState.LOADING)
+
+  return {
+    viewState,
+    isLoading,
   }
 }

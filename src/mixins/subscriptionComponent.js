@@ -15,8 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import subscriptionMixin from '@/mixins/subscription'
+import { inject, onBeforeMount, onBeforeUnmount, onMounted, watch } from 'vue'
 import { uniqueId } from 'lodash'
+import { useViewState } from '@/mixins/subscription'
+
+/** @typedef {import('@/model/SubscriptionQuery.model').SubscriptionQuery} SubscriptionQuery */
 
 /**
  * A mixin for components that declare GraphQL Query subscriptions. An example
@@ -26,47 +29,57 @@ import { uniqueId } from 'lodash'
  * Uses Vue component lifecycle methods (e.g. created, beforeUnmount) to
  * coordinate when a subscription is created in the WorkflowService service.
  *
- * @see Subscription
- * @see SubscriptionQuery
- * @see WorkflowService
+ * @param {string} name - The name of the component or view.
+ * @param {import('vue').Ref<SubscriptionQuery>} query - The GraphQL query.
  */
-export default {
-  mixins: [
-    subscriptionMixin
-  ],
-  beforeCreate () {
-    // Uniquely identify this component/view so we can keep track of which
-    // ones are sharing subscriptions.
-    this._uid = uniqueId(this.$options.name)
-  },
-  beforeMount () {
-    if (this.query) {
-      this.$workflowService.subscribe(this)
+export function useComponentSubscription (name, query) {
+  /** @type {import('@/services/workflow.service').WorkflowService} */
+  const workflowService = inject('workflowService')
+
+  /**
+   * Unique identifier for this component/view so we can keep track of which
+   * ones are sharing subscriptions.
+   */
+  const uid = uniqueId(name)
+
+  onBeforeMount(() => {
+    if (query.value) {
+      workflowService.subscribe(uid, query.value)
     }
-  },
-  mounted () {
-    if (this.query) {
-      this.$workflowService.startSubscriptions()
+  })
+  onMounted(() => {
+    if (query.value) {
+      workflowService.startSubscriptions()
     }
-  },
-  beforeUnmount () {
-    this._updateQuery(null, this.query)
-  },
-  methods: {
-    _updateQuery (newQuery, oldQuery) {
-      if (oldQuery) {
-        this.$workflowService.unsubscribe(oldQuery, this._uid)
-      }
-      if (newQuery) {
-        this.$workflowService.subscribe(this)
-        this.$workflowService.startSubscriptions()
-      }
+  })
+  onBeforeUnmount(() => {
+    updateQuery(null, query.value)
+  })
+
+  /**
+   * @param {?DocumentNode} newQuery
+   * @param {?DocumentNode} oldQuery
+   */
+  function updateQuery (newQuery, oldQuery) {
+    if (oldQuery) {
+      workflowService.unsubscribe(uid, oldQuery)
     }
-  },
-  watch: {
-    query (newVal, oldVal) {
-      // if the query changes, unsubscribe & re-subscribe
-      this._updateQuery(newVal, oldVal)
+    if (newQuery) {
+      workflowService.subscribe(uid, newQuery)
+      workflowService.startSubscriptions()
     }
+  }
+
+  watch(query, (newVal, oldVal) => {
+    // if the query changes, unsubscribe & re-subscribe
+    updateQuery(newVal, oldVal)
+  })
+
+  const { isLoading, viewState } = useViewState()
+
+  return {
+    isLoading,
+    uid,
+    viewState,
   }
 }

@@ -18,7 +18,7 @@
 import { mount } from '@vue/test-utils'
 import sinon from 'sinon'
 import { createVuetify } from 'vuetify'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import GanttChart from '@/components/cylc/gantt/GanttChart.vue'
 
 const jobs = {

@@ -22,7 +22,7 @@ import storeOptions from '@/store/options'
 import Toolbar from '@/components/cylc/workspace/Toolbar.vue'
 import CommandMenuPlugin from '@/components/cylc/commandMenu/plugin'
 import sinon from 'sinon'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import { useDrawer } from '@/utils/toolbar'
 
 const $workflowService = sinon.createStubInstance(WorkflowService)

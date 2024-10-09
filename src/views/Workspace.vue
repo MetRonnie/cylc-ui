@@ -27,10 +27,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     >
       <Lumino
         ref="lumino"
-        @emptied="onEmptied"
+        @emptied="empty = true"
+        @widgetAdded="empty = false"
         :workflow-name="workflowName"
         :allViews="allViews"
       />
+      <!-- <v-empty-state
+        v-if="empty"
+        title="To get started, add a view from the toolbar above"
+        class="text-disabled"
+      /> -->
     </div>
   </div>
 </template>
@@ -40,18 +46,12 @@ import { ref } from 'vue'
 import { onBeforeRouteUpdate } from 'vue-router'
 import { allViews } from '@/views/views.js'
 import { workflowName } from '@/mixins/graphql'
-import subscriptionMixin from '@/mixins/subscription'
-import ViewState from '@/model/ViewState.model'
 import Lumino from '@/components/cylc/workspace/Lumino.vue'
 import Toolbar from '@/components/cylc/workspace/Toolbar.vue'
 import { toolbarHeight } from '@/utils/toolbar'
 
 export default {
   name: 'Workspace',
-
-  mixins: [
-    subscriptionMixin
-  ],
 
   components: {
     Lumino,
@@ -66,22 +66,17 @@ export default {
     /** Template ref */
     const lumino = ref(null)
 
+    /** No tabs open */
+    const empty = ref(false)
+
     onBeforeRouteUpdate((to, from) => {
       lumino.value.changeLayout(to.params.workflowName)
     })
 
     return {
       allViews,
+      empty,
       lumino,
-    }
-  },
-
-  methods: {
-    onEmptied () {
-      // If we have no more widgets in the view, then we are not loading, not complete, not error,
-      // but back to beginning. When a widget is added, if it uses a query, then the mixins will
-      // take care to set the state to LOADING and then COMPLETE (and hopefully not ERROR).
-      this.viewState = ViewState.NO_STATE
     }
   },
 

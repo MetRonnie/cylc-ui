@@ -84,7 +84,8 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
-  'emptied'
+  'emptied',
+  'widgetAdded',
 ])
 
 /**
@@ -140,6 +141,7 @@ onBeforeUnmount(() => {
  * @param {boolean} onTop
  */
 const addView = ({ name, initialOptions = {} }, onTop = true) => {
+  emit('widgetAdded')
   const id = uniqueId('widget')
   const luminoWidget = new LuminoWidget(id, startCase(name), /* closable */ true)
   dockPanel.addWidget(luminoWidget, { mode: 'tab-after' })

@@ -29,7 +29,7 @@ import {
   simpleTaskNode
 } from './tree.data'
 import CommandMenuPlugin from '@/components/cylc/commandMenu/plugin'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import { flattenWorkflowParts } from '@/components/cylc/gscan/sort'
 
 /**
