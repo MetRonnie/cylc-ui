@@ -102,7 +102,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import gql from 'graphql-tag'
 import { mapGetters } from 'vuex'
 import { useJobTheme } from '@/composables/localStorage'
-import graphqlMixin from '@/mixins/graphql'
+import { workflowName, useGraphQL } from '@/mixins/graphql'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
@@ -220,7 +220,6 @@ export default {
   name: 'Graph',
 
   mixins: [
-    graphqlMixin,
     subscriptionComponentMixin
   ],
 
@@ -230,7 +229,10 @@ export default {
     ViewToolbar
   },
 
-  props: { initialOptions },
+  props: {
+    initialOptions,
+    workflowName,
+  },
 
   setup (props, { emit }) {
     /**
@@ -260,12 +262,16 @@ export default {
      */
     const groupCycle = useInitialOptions('groupCycle', { props, emit }, false)
 
+    const { workflowIDs, variables } = useGraphQL(props)
+
     return {
       jobTheme: useJobTheme(),
       transpose,
       autoRefresh,
       spacing,
-      groupCycle
+      groupCycle,
+      workflowIDs,
+      variables,
     }
   },
 
@@ -322,9 +328,6 @@ export default {
         /* isDelta */ true,
         /* isGlobalCallback */ true
       )
-    },
-    workflowIDs () {
-      return [this.workflowId]
     },
     workflows () {
       return this.getNodes('workflow', this.workflowIDs)

@@ -56,7 +56,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import { mapState, mapGetters } from 'vuex'
-import graphqlMixin from '@/mixins/graphql'
+import { workflowName, useGraphQL } from '@/mixins/graphql'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
@@ -153,7 +153,6 @@ export default {
   name: 'Table',
 
   mixins: [
-    graphqlMixin,
     subscriptionComponentMixin
   ],
 
@@ -166,9 +165,12 @@ export default {
 
   props: {
     initialOptions,
+    workflowName,
   },
 
   setup (props, { emit }) {
+    const { workflowIDs, variables } = useGraphQL(props)
+
     /**
      * The job id input and selected task filter state.
      * @type {import('vue').Ref<object>}
@@ -184,15 +186,14 @@ export default {
     return {
       dataTableOptions,
       tasksFilter,
+      workflowIDs,
+      variables,
     }
   },
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
     ...mapGetters('workflows', ['getNodes']),
-    workflowIDs () {
-      return [this.workflowId]
-    },
     workflows () {
       return this.getNodes('workflow', this.workflowIDs)
     },

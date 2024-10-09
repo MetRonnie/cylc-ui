@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { ref } from 'vue'
 import { onBeforeRouteUpdate } from 'vue-router'
 import { allViews } from '@/views/views.js'
-import graphqlMixin from '@/mixins/graphql'
+import { workflowName } from '@/mixins/graphql'
 import subscriptionMixin from '@/mixins/subscription'
 import ViewState from '@/model/ViewState.model'
 import Lumino from '@/components/cylc/workspace/Lumino.vue'
@@ -50,13 +50,16 @@ export default {
   name: 'Workspace',
 
   mixins: [
-    graphqlMixin,
     subscriptionMixin
   ],
 
   components: {
     Lumino,
     Toolbar
+  },
+
+  props: {
+    workflowName,
   },
 
   setup () {

@@ -82,10 +82,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
+import { ref } from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import { mdiPlus, mdiMinus } from '@mdi/js'
 import gql from 'graphql-tag'
-import graphqlMixin from '@/mixins/graphql'
+import { workflowName, useGraphQL } from '@/mixins/graphql'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
@@ -204,7 +205,6 @@ export default {
   name: 'Tree',
 
   mixins: [
-    graphqlMixin,
     subscriptionComponentMixin
   ],
 
@@ -213,9 +213,14 @@ export default {
     TreeComponent
   },
 
-  props: { initialOptions },
+  props: {
+    initialOptions,
+    workflowName,
+  },
 
   setup (props, { emit }) {
+    const { workflowIDs, variables } = useGraphQL(props)
+
     /**
      * The job id input and selected task filter state.
      * @type {import('vue').Ref<Object>}
@@ -223,21 +228,16 @@ export default {
     const tasksFilter = useInitialOptions('tasksFilter', { props, emit }, { id: null, states: null })
 
     return {
-      tasksFilter
+      expandAll: ref(null),
+      tasksFilter,
+      workflowIDs,
+      variables,
     }
   },
-
-  data: () => ({
-    expandAll: null,
-  }),
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
     ...mapGetters('workflows', ['getNodes']),
-
-    workflowIDs () {
-      return [this.workflowId]
-    },
 
     workflows () {
       return this.getNodes('workflow', this.workflowIDs)

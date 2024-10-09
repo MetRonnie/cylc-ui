@@ -212,7 +212,7 @@ import { startCase } from 'lodash'
 import { until } from '@/utils'
 import { useDrawer, useNavBtn, toolbarHeight } from '@/utils/toolbar'
 import WorkflowState from '@/model/WorkflowState.model'
-import graphql from '@/mixins/graphql'
+import { useGraphQL, workflowName } from '@/mixins/graphql'
 import {
   mutationStatus
 } from '@/utils/aotf'
@@ -263,19 +263,23 @@ fragment PrunedDelta on Pruned {
 export default {
   name: 'Toolbar',
 
-  setup () {
+  setup (props) {
+    const { variables, workflowID } = useGraphQL(props)
+
     const { showNavBtn } = useNavBtn()
     const { toggleDrawer } = useDrawer()
+
     return {
       eventBus,
       showNavBtn,
       toggleDrawer,
-      toolbarHeight
+      toolbarHeight,
+      variables,
+      workflowID,
     }
   },
 
   mixins: [
-    graphql,
     subscriptionComponentMixin
   ],
 
@@ -283,12 +287,15 @@ export default {
     /**
      * All possible view component classes that can be rendered
      *
-     * @type {Map<string, import('@/views/views.js').CylcView>}
+     * @type {import('vue').Prop<
+     *   Map<string, import('@/views/views.js').CylcView>
+     * >}
      */
     views: {
       type: Map,
-      required: true
-    }
+      required: true,
+    },
+    workflowName,
   },
 
   data: () => ({
@@ -316,7 +323,7 @@ export default {
       )
     },
     currentWorkflow () {
-      return this.cylcTree.$index[this.workflowId]
+      return this.cylcTree.$index[this.workflowID]
     },
     isRunning () {
       return (
