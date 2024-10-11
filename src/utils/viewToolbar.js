@@ -32,7 +32,9 @@ export function btnIconFontSize (btnSize) {
 }
 
 export const btnProps = (size) => ({
-  icon: true,
+  // icon: true,
+  // active: true,
+  // activeColor: 'blue',
   variant: 'text',
   size,
   style: {

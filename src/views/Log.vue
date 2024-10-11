@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         dense
         class="flex-0-0"
       >
-        <v-col class="pt-0">
+        <v-col class="pt-0 d-flex">
           <v-btn-toggle
             v-model="jobLog"
             divided
@@ -47,11 +47,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <v-btn data-cy="workflow-toggle">Workflow</v-btn>
             <v-btn data-cy="job-toggle">Job</v-btn>
           </v-btn-toggle>
-          <ViewToolbar
-            :groups="controlGroups"
-            @setOption="setOption"
-            :size="toolbarBtnSize"
-          />
+          <ViewToolbar :size="toolbarBtnSize">
+            <ViewToolbarBtn
+              v-model="timestamps"
+              :icon="icons.mdiClockOutline"
+              v-tooltip="'Timestamps'"
+            />
+            <ViewToolbarBtn
+              v-model="wordWrap"
+              :icon="icons.mdiWrap"
+              v-tooltip="'Word wrap'"
+            />
+          </ViewToolbar>
         </v-col>
       </v-row>
 
@@ -94,10 +101,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             @click="() => this.updateLogFileList(false)"
             v-bind="toolbarBtnProps"
             data-cy="refresh-files"
-          >
-            <v-icon :icon="$options.icons.mdiFolderRefresh"/>
-            <v-tooltip>Refresh file list</v-tooltip>
-          </v-btn>
+            :icon="icons.mdiFolderRefresh"
+            v-tooltip="'Refresh file list'"
+          />
         </v-col>
       </v-row>
 
@@ -116,10 +122,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             class="flex-shrink-0"
             v-bind="results.connected ? {
               color: 'success',
-              prependIcon: $options.icons.mdiPowerPlug,
+              prependIcon: icons.mdiPowerPlug,
             } : {
               color: 'error',
-              prependIcon: $options.icons.mdiPowerPlugOff,
+              prependIcon: icons.mdiPowerPlugOff,
               onClick: updateQuery
             }"
           >
@@ -153,7 +159,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             variant="tonal"
             density="comfortable"
             class="mb-4"
-            :icon="$options.icons.mdiFileAlertOutline"
+            :icon="icons.mdiFileAlertOutline"
           >
             <span class="text-pre-wrap text-break">
               {{ results.error }}
@@ -198,6 +204,7 @@ import gql from 'graphql-tag'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
 import DeltasCallback from '@/services/callbacks'
 import debounce from 'lodash/debounce'
+import ViewToolbarBtn from '@/components/cylc/ViewToolbarBtn.vue'
 
 /**
  * Query used to retrieve data for the Log view.
@@ -315,7 +322,8 @@ export default {
 
   components: {
     LogComponent,
-    ViewToolbar
+    ViewToolbar,
+    ViewToolbarBtn,
   },
   emits: [
     updateInitialOptionsEvent,
@@ -390,32 +398,14 @@ export default {
       debouncedUpdateRelativeID,
       toolbarBtnSize,
       toolbarBtnProps: btnProps(toolbarBtnSize),
-    }
-  },
-
-  data () {
-    return {
-      controlGroups: [
-        {
-          title: 'Log',
-          controls: [
-            {
-              title: 'Timestamps',
-              icon: mdiClockOutline,
-              action: 'toggle',
-              value: this.timestamps,
-              key: 'timestamps'
-            },
-            {
-              title: 'Word wrap',
-              icon: mdiWrap,
-              action: 'toggle',
-              value: this.wordWrap,
-              key: 'wordWrap',
-            },
-          ]
-        }
-      ],
+      icons: {
+        mdiClockOutline,
+        mdiFileAlertOutline,
+        mdiFolderRefresh,
+        mdiPowerPlugOff,
+        mdiPowerPlug,
+        mdiWrap,
+      }
     }
   },
 
@@ -554,13 +544,5 @@ export default {
       this.relativeID = val ? this.previousRelativeID : null
     },
   },
-
-  // Misc options
-  icons: {
-    mdiFileAlertOutline,
-    mdiFolderRefresh,
-    mdiPowerPlug,
-    mdiPowerPlugOff,
-  }
 }
 </script>

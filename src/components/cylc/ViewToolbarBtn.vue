@@ -14,46 +14,30 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-
 <template>
-  <v-defaults-provider
-   :defaults="{
-      VBtn: btnProps(size),
-    }"
-  >
-    <slot/>
-  </v-defaults-provider>
+  <v-btn
+    :color="active ? 'blue': null"
+    @click="active = !active"
+  />
 </template>
 
 <script setup>
-import { btnProps } from '@/utils/viewToolbar'
+import { computed } from 'vue'
 
-defineProps({
-  /** Button size in px or vuetify named size */
-  size: {
-    type: String,
-    default: 'default',
-  }
+const props = defineProps({
+  /** Active state. */
+  modelValue: {
+    type: Boolean,
+  },
 })
+
+const emit = defineEmits(['update:modelValue'])
+
+const active = computed({
+  get: () => props.modelValue ?? false,
+  set: (value) => {
+    if (props.modelValue != null) emit('update:modelValue', value)
+  },
+})
+
 </script>
-
-<!-- <style lang="scss">
-  .c-view-toolbar {
-    > div {
-      display: flex;
-      align-items: center;
-
-      $spacing: 0.5rem;
-
-      &:not(:first-child):before {
-        // place a divider between groups
-        content: '';
-        height: 70%;
-        width: 2px;
-        background: rgb(0, 0, 0, 0.22);
-        // put a bit of space between the groups
-        margin: 0 $spacing;
-      }
-    }
-  }
-</style> -->
