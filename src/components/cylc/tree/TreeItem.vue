@@ -93,9 +93,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               :prepend-icon="$options.icons.flow"
               :disabled="node.node.state === 'waiting' && !node.node.isQueued"
             >
-              {{ node.node.flowNums.replace(/\[|\]/g, '') }}
+              {{ formatFlowNums(node.node.flowNums) }}
               <v-tooltip location="right">
-                Flows: {{ node.node.flowNums }}
+                Flows: {{ formatFlowNums(node.node.flowNums) }}
               </v-tooltip>
             </v-chip>
           </template>
@@ -188,6 +188,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
+import { ref } from 'vue'
 import {
   mdiChevronRight,
   mdiLabelOutline,
@@ -196,8 +197,9 @@ import Task from '@/components/cylc/Task.vue'
 import Job from '@/components/cylc/Job.vue'
 import JobDetails from '@/components/cylc/tree/JobDetails.vue'
 import {
+  formatFlowNums,
+  jobMessageOutputs,
   latestJob,
-  jobMessageOutputs
 } from '@/utils/tasks'
 import { getIndent, getNodeChildren } from '@/components/cylc/tree/util'
 
@@ -251,9 +253,10 @@ export default {
     },
   },
 
-  data () {
+  setup () {
     return {
-      manuallyExpanded: null,
+      manuallyExpanded: ref(null),
+      formatFlowNums,
     }
   },
 
