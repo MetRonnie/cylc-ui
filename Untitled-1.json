@@ -1,0 +1,282 @@
+{
+    "added": {
+        "familyProxies": [],
+        "taskProxies": [
+            {
+                "id": "~rdutta/Kryx//2/c",
+                "state": "waiting",
+                "isHeld": false,
+                "isQueued": false,
+                "isRunahead": false,
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//2/root",
+                    "__typename": "FamilyProxy"
+                },
+                "flowNums": "[1, 2]",
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//3/b",
+                "state": "waiting",
+                "isHeld": false,
+                "isQueued": false,
+                "isRunahead": false,
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//3/root",
+                    "__typename": "FamilyProxy"
+                },
+                "flowNums": "[1, 2]",
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//2/a",
+                "state": "succeeded",
+                "isHeld": false,
+                "isQueued": false,
+                "isRunahead": false,
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//2/root",
+                    "__typename": "FamilyProxy"
+                },
+                "flowNums": "[1, 2]",
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//3/c",
+                "state": "waiting",
+                "isHeld": false,
+                "isQueued": false,
+                "isRunahead": false,
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//3/root",
+                    "__typename": "FamilyProxy"
+                },
+                "flowNums": "[1, 2]",
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//1/c",
+                "state": "succeeded",
+                "isHeld": false,
+                "isQueued": false,
+                "isRunahead": false,
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//1/root",
+                    "__typename": "FamilyProxy"
+                },
+                "flowNums": "[1]",
+                "__typename": "TaskProxy"
+            }
+        ],
+        "jobs": [
+            {
+                "id": "~rdutta/Kryx//1/c/01",
+                "jobRunnerName": "background",
+                "jobId": "58714",
+                "platform": "localhost",
+                "startedTime": "2024-05-28T15:28:16+01:00",
+                "submittedTime": "2024-05-28T15:28:13+01:00",
+                "finishedTime": "2024-05-28T15:28:21+01:00",
+                "state": "succeeded",
+                "submitNum": 1,
+                "messages": [],
+                "taskProxy": {
+                    "outputs": [
+                        {
+                            "label": "submitted",
+                            "message": "submitted",
+                            "__typename": "Output"
+                        },
+                        {
+                            "label": "started",
+                            "message": "started",
+                            "__typename": "Output"
+                        },
+                        {
+                            "label": "succeeded",
+                            "message": "succeeded",
+                            "__typename": "Output"
+                        }
+                    ],
+                    "__typename": "TaskProxy"
+                },
+                "__typename": "Job"
+            },
+            {
+                "id": "~rdutta/Kryx//2/a/01",
+                "jobRunnerName": "background",
+                "jobId": "59019",
+                "platform": "localhost",
+                "startedTime": "2024-05-28T15:28:33+01:00",
+                "submittedTime": "2024-05-28T15:28:31+01:00",
+                "finishedTime": "2024-05-28T15:28:38+01:00",
+                "state": "succeeded",
+                "submitNum": 1,
+                "messages": [],
+                "taskProxy": {
+                    "outputs": [
+                        {
+                            "label": "submitted",
+                            "message": "submitted",
+                            "__typename": "Output"
+                        },
+                        {
+                            "label": "started",
+                            "message": "started",
+                            "__typename": "Output"
+                        },
+                        {
+                            "label": "succeeded",
+                            "message": "succeeded",
+                            "__typename": "Output"
+                        }
+                    ],
+                    "__typename": "TaskProxy"
+                },
+                "__typename": "Job"
+            }
+        ],
+        "__typename": "Added"
+    },
+    "updated": {
+        "workflow": {
+            "id": "~rdutta/Kryx",
+            "nEdgeDistance": 3,
+            "__typename": "Workflow"
+        },
+        "familyProxies": [
+            {
+                "__typename": "FamilyProxy",
+                "id": "~rdutta/Kryx//2/root",
+                "state": "waiting",
+                "childTasks": [
+                    {
+                        "id": "~rdutta/Kryx//2/c",
+                        "__typename": "TaskProxy"
+                    },
+                    {
+                        "id": "~rdutta/Kryx//2/a",
+                        "__typename": "TaskProxy"
+                    }
+                ]
+            },
+            {
+                "__typename": "FamilyProxy",
+                "id": "~rdutta/Kryx//3/root",
+                "state": "waiting",
+                "childTasks": [
+                    {
+                        "id": "~rdutta/Kryx//3/b",
+                        "__typename": "TaskProxy"
+                    },
+                    {
+                        "id": "~rdutta/Kryx//3/c",
+                        "__typename": "TaskProxy"
+                    }
+                ]
+            },
+            {
+                "__typename": "FamilyProxy",
+                "id": "~rdutta/Kryx//1/root",
+                "state": "succeeded",
+                "childTasks": [
+                    {
+                        "id": "~rdutta/Kryx//1/c",
+                        "__typename": "TaskProxy"
+                    }
+                ]
+            }
+        ],
+        "taskProxies": [
+            {
+                "id": "~rdutta/Kryx//3/b",
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//3/root",
+                    "__typename": "FamilyProxy"
+                },
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//3/a",
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//3/root",
+                    "__typename": "FamilyProxy"
+                },
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//3/c",
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//3/root",
+                    "__typename": "FamilyProxy"
+                },
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//1/c",
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//1/root",
+                    "__typename": "FamilyProxy"
+                },
+                "__typename": "TaskProxy"
+            },
+            {
+                "id": "~rdutta/Kryx//2/a",
+                "task": {
+                    "meanElapsedTime": 5,
+                    "__typename": "Task"
+                },
+                "firstParent": {
+                    "id": "~rdutta/Kryx//2/root",
+                    "__typename": "FamilyProxy"
+                },
+                "__typename": "TaskProxy"
+            }
+        ],
+        "__typename": "Updated"
+    },
+    "pruned": {
+        "familyProxies": [],
+        "taskProxies": [],
+        "jobs": [],
+        "__typename": "Pruned"
+    },
+    "id": "~rdutta/Kryx",
+    "__typename": "Deltas"
+}
