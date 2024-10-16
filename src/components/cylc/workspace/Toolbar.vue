@@ -212,15 +212,13 @@ import { startCase } from 'lodash'
 import { until } from '@/utils'
 import { useDrawer, useNavBtn, toolbarHeight } from '@/utils/toolbar'
 import WorkflowState from '@/model/WorkflowState.model'
-import { useGraphQL, workflowName } from '@/mixins/graphql'
+import { workflowName } from '@/mixins/graphql'
 import {
   mutationStatus
 } from '@/utils/aotf'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { useSubscriptionQuery } from '@/mixins/subscriptionComponent'
 import gql from 'graphql-tag'
 import { eventBus } from '@/services/eventBus'
-import { computed } from 'vue'
 
 const QUERY = gql(`
 subscription Workflow ($workflowId: ID) {
@@ -265,17 +263,14 @@ export default {
   name: 'Toolbar',
 
   setup (props) {
-    const { variables, workflowID } = useGraphQL(props)
-
-    const query = computed(() => new SubscriptionQuery(
+    const { workflowID } = useSubscriptionQuery(
+      props,
+      'Toolbar',
       QUERY,
-      variables.value,
       'workflow',
       [],
-      { isDelta: true, isGlobalCallback: true }
-    ))
-
-    const { viewState } = useComponentSubscription('Toolbar', query)
+      { isDelta: true, isGlobalCallback: true },
+    )
 
     const { showNavBtn } = useNavBtn()
     const { toggleDrawer } = useDrawer()
@@ -285,7 +280,6 @@ export default {
       showNavBtn,
       toggleDrawer,
       toolbarHeight,
-      viewState,
       workflowID,
     }
   },

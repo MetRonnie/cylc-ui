@@ -82,17 +82,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import { mdiPlus, mdiMinus } from '@mdi/js'
 import gql from 'graphql-tag'
-import { workflowName, useGraphQL } from '@/mixins/graphql'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { workflowName } from '@/mixins/graphql'
+import { useSubscriptionQuery } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   useInitialOptions
 } from '@/utils/initialOptions'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import TaskFilter from '@/components/cylc/TaskFilter.vue'
 import TreeComponent from '@/components/cylc/tree/Tree.vue'
 import { matchID, matchState } from '@/components/cylc/common/filter'
@@ -215,17 +214,14 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL(props)
-
-    const query = computed(() => new SubscriptionQuery(
+    const { viewState, workflowIDs } = useSubscriptionQuery(
+      props,
+      'Tree',
       QUERY,
-      variables.value,
       'workflow',
       [],
       { isDelta: true, isGlobalCallback: true },
-    ))
-
-    const { viewState } = useComponentSubscription('Tree', query)
+    )
 
     /**
      * The job id input and selected task filter state.

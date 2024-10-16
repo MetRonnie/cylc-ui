@@ -139,13 +139,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import { mdiBook, mdiBookMultiple, mdiBookOpenVariant, mdiCog, mdiHubspot, mdiTable } from '@mdi/js'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { useSubscriptionQuery } from '@/mixins/subscriptionComponent'
 import { createUrl } from '@/utils/urls'
 import { WorkflowState, WorkflowStateOrder } from '@/model/WorkflowState.model'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 
 const QUERY = gql`
@@ -187,16 +186,15 @@ fragment WorkflowData on Workflow {
 export default {
   name: 'Dashboard',
 
-  setup () {
-    const query = computed(() => new SubscriptionQuery(
+  setup (props) {
+    const { viewState, isLoading } = useSubscriptionQuery(
+      props,
+      'Dashboard',
       QUERY,
-      {},
       'root',
       [],
       { isDelta: true, isGlobalCallback: true },
-    ))
-
-    const { viewState, isLoading } = useComponentSubscription('Dashboard', query)
+    )
 
     return {
       events: ref([]),

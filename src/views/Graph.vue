@@ -102,13 +102,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import gql from 'graphql-tag'
 import { mapGetters } from 'vuex'
 import { useJobTheme } from '@/composables/localStorage'
-import { workflowName, useGraphQL } from '@/mixins/graphql'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { workflowName } from '@/mixins/graphql'
+import { useSubscriptionQuery } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   useInitialOptions
 } from '@/utils/initialOptions'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 // import CylcTreeCallback from '@/services/treeCallback'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import GraphSubgraph from '@/components/cylc/GraphSubgraph.vue'
@@ -128,7 +127,6 @@ import {
   mdiFileRotateRight,
   mdiVectorSelection
 } from '@mdi/js'
-import { computed } from 'vue'
 
 // NOTE: Use TaskProxies not nodesEdges{nodes} to list nodes as this is what
 // the tree view uses which allows the requests to overlap with this and other
@@ -232,17 +230,14 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL(props)
-
-    const query = computed(() => new SubscriptionQuery(
+    const { viewState, workflowIDs } = useSubscriptionQuery(
+      props,
+      'Graph',
       QUERY,
-      variables.value,
       'workflow',
       [],
       { isDelta: true, isGlobalCallback: true },
-    ))
-
-    const { viewState } = useComponentSubscription('Graph', query)
+    )
 
     /**
      * The transpose toggle state.

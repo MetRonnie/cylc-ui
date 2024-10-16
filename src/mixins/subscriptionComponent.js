@@ -15,11 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { inject, onBeforeMount, onBeforeUnmount, onMounted, watch } from 'vue'
+import { computed, inject, onBeforeMount, onBeforeUnmount, onMounted, watch } from 'vue'
 import { uniqueId } from 'lodash'
 import { useViewState } from '@/mixins/subscription'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { useGraphQL } from '@/mixins/graphql'
 
-/** @typedef {import('@/model/SubscriptionQuery.model').SubscriptionQuery} SubscriptionQuery */
+/** @typedef {import('graphql').DocumentNode} DocumentNode */
 
 /**
  * A mixin for components that declare GraphQL Query subscriptions. An example
@@ -29,18 +31,48 @@ import { useViewState } from '@/mixins/subscription'
  * Uses Vue component lifecycle methods (e.g. created, beforeUnmount) to
  * coordinate when a subscription is created in the WorkflowService service.
  *
- * @param {string} name - The name of the component or view.
- * @param {import('vue').Ref<SubscriptionQuery>} query - The GraphQL query.
+ * @param {any} props - The component/view props.
+ * @param {string} componentName - The name of the component/view.
+ * @param {DocumentNode} queryAST - The GraphQL query.
+ * @param {string} queryName - The name of the query, which might be shared by different subscriptions (?).
+ * @param {DeltasCallback[]} callbacks
+ * @param {{ isDelta: boolean, isGlobalCallback: boolean }} opts
  */
-export function useComponentSubscription (name, query) {
+export function useSubscriptionQuery (props, componentName, queryAST, queryName, callbacks, opts) {
+  const { variables, workflowID, workflowIDs } = useGraphQL(props)
+
+  const query = computed(() => new SubscriptionQuery(
+    queryAST,
+    variables.value,
+    queryName,
+    callbacks,
+    opts,
+  ))
+
+  const { isLoading, uid, viewState } = useSubscription(componentName, query)
+
+  return {
+    isLoading,
+    uid,
+    viewState,
+    workflowID,
+    workflowIDs,
+  }
+}
+
+/**
+ * @param {string} componentName
+ * @param {import('vue').Ref<SubscriptionQuery?>} query
+ */
+export function useSubscription (componentName, query) {
   /** @type {import('@/services/workflow.service').WorkflowService} */
   const workflowService = inject('workflowService')
 
   /**
    * Unique identifier for this component/view so we can keep track of which
    * ones are sharing subscriptions.
-   */
-  const uid = uniqueId(name)
+  */
+  const uid = uniqueId(componentName)
 
   onBeforeMount(() => {
     if (query.value) {

@@ -104,12 +104,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { computed } from 'vue'
 import gql from 'graphql-tag'
 import { mapState, mapGetters } from 'vuex'
-import { workflowName, useGraphQL } from '@/mixins/graphql'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { workflowName } from '@/mixins/graphql'
+import { useSubscriptionQuery } from '@/mixins/subscriptionComponent'
 
 // Any fields that our view will use (e.g. TaskProxy.status) must be requested
 // in the query.
@@ -192,18 +190,17 @@ export default {
   },
 
   setup (props) {
-    // This is a helper function that provides us with some computed properties.
-    const { workflowIDs, variables } = useGraphQL(props)
-
-    // This registers the query with the WorkflowService, once registered, the
+    // This is a helper function that enables various functionalities.
+    // This registers the query with the WorkflowService. Once registered, the
     // WorkflowService promises to make the data defined by the query available
     // in the store and to keep it up to date.
-    const query = computed(
-      () => new SubscriptionQuery(QUERY, variables.value, 'workflow', [])
+    const { viewState, workflowIDs } = useSubscriptionQuery(
+      props,
+      'SimpleTree',
+      QUERY,
+      'workflow',
+      []
     )
-
-    // This is another helper function that enables various functionalities:
-    const { viewState } = useComponentSubscription('SimpleTree', query)
 
     return {
       viewState,

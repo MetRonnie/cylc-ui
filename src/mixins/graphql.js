@@ -37,6 +37,14 @@ export const workflowName = {
 }
 
 export function useGraphQL (props) {
+  if (!props.workflowName) {
+    return {
+      workflowID: {},
+      workflowIDs: {},
+      variables: { value: {} },
+    }
+  }
+
   const store = useStore()
 
   /**

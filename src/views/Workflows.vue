@@ -23,8 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { computed } from 'vue'
 import { useStore } from 'vuex'
 import GScan from '@/components/cylc/gscan/GScan.vue'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { useSubscriptionQuery } from '@/mixins/subscriptionComponent'
 import gql from 'graphql-tag'
 
 const QUERY = gql`
@@ -75,14 +74,13 @@ fragment WorkflowData on Workflow {
 }
 `
 
-const query = computed(() => new SubscriptionQuery(
-  QUERY,
+const { isLoading, viewState } = useSubscriptionQuery(
   {},
+  'Workflows',
+  QUERY,
   'root',
-  []
-))
-
-const { isLoading, viewState } = useComponentSubscription('Workflows', query)
+  [],
+)
 
 const store = useStore()
 

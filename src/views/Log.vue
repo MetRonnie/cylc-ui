@@ -185,7 +185,7 @@ import {
 } from '@mdi/js'
 import { btnProps } from '@/utils/viewToolbar'
 import { workflowName, useGraphQL } from '@/mixins/graphql'
-import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { useSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   updateInitialOptionsEvent,
@@ -324,9 +324,6 @@ export default {
   setup (props, { emit }) {
     const store = useStore()
 
-    const { workflowID, variables } = useGraphQL(props)
-    const { uid, viewState } = useComponentSubscription() // TODO
-
     /**
      * The task/job ID input.
      * @type {import('vue').Ref<string>}
@@ -354,6 +351,16 @@ export default {
       results.value = new Results()
     }
 
+    /**
+     * The log subscription query.
+     *
+     * @type {import('vue').Ref<SubscriptionQuery>}
+     */
+    const query = ref(null)
+
+    const { workflowID } = useGraphQL(props)
+    const { uid, viewState } = useSubscription('Log', query)
+
     whenever(
       () => store.state.offline,
       () => { results.value.connected = false }
@@ -368,8 +375,7 @@ export default {
     const toolbarBtnSize = '40'
 
     return {
-      // the log subscription query
-      query: ref(null),
+      query,
       // list of log files for the selected workflow/task/job
       logFiles: ref([]),
       results,
@@ -392,7 +398,6 @@ export default {
       uid,
       viewState,
       workflowID,
-      variables
     }
   },
 
@@ -486,8 +491,7 @@ export default {
         [
           new LogsCallback(this.results)
         ],
-        /* isDelta */ false,
-        /* isGlobalCallback */ false
+        { isDelta: false, isGlobalCallback: false },
       )
     },
     async updateLogFileList (reset = true) {

@@ -76,38 +76,7 @@ import { mapState, mapGetters } from 'vuex'
 import { i18n } from '@/i18n'
 import { mdiTable } from '@mdi/js'
 import { useViewState } from '@/mixins/subscription'
-import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import WorkflowIcon from '@/components/cylc/gscan/WorkflowIcon.vue'
-import gql from 'graphql-tag'
-
-const QUERY = gql`
-subscription Workflow {
-  deltas {
-    id
-    added {
-      workflow {
-        ...WorkflowData
-      }
-    }
-    updated (stripNull: true) {
-      workflow {
-        ...WorkflowData
-      }
-    }
-    pruned {
-      workflow
-    }
-  }
-}
-
-fragment WorkflowData on Workflow {
-  id
-  status
-  owner
-  host
-  port
-}
-`
 
 export default {
   name: 'WorkflowsTable',
@@ -124,16 +93,6 @@ export default {
       viewState,
     }
   },
-
-  data: () => ({
-    query: new SubscriptionQuery(
-      QUERY,
-      {},
-      'root',
-      [],
-      { isDelta: true, isGlobalCallback: true },
-    ),
-  }),
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
