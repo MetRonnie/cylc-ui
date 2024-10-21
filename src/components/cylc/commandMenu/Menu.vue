@@ -30,10 +30,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     >
       <v-card>
         <v-card-title class="pb-1 pt-3">
-          {{ node.id }}
+          {{ title }}
           <v-btn
             v-if="clipboard.isSupported"
-            @click="clipboard.copy(node.id)"
+            @click="clipboard.copy(title)"
             icon
             variant="plain"
             size="small"
@@ -213,6 +213,10 @@ export default {
           )
       }
       return this.mutations
+    },
+
+    title () {
+      return this.node.tokens.clone({ user: undefined }).id
     },
 
     typeAndStatusText () {
