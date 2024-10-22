@@ -127,10 +127,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </v-chip>
           <span
             data-cy="log-path"
-            style="padding-left: 0.5em; color: rgb(150,150,150);"
+            class="ml-2 mr-1 text-medium-emphasis"
           >
             {{ results.path }}
           </span>
+          <CopyBtn
+            :text="results.path.split(':')[1]"
+            tooltip="Copy path"
+          />
         </v-col>
       </v-row>
     </v-container>
@@ -197,7 +201,8 @@ import { Tokens } from '@/utils/uid'
 import gql from 'graphql-tag'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
 import DeltasCallback from '@/services/callbacks'
-import debounce from 'lodash/debounce'
+import { debounce } from 'lodash-es'
+import CopyBtn from '@/components/core/CopyBtn.vue'
 
 /**
  * Query used to retrieve data for the Log view.
@@ -314,8 +319,9 @@ export default {
   ],
 
   components: {
+    CopyBtn,
     LogComponent,
-    ViewToolbar
+    ViewToolbar,
   },
   emits: [
     updateInitialOptionsEvent,

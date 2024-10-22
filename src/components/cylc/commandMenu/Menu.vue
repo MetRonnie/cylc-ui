@@ -31,18 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <v-card>
         <v-card-title class="pb-1 pt-3">
           {{ title }}
-          <v-btn
-            v-if="clipboard.isSupported"
-            @click="clipboard.copy(title)"
-            icon
-            variant="plain"
-            size="small"
-            density="comfortable"
-            data-cy="copy-to-clipboard"
-          >
-            <v-icon>{{ clipboard.copied ? icons.mdiClipboardCheck : icons.mdiContentCopy }}</v-icon>
-            <v-tooltip :open-delay="1e3">{{ clipboard.copied ? 'Copied' : 'Copy' }}</v-tooltip>
-          </v-btn>
+          <CopyBtn :text="title"/>
         </v-card-title>
         <v-card-subtitle class="pt-0 pb-2">
           {{ typeAndStatusText }}
@@ -123,7 +112,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { nextTick, reactive, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 import {
   filterAssociations,
   getMutationArgsFromTokens,
@@ -131,20 +120,19 @@ import {
 } from '@/utils/aotf'
 import Mutation from '@/components/cylc/Mutation.vue'
 import {
-  mdiClipboardCheck,
-  mdiContentCopy,
   mdiPencil,
 } from '@mdi/js'
 import { mapGetters, mapState } from 'vuex'
 import WorkflowState from '@/model/WorkflowState.model'
 import { eventBus } from '@/services/eventBus'
-import { useClipboard } from '@vueuse/core'
+import CopyBtn from '@/components/core/CopyBtn.vue'
 
 export default {
   name: 'CommandMenu',
 
   components: {
-    Mutation
+    CopyBtn,
+    Mutation,
   },
 
   props: {
@@ -156,8 +144,6 @@ export default {
   },
 
   setup () {
-    const clipboard = reactive(useClipboard())
-
     return {
       dialog: ref(false),
       dialogMutation: ref(null),
@@ -169,10 +155,7 @@ export default {
       showMenu: ref(false),
       types: ref([]),
       target: ref(null),
-      clipboard,
       icons: {
-        mdiClipboardCheck,
-        mdiContentCopy,
         mdiPencil,
       },
     }
