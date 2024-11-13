@@ -30,19 +30,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <!-- input label - the display title for this input -->
             {{ upperFirst(lowerCase(input.label)) }}
             <!-- help button - tooltip for more information -->
-            <v-tooltip
+            <HelpIcon
               v-if="input.description"
-              :activator="null"
-            >
-              <template v-slot:activator="{ props }">
-                <v-icon v-bind="props" class="mx-2">
-                  {{ $options.icons.mdiHelpCircleOutline }}
-                </v-icon>
-              </template>
-              <Markdown
-                :markdown="input.description"
-              />
-            </v-tooltip>
+              :tooltip="input.description"
+              class="ml-2"
+            />
           </v-list-item-title>
           <FormInput
             v-model="model[input.label]"
@@ -58,7 +50,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { cloneDeep, lowerCase, upperFirst } from 'lodash'
 import { mdiHelpCircleOutline } from '@mdi/js'
 
-import Markdown from '@/components/Markdown.vue'
+import HelpIcon from '@/components/graphqlFormGenerator/components/HelpIcon.vue'
 import FormInput from '@/components/graphqlFormGenerator/FormInput.vue'
 import { getNullValue, mutate } from '@/utils/aotf'
 
@@ -66,7 +58,7 @@ export default {
   name: 'form-generator',
 
   components: {
-    Markdown,
+    HelpIcon,
     FormInput
   },
 
