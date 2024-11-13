@@ -55,14 +55,13 @@ export const RULES = {
 
 export const RUNTIME_SETTING = 'RuntimeSetting'
 
-export default {
-  defaultProps: {
-    // default props for all form inputs
-    variant: 'filled',
-    density: 'compact',
-    hideDetails: false,
-  },
+/** Defaults for all form inputs */
+export const defaults = {
+  variant: 'filled',
+  hideDetails: false,
+}
 
+export default {
   namedTypes: {
     // registry of GraphQL "named types" (e.g. String)
     // {namedType: {is: ComponentClass, prop1: value, ...}}

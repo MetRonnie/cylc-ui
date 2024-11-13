@@ -137,7 +137,12 @@ import {
   mutationStatus
 } from '@/utils/aotf'
 import { mdiClose } from '@mdi/js'
-import { useDynamicVuetifyDefaults } from '@/plugins/vuetify'
+import { inputComponents, useDynamicVuetifyDefaults } from '@/plugins/vuetify'
+import { defaults } from '@/components/graphqlFormGenerator/components/vuetify'
+
+const mutationFormInputDefaults = Object.fromEntries(
+  inputComponents.map(({ name }) => [name, defaults])
+)
 
 export default {
   name: 'mutation',
@@ -177,7 +182,7 @@ export default {
   },
 
   setup () {
-    const vuetifyDefaults = useDynamicVuetifyDefaults()
+    const vuetifyDefaults = useDynamicVuetifyDefaults(mutationFormInputDefaults)
 
     return {
       vuetifyDefaults,
