@@ -27,18 +27,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   />
 </template>
 
-<script>
-import { formElement } from '@/components/graphqlFormGenerator/mixins'
+<script setup>
+import { formElementProps, useFormElement } from '@/components/graphqlFormGenerator/mixins'
+import { computed } from 'vue'
 
-export default {
-  name: 'g-enum',
-  mixins: [formElement],
-  computed: {
-    itemDesc () {
-      return this.type.enumValues.find(
-        ({ name }) => name === this.modelValue
-      )?.description ?? ''
-    }
-  }
-}
+const props = defineProps({
+  ...formElementProps,
+})
+
+const model = defineModel({ type: String, required: true })
+
+const { type } = useFormElement(props)
+
+const itemDesc = computed(
+  () => type.value.enumValues.find(
+    ({ name }) => name === props.modelValue
+  )?.description ?? ''
+)
 </script>
