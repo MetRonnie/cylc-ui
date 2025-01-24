@@ -20,6 +20,10 @@ import EditRuntimeForm from '@/components/graphqlFormGenerator/EditRuntimeForm.v
 import { IntrospectionQuery, taskProxy } from '@/services/mock/json/index.cjs'
 import { cloneDeep } from 'lodash'
 import { createVuetify } from 'vuetify'
+import { merge } from 'lodash-es'
+import { vi } from 'vitest'
+import sinon from 'sinon'
+import { onBeforeMount } from 'vue'
 
 /** NOTE: update this if updating src/services/mock/json/taskProxy.json */
 const INITIAL_DATA = {
@@ -66,7 +70,7 @@ const INITIAL_DATA = {
   runMode: 'Live',
 }
 
-const $workflowService = {
+const workflowService = {
   query () {
     return Promise.resolve(taskProxy.data)
   }
@@ -81,7 +85,7 @@ describe('EditRuntimeForm Component', () => {
       isFamily: false,
       tokens: { id: '~u/w//1/t' }
     },
-    value: false,
+    // value: false,
     types: cloneDeep(IntrospectionQuery.data.__schema.types)
   }
 
@@ -89,30 +93,35 @@ describe('EditRuntimeForm Component', () => {
    * @param {*} options
    * @returns {Wrapper<EditRuntimeForm>}
    */
-  const mountFunction = (options) => shallowMount(EditRuntimeForm, {
-    global: {
-      plugins: [vuetify],
-      mocks: { $workflowService }
+  const mountFunction = (options = {}) => shallowMount(EditRuntimeForm, merge(
+    {
+      global: {
+        plugins: [vuetify],
+        provide: { workflowService },
+      },
+      props,
     },
-    ...options
-  })
+    options
+  ))
 
   describe('reset()', () => {
     it("queries the task's runtime section & processes the response", async () => {
-      const wrapper = mountFunction({
-        props,
-        created () {},
-      })
+      // vi.mock('vue', async (importOriginal) => ({
+      //   ...await importOriginal(),
+      //   onBeforeMount () {},
+      // }))
+      // How to cleanly test the reset() func in isolation without it already being run by the onBeforeMount hook?
+      const wrapper = mountFunction()
       await wrapper.vm.reset()
       expect(INITIAL_DATA).not.to.have.key('__typename')
-      expect(wrapper.vm.model).to.deep.equal(INITIAL_DATA)
+      expect(wrapper.vm.data).to.deep.equal(INITIAL_DATA)
       expect(wrapper.vm.initialData).to.deep.equal(INITIAL_DATA)
     })
   })
 
   describe('getBroadcastData()', () => {
     it('correctly extracts only the changed data', () => {
-      const model = {
+      const data = {
         ...INITIAL_DATA,
         executionTimeLimit: 'PT30M',
         environment: [
@@ -148,7 +157,7 @@ describe('EditRuntimeForm Component', () => {
         props,
         data: () => ({
           initialData: INITIAL_DATA,
-          model
+          data
         }),
         created () {}
       })
@@ -156,7 +165,7 @@ describe('EditRuntimeForm Component', () => {
     })
 
     it('handles empty key-val pairs', () => {
-      const model = {
+      const data = {
         ...INITIAL_DATA,
         environment: [
           { key: null, value: null },
@@ -171,7 +180,7 @@ describe('EditRuntimeForm Component', () => {
         props,
         data: () => ({
           initialData: INITIAL_DATA,
-          model
+          data
         }),
         created () {}
       })
