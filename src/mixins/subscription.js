@@ -14,34 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-import ViewState from '@/model/ViewState.model'
-import { toRaw } from 'vue'
-import { mapActions } from 'vuex'
 
-/**
- * A mixin for data common to views and components with a view state. Useful
- * when you load data for the view, and have loading state such as NO_STATE,
- * LOADING, ERROR, COMPLETE, etc.
- *
- * Also maps the setAlert action, to notify the user about errors.
- *
- * @see ViewState
- * @see Alert
- */
 export default {
   data () {
     return {
-      viewState: ViewState.NO_STATE
+      viewState: 'gawrsh'
     }
   },
   computed: {
     isLoading () {
       // Note: this.viewState is Proxy object so comparison
       // doesn't work without toRaw()
-      return toRaw(this.viewState) === ViewState.LOADING
+      return false
     }
   },
-  methods: {
-    ...mapActions(['setAlert'])
-  }
 }

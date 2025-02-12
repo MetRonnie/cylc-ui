@@ -42,7 +42,6 @@ const actions = {
   /**
    *
    * @param {*} param0
-   * @param {?import('@/model/Alert.model').Alert} alert
    */
   setAlert ({ commit }, alert) {
     // log to console when the alert is not null (null can mean to remove the alert)

@@ -15,10 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { i18n } from '@/i18n'
-
-const workflowTitle = ({ workflowName: name }) => i18n.global.t('App.workflow', { name })
-
 /**
  * Define all of your application routes here
  * for more information on routes, see the
@@ -32,41 +28,7 @@ export default [
     path: '/',
     view: 'Dashboard',
     meta: {
-      title: i18n.global.t('App.dashboard'),
-      layout: 'default'
-    }
-  },
-  {
-    path: '/workflow-table',
-    view: 'WorkflowsTable',
-    meta: {
-      title: 'Workflow Table',
-      layout: 'default'
-    }
-  },
-  {
-    path: '/workspace/:workflowName(.*)',
-    view: 'Workspace',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true
-    },
-    props: true
-  },
-  {
-    path: '/user-profile',
-    view: 'UserProfile',
-    meta: {
-      title: i18n.global.t('App.userProfile'),
-      layout: 'default'
-    }
-  },
-  {
-    path: '/guide',
-    view: 'Guide',
-    meta: {
-      title: i18n.global.t('App.guide'),
+      title: 'Dashboard',
       layout: 'default'
     }
   },
@@ -82,87 +44,9 @@ export default [
     path: '/:catchAll(.*)',
     view: 'NotFound',
     meta: {
-      title: i18n.global.t('App.notFound'),
+      title: 'NotFound',
       layout: 'empty'
     }
-  },
-
-  // the standalone views
-  {
-    path: '/workflows',
-    view: 'Workflows',
-    meta: {
-      title: i18n.global.t('App.workflows'),
-      layout: 'default',
-      toolbar: false,
-      showSidebar: false
-    }
-  },
-  {
-    path: '/tree/:workflowName(.*)',
-    view: 'Tree',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true,
-      showSidebar: false
-    },
-    props: true
-  },
-  {
-    path: '/table/:workflowName(.*)',
-    view: 'Table',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true,
-      showSidebar: false
-    },
-    props: true
-  },
-  {
-    path: '/graph/:workflowName(.*)',
-    view: 'Graph',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true,
-      showSidebar: false
-    },
-    props: true
-  },
-  {
-    path: '/log/:workflowName(.*)',
-    view: 'Log',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true,
-      showSidebar: false
-    },
-    props: true
-  },
-  {
-    path: '/analysis/:workflowName(.*)',
-    view: 'Analysis',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true,
-      showSidebar: false
-    },
-    props: true
-  },
-  {
-    path: '/gantt/:workflowName(.*)',
-    view: 'Gantt',
-    meta: {
-      getTitle: workflowTitle,
-      layout: 'default',
-      toolbar: true,
-      showSidebar: false
-    },
-    props: true
   },
   {
     path: '/noAuth',

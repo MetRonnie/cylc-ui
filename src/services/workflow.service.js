@@ -17,47 +17,23 @@
 
 import { cloneDeep, isEqual } from 'lodash'
 import gql from 'graphql-tag'
-import ViewState from '@/model/ViewState.model'
-import Subscription from '@/model/Subscription.model'
-import {
-  dummyMutations,
-  extractFields,
-  findByName,
-  getBaseType,
-  getIntrospectionQuery,
-  getMutationArgsFromTokens,
-  mutate,
-  primaryMutations,
-  processMutations,
-  query,
-  tokenise
-} from '@/utils/aotf'
 import { store } from '@/store/index'
 import { createApolloClient } from '@/graphql/index'
 import { print } from 'graphql'
 import mergeQueries from '@/graphql/merge'
-import { Alert } from '@/model/Alert.model'
 import CylcTreeCallback from '@/services/treeCallback'
+function  dummyMutations () {}
+function  extractFields () {}
+function  findByName () {}
+function  getBaseType () {}
+function  getIntrospectionQuery () {}
+function  getMutationArgsFromTokens () {}
+function  mutate () {}
+function  primaryMutations () {}
+function  processMutations () {}
+function  query () {}
+function  tokenise () {}
 
-/** @typedef {import('graphql').DocumentNode} DocumentNode */
-/** @typedef {import('graphql').IntrospectionInputType} IntrospectionInputType */
-/** @typedef {import('subscriptions-transport-ws').SubscriptionClient} SubscriptionClient */
-/** @typedef {import('@/utils/aotf').Mutation} Mutation */
-/** @typedef {import('@/utils/aotf').MutationResponse} MutationResponse */
-/** @typedef {import('@/utils/aotf').Query} Query */
-
-/**
- * @typedef {Object} IntrospectionObj
- * @property {Mutation[]} mutations
- * @property {Mutation[]} queries
- * @property {IntrospectionInputType[]} types
- */
-
-/**
- * @typedef {Object} SubscriptionOptions
- * @property {Function} next
- * @property {Function} error
- */
 
 class WorkflowService {
   /**
@@ -71,18 +47,6 @@ class WorkflowService {
     this.subscriptionClient = subscriptionClient
     this.apolloClient = createApolloClient(httpUrl, subscriptionClient)
 
-    /**
-     * This is the mapping of Vue components/views subscriptions. Not necessarily
-     * GraphQL subscriptions. A Vue components/views subscription results, ultimately,
-     * in a GraphQL subscription. But you may have 10 Vue components/views subscriptions,
-     * all using the same query. In this case, we end up with a single, merged, GraphQL
-     * query, and a single Apollo Client GraphQL subscription.
-     *
-     * The Apollo Client GraphQL subscription can be accessed via the Subscription
-     * attribute `.observable`, or via the `.subscriptionClient`.
-     *
-     * @type {Object.<string, Subscription>}
-     */
     this.subscriptions = {}
 
     // mutations defaults
@@ -214,13 +178,8 @@ class WorkflowService {
 
   // --- GraphQL query subscriptions
 
-  /**
-   * @param {SubscriptionQuery} query
-   * @returns {Subscription}
-   */
   getOrCreateSubscription (query) {
     // note, this will force a return of the FIRST query of the SAME name as any subsequent queries
-    return (this.subscriptions[query.name] ??= new Subscription(query))
   }
 
   /**
@@ -242,9 +201,7 @@ class WorkflowService {
         if (callback.init) {
           callback.init(store, errors)
           for (const error of errors) {
-            store.commit('SET_ALERT', new Alert(error[0], 'error'), { root: true })
             console.warn(...error)
-            subscription.handleViewState(ViewState.ERROR, error('Error presetting view state'))
           }
         }
       }
@@ -263,11 +220,6 @@ class WorkflowService {
     pendingSubscriptions.forEach(subscription => this.startSubscription(subscription))
   }
 
-  /**
-   * Start a Subscription for a view or component.
-   *
-   * @param {Subscription} subscription
-   */
   startSubscription (subscription) {
     if (this.debug) {
       // eslint-disable-next-line no-console
@@ -276,15 +228,9 @@ class WorkflowService {
         subscription
       )
     }
-    subscription.handleViewState(ViewState.LOADING, null)
 
     // Stop if already running.
     if (subscription.observable !== null) {
-      if (this.debug) {
-        // eslint-disable-next-line no-console
-        console.debug(
-          `Subscription for query [${subscription.query.name}] already running. Stopping it...`)
-      }
       this.stopSubscription(subscription, true)
     }
     if (subscription.query.isDelta === false & subscription.query.isGlobalCallback === false) {
@@ -305,16 +251,13 @@ class WorkflowService {
               }
             },
             error: function error (err) {
-              subscription.handleViewState(ViewState.ERROR, err)
             }
           }
         )
         this.subscriptions[subscription.query.name] = subscription
         // All done!
-        subscription.handleViewState(ViewState.COMPLETE, null)
         subscription.reload = false
       } catch (e) {
-        subscription.handleViewState(ViewState.ERROR, e)
       }
     } else {
       const globalCallback = this.globalCallback
@@ -353,39 +296,21 @@ class WorkflowService {
                 callback.commit(store, errors)
               }
               for (const error of errors) {
-                store.commit(
-                  'SET_ALERT',
-                  new Alert(error[0], 'error'),
-                  { root: true }
-                )
                 console.warn(...error)
               }
             },
             error: function error (err) {
-              subscription.handleViewState(ViewState.ERROR, err)
             }
           }
         )
         this.subscriptions[subscription.query.name] = subscription
         // All done!
-        subscription.handleViewState(ViewState.COMPLETE, null)
         subscription.reload = false
       } catch (e) {
-        subscription.handleViewState(ViewState.ERROR, e)
       }
     }
   }
 
-  /**
-   * Create and start a deltas GraphQL subscription. It will result in a JS
-   * Observable being created to monitor the subscription. Apollo Client is
-   * used here to create the observer and the subscription.
-   *
-   * @param {DocumentNode} query - an already parsed GraphQL query (i.e. not a `string`)
-   * @param {Object} variables
-   * @param {SubscriptionOptions} subscriptionOptions - { next(), error() }
-   * @returns {Subscription}
-   */
   startCylcSubscription (query, variables, subscriptionOptions) {
     if (!query) {
       throw new Error('You must provide a query for the subscription')
@@ -478,10 +403,6 @@ class WorkflowService {
   }
 
   // --- Merging GraphQL queries...
-
-  /**
-   * @param {Subscription} subscription
-   */
   recompute (subscription) {
     const subscribers = Object.values(subscription.subscribers)
     if (subscribers.length === 0) {

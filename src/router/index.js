@@ -24,16 +24,11 @@
  */
 
 import { createRouter, createWebHashHistory } from 'vue-router'
-import NProgress from 'nprogress'
-import { i18n } from '@/i18n'
 
 import paths from '@/router/paths'
 import { store } from '@/store/index'
-import { Alert } from '@/model/Alert.model'
 
-const defaultPageTitle = i18n.global.t('App.name')
-
-NProgress.configure({ showSpinner: false })
+const defaultPageTitle = 'App'
 
 function getRoute (path) {
   return {
@@ -70,7 +65,6 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from) => {
-  NProgress.start()
   if (!store.state.user.user) {
     const user = await router.app.config.globalProperties.$userService.getUserProfile()
     // TODO: catch error getting user profile and redirect to static error page
@@ -99,13 +93,5 @@ router.beforeEach(async (to, from) => {
   store.dispatch('setAlert', null)
 })
 
-router.afterEach(() => {
-  NProgress.done()
-})
-
-router.onError((err, to, from) => {
-  store.dispatch('setAlert', new Alert(err, 'error'))
-  NProgress.done()
-})
 
 export default router

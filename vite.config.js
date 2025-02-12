@@ -18,88 +18,26 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vuetify from 'vite-plugin-vuetify'
-import eslint from 'vite-plugin-eslint'
-import IstanbulPlugin from 'vite-plugin-istanbul'
-import dns from 'dns'
 import path from 'path'
-
-// Workaround https://github.com/cypress-io/cypress/issues/25397
-dns.setDefaultResultOrder('ipv4first')
 
 export default defineConfig(({ mode }) => {
   const plugins = [
     vue(),
     vuetify(),
-    eslint({
-      failOnError: mode === 'production'
-    }),
   ]
-
-  if (mode !== 'production' && process.env.COVERAGE) {
-    plugins.push(
-      IstanbulPlugin({
-        forceBuildInstrument: true
-      })
-    )
-  }
-
-  /**
-   * When running the Vite dev server to serve the app, set the proxy for the
-   * mock JSON server data in offline mode else the Cylc UIServer data.
-   */
-  const devProxyTarget = `http://localhost:3000${mode === 'offline' ? '/' : '/cylc/'}`
 
   return {
     base: '',
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
-        $tests: path.resolve(__dirname, './tests'),
         lodash: 'lodash-es',
         react: 'preact/compat',
         'react-dom': 'preact/compat',
       }
     },
     plugins,
-    optimizeDeps: {
-      entries: ['./src/**/*.{vue,js,jsx,ts,tsx}'],
-      /* Vuetify components are dynamically imported by vite-plugin-vuetify,
-      so Vite only knows which components are being used upon navigation, causing
-      it to optimize them on the fly instead of pre-bundling. This can cause a
-      page reload which breaks some Cypress tests, so we exclude Vuetify from
-      optimization in that case. */
-      exclude: ['vuetify'],
-    },
-    server: {
-      proxy: {
-        '^/(userprofile|graphql)': {
-          target: devProxyTarget,
-          changeOrigin: true
-        },
-        '^/subscriptions': {
-          target: devProxyTarget,
-          changeOrigin: true,
-          ws: true
-        }
-      },
-      watch: {
-        ignored: [
-          path.resolve(__dirname, './coverage')
-        ]
-      },
-      warmup: {
-        clientFiles: [
-          './src/main.js',
-          './src/App.vue',
-          './src/views/Dashboard.vue',
-          './src/views/Workspace.vue',
-        ]
-      }
-    },
     build: {
-      sourcemap: mode !== 'production',
-      // Use default browser compatibility for ECMAScript syntax as it's
-      // good enough:
       target: 'modules',
     },
     css: {
@@ -109,32 +47,5 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    define: {
-      // Allow vue devtools to work when runing vite build:
-      __VUE_PROD_DEVTOOLS__: mode !== 'production'
-    },
-    // Unit test specific config:
-    test: {
-      include: ['./tests/unit/**/*.spec.{js,ts}'],
-      environment: 'jsdom',
-      globals: true, // auto-import `describe`, `it`, `beforeEach` etc.
-      setupFiles: ['./tests/unit/setup.js'],
-      restoreMocks: true,
-      server: {
-        deps: {
-          // inline vuetify to prevent 'TypeError: Unknown file extension ".css"
-          inline: ['vuetify'],
-        },
-      },
-      coverage: {
-        provider: 'istanbul',
-        include: [
-          'src/**'
-        ],
-        exclude: [
-          'src/services/mock/**'
-        ],
-      }
-    }
   }
 })

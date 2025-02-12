@@ -16,8 +16,9 @@
  */
 import pick from 'lodash/pick'
 import isArray from 'lodash/isArray'
-import { Tokens } from '@/utils/uid'
-import { sortedIndexBy } from '@/components/cylc/common/sort'
+function Tokens () {}
+
+function sortedIndexBy (){}
 
 const NODE_TYPES = [
   'user',

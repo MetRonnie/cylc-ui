@@ -1,8 +1,0 @@
-{
-  "tableHeader": "Workflows Table",
-  "tableColumnName": "Name",
-  "tableColumnOwner": "Owner",
-  "tableColumnHost": "Host",
-  "tableColumnPort": "Port",
-  "tableColumnActions": "Actions"
-}

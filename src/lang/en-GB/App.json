@@ -1,9 +1,0 @@
-{
-  "name": "Cylc UI",
-  "dashboard": "Dashboard",
-  "workflow": "Workflow {name}",
-  "workflows": "Workflows",
-  "notFound": "Not Found",
-  "userProfile": "User Profile",
-  "guide": "Guide"
-}

@@ -21,7 +21,6 @@ import {
   mdiChartLine,
   mdiFileDocumentMultipleOutline,
   mdiFileTree,
-  mdiGraph,
   mdiTable,
   mdiTree,
   mdiChartGantt,
@@ -31,11 +30,9 @@ import {
 // Use dynamic async components for lazy loading:
 const TreeView = defineAsyncComponent(() => import('@/views/Tree.vue'))
 const TableView = defineAsyncComponent(() => import('@/views/Table.vue'))
-const GraphView = defineAsyncComponent(() => import('@/views/Graph.vue'))
 const LogView = defineAsyncComponent(() => import('@/views/Log.vue'))
 const AnalysisView = defineAsyncComponent(() => import('@/views/Analysis.vue'))
 const GanttView = defineAsyncComponent(() => import('@/views/Gantt.vue'))
-const SimpleTreeView = defineAsyncComponent(() => import('@/views/SimpleTree.vue'))
 const InfoView = defineAsyncComponent(() => import('@/views/Info.vue'))
 
 /**
@@ -54,7 +51,6 @@ export const TREE = 'Tree'
 export const workspaceViews = new Map([
   [TREE, { component: TreeView, icon: mdiFileTree }],
   ['Table', { component: TableView, icon: mdiTable }],
-  ['Graph', { component: GraphView, icon: mdiGraph }],
   ['Log', { component: LogView, icon: mdiFileDocumentMultipleOutline }],
   ['Analysis', { component: AnalysisView, icon: mdiChartLine }],
   ['Gantt', { component: GanttView, icon: mdiChartGantt }],
@@ -75,12 +71,6 @@ export const allViews = new Map([
   ...workspaceViews,
   ['Info', { component: InfoView, icon: mdiInformationOutline }],
 ])
-
-// Development views that we don't want in production:
-if (import.meta.env.MODE !== 'production') {
-  allViews.set('SimpleTree', { component: SimpleTreeView, icon: mdiTree })
-  workspaceViews.set('SimpleTree', { component: SimpleTreeView, icon: mdiTree })
-}
 
 export const useDefaultView = () => {
   const defaultView = useLocalStorage('defaultView', TREE)

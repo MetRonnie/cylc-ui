@@ -38,7 +38,6 @@ export default {
      * has only the workflow name from the Vue route. We then combine it
      * with the user name to create the workflow ID.
      *
-     * @return {import('@/model/User.model').User}
      */
     ...mapState('user', ['user']),
     /**

@@ -20,57 +20,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import 'graphiql/graphiql.min.css'
 import { render, createElement } from 'preact/compat'
 import GraphiQL from 'graphiql'
-import { fallbackGraphQLFetcher, graphQLFetcher } from '@/graphql/graphiql'
 
 export default {
   name: 'GraphiQL',
-  data () {
-    return {
-      fetcher: null,
-      subscription: null
-    }
-  },
   mounted () {
-    this.fetcher = this.createFetcher()
     render(
-      createElement(GraphiQL, {
-        fetcher: this.fetcher,
-        defaultVariableEditorOpen: false
-      }),
+      createElement(GraphiQL),
       this.$refs.graphiql
     )
   },
-  beforeRouteLeave (to, from) {
-    // Important to remember to unsubscribe, otherwise a user may accidentally create several
-    // subscriptions/observers, causing performance issues on both frontend and backend.
-    if (this.subscription !== null) {
-      this.subscription.unsubscribe()
-      this.subscription = null
-    }
-  },
-  methods: {
-    createFetcher () {
-      const subscriptionClient = this.$workflowService.subscriptionClient
-      return subscriptionClient !== null
-        ? graphQLFetcher(subscriptionClient, fallbackGraphQLFetcher, this)
-        : fallbackGraphQLFetcher
-    }
-  }
 }
 </script>
-
-<style scoped>
-body {
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-  width: 100%;
-}
-
-#graphiql {
-  height: 100vh;
-}
-</style>

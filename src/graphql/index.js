@@ -27,7 +27,9 @@ import { WebSocketLink } from '@apollo/client/link/ws'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { store } from '@/store/index'
-import { createUrl, getCylcHeaders } from '@/utils/urls'
+
+function createUrl() {}
+function getCylcHeaders () {}
 
 /** @typedef {import('subscriptions-transport-ws').ClientOptions} ClientOptions */
 
