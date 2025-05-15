@@ -44,6 +44,7 @@ const inputDefaults = Object.fromEntries(
       variant: 'outlined',
       clearIcon: mdiClose,
       hideDetails: 'auto',
+      rounded: 'lg',
     }
   ])
 )
@@ -79,19 +80,52 @@ export const vuetifyOptions = {
   aliases: {
     VSelectActions: VCardActions,
   },
-  defaults: {
-    VTooltip: {
-      activator: 'parent',
-      location: 'bottom',
+  defaults: merge(
+    {
+      VTooltip: {
+        activator: 'parent',
+        location: 'bottom',
+        rounded: 'lg',
+      },
+      VList: {
+        slim: true,
+      },
+      VSelectActions: {
+        class: 'mt-n2 mb-n1'
+      },
+      VBtn: {
+        rounded: 'lg',
+      },
+      VBtnToggle: {
+        rounded: 'lg',
+        VBtn: {
+          rounded: null,
+        }
+      },
+      VCard: {
+        rounded: 'lg',
+      },
+      VAlert: {
+        rounded: 'lg',
+      },
+      VSnackbar: {
+        rounded: 'lg',
+      },
+      VMenu: {
+        rounded: 'lg',
+        VList: {
+          rounded: 'lg',
+          density: 'comfortable',
+          class: 'd-flex flex-column ga-1',
+          VListItem: {
+            rounded: 'lg',
+            class: 'mx-2'
+          },
+        }
+      }
     },
-    VList: {
-      slim: true,
-    },
-    VSelectActions: {
-      class: 'mt-n2'
-    },
-    ...inputDefaults
-  },
+    inputDefaults,
+  )
 }
 
 /**

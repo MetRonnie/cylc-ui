@@ -64,6 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         icon
         variant="text"
         size="small"
+        rounded="circle"
         :style="{
           visibility: (item.task.children || []).length ? null : 'hidden',
           transform: isExpanded(internalItem) ? 'rotate(180deg)' : null
