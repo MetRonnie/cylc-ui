@@ -113,7 +113,71 @@ const resizeObserver = new ResizeObserver(() => {
   boxPanel.update()
 })
 
-const layoutsCache = window.caches.open('workspace-layouts')
+// IndexedDB helpers for workspace layouts
+const DB_NAME = 'workspace-layouts-db'
+const STORE_NAME = 'layouts'
+const DB_VERSION = 1
+
+function openDB () {
+  return new Promise((resolve, reject) => {
+    const request = window.indexedDB.open(DB_NAME, DB_VERSION)
+    request.onupgradeneeded = function (event) {
+      const db = event.target.result
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME)
+      }
+    }
+    request.onsuccess = function (event) {
+      resolve(event.target.result)
+    }
+    request.onerror = function (event) {
+      reject(event.target.error)
+    }
+  })
+}
+
+async function saveLayoutToDB (key, value) {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite')
+    const store = tx.objectStore(STORE_NAME)
+    const req = store.put(value, key)
+    req.onsuccess = () => resolve()
+    req.onerror = (e) => reject(e)
+  })
+}
+
+async function getLayoutFromDB (key) {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readonly')
+    const store = tx.objectStore(STORE_NAME)
+    const req = store.get(key)
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = (e) => reject(e)
+  })
+}
+
+async function deleteOldestIfNeeded () {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite')
+    const store = tx.objectStore(STORE_NAME)
+    const req = store.getAllKeys()
+    req.onsuccess = async () => {
+      if (req.result.length > 100) {
+        await new Promise((resolve, reject) => {
+          const delReq = store.delete(req.result[0])
+          delReq.onsuccess = () => resolve()
+          delReq.onerror = (e) => reject(e)
+        })
+      }
+      resolve()
+    }
+    req.onerror = (e) => reject(e)
+  })
+}
+
 const layoutWatcher = watchWithControl(views, saveLayout, { deep: true })
 
 onMounted(async () => {
@@ -187,7 +251,7 @@ async function getLayout () {
 }
 
 /**
- * Save the current layout/views to cache storage.
+ * Save the current layout/views to IndexedDB.
  */
 async function saveLayout () {
   // Serialize layout first to synchronously capture the current state
@@ -195,24 +259,15 @@ async function saveLayout () {
     layout: dockPanel.saveLayout(),
     views: views.value,
   }, replacer)
-  const cache = await layoutsCache
-  // Overrides on FIFO basis:
-  await cache.put(props.workflowName, new Response(
-    serializedLayout,
-    { headers: { 'Content-Type': 'application/json' } }
-  ))
-  const keys = await cache.keys()
-  if (keys.length > 100) {
-    await cache.delete(keys[0])
-  }
+  await saveLayoutToDB(props.workflowName, serializedLayout)
+  await deleteOldestIfNeeded()
 }
 
 /**
- * Return the saved layout for this workflow from cache storage, if it was saved.
+ * Return the saved layout for this workflow from IndexedDB, if it was saved.
  */
 async function getStoredLayout () {
-  const cache = await layoutsCache
-  const stored = await cache.match(props.workflowName).then((r) => r?.text())
+  const stored = await getLayoutFromDB(props.workflowName)
   if (stored) {
     return JSON.parse(
       stored,
