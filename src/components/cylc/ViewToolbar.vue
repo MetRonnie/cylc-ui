@@ -16,189 +16,48 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
 <template>
-  <div class="c-view-toolbar">
-    <!-- control group -->
-    <div
-      class="group"
-      v-for="iGroup in iGroups"
-      :key="iGroup.title"
+  <div
+    class="c-view-toolbar"
+    :class="roundedClass"
+  >
+    <v-defaults-provider
+    :defaults="{
+        VBtn: btnProps(size, rounded),
+      }"
     >
-      <!-- control -->
-      <div
-        v-for="iControl in iGroup.iControls"
-        :key="iControl.title"
-        class="control"
-        :data-cy="`control-${iControl.key}`"
-      >
-        <v-btn
-          v-bind="btnProps"
-          :disabled="iControl.disabled"
-          :color="iControl.color"
-          @click="iControl.callback"
-        >
-          <v-icon>{{ iControl.icon }}</v-icon>
-          <v-tooltip>{{ iControl.title }}</v-tooltip>
-        </v-btn>
-      </div>
-    </div>
+      <slot/>
+    </v-defaults-provider>
   </div>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import { btnProps } from '@/utils/viewToolbar'
 
-export default {
-  name: 'ViewToolbar',
-
-  emits: [
-    'setOption'
-  ],
-
-  props: {
-    groups: {
-      required: true,
-      type: Array
-      /*
-        groups: [
-          {
-            // display name
-            title: String,
-            // list of controls in this group
-            controls: [
-              {
-                // display name
-                title: String,
-                // unique key:
-                // * Provided with "setOption" events.
-                // * Used by enableIf/disableIf
-                // * Added to the control's class list for testing.
-                key: String
-                // action to perform when clicked:
-                // * toggle - toggle true/false
-                // * callback - call the provided callback
-                action: String
-                // for use with action='callback'
-                callback: Fuction
-                // list of keys
-                // only enable this control if all of the listed controls have
-                // truthy values
-                enableIf
-                // list of keys
-                // disable this control if any of the listed controls have
-                // truthy values
-                disableIf
-              }
-            ]
-          }
-        ]
-      */
-    },
-    /** Button size in px or vuetify named size */
-    size: {
-      type: String,
-      default: 'default',
-    }
+const props = defineProps({
+  /** Button size in px or vuetify named size */
+  size: {
+    type: String,
+    default: 'default',
   },
-
-  computed: {
-    iGroups () {
-      // wrap the provided props into something we can mutate with derived
-      // parameters
-      const ret = []
-      let iGroup
-      let iControl
-      let color // control color
-      let callback // callback to fire when control is activated
-      let disabled // true if control should not be enabled
-      const values = this.getValues()
-      for (const group of this.groups) {
-        iGroup = {
-          ...group,
-          iControls: []
-        }
-        for (const control of group.controls) {
-          color = null
-          callback = null
-          disabled = false
-
-          // set callback and color
-          switch (control.action) {
-            case 'toggle':
-              callback = (e) => this.toggle(control, e)
-              if (control.value) {
-                color = 'blue'
-              }
-              break
-            case 'callback':
-              callback = (e) => this.call(control, e)
-              break
-          }
-
-          // set disabled
-          for (const enableIf of control.enableIf || []) {
-            if (!values[enableIf]) {
-              disabled = true
-              break
-            }
-          }
-          for (const disableIf of control.disableIf || []) {
-            if (values[disableIf]) {
-              disabled = true
-              break
-            }
-          }
-
-          iControl = {
-            ...control,
-            color,
-            callback,
-            disabled
-          }
-          iGroup.iControls.push(iControl)
-        }
-        ret.push(iGroup)
-      }
-      return ret
-    },
-    btnProps () {
-      return btnProps(this.size)
-    }
+  /** @see https://vuetifyjs.com/en/styles/border-radius/ */
+  rounded: {
+    type: [String, Boolean],
+    default: true,
   },
+})
 
-  methods: {
-    toggle (control, e) {
-      // toggle a boolean value
-      // NOTE: undefined is falsy
-      control.value = !control.value
-      this.$emit('setOption', control.key, control.value)
-      e.currentTarget.blur()
-    },
-    call (control, e) {
-      // call a control's callback
-      control.callback()
-      e.currentTarget.blur()
-    },
-    getValues () {
-      // an object with all defined values
-      const vars = {}
-      for (const group of this.groups) {
-        for (const control of group.controls) {
-          if (control.key) {
-            vars[control.key] = control.value
-          }
-        }
-      }
-      return vars
-    },
-  }
-}
+const roundedClass = computed(() => {
+  if (!props.rounded) return
+  if (props.rounded === true) return 'rounded'
+  return `rounded-${props.rounded}`
+})
+
 </script>
 
-<style lang="scss">
+<!-- <style lang="scss">
   .c-view-toolbar {
-    display: flex;
-
-    .group {
+    > div {
       display: flex;
       align-items: center;
 
@@ -215,4 +74,4 @@ export default {
       }
     }
   }
-</style>
+</style> -->

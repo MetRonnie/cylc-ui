@@ -18,10 +18,44 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <template>
   <div class="c-graph w-100 h-100">
     <!-- the controls -->
-    <ViewToolbar
-      :groups="controlGroups"
-      @setOption="setOption"
-    />
+    <ViewToolbar rounded="lg">
+      <ViewToolbarBtn
+        @click="refresh"
+        :icon="icons.mdiRefresh"
+        v-tooltip="'Refresh'"
+        :disabled="autoRefresh"
+      />
+      <ViewToolbarBtn
+        v-model:toggle="autoRefresh"
+        :icon="icons.mdiTimer"
+        v-tooltip="'Auto Refresh'"
+      />
+      <ViewToolbarBtn
+        v-model:toggle="transpose"
+        :icon="icons.mdiFileRotateRight"
+        v-tooltip="'Transpose'"
+      />
+      <ViewToolbarBtn
+        @click="reset"
+        :icon="icons.mdiImageFilterCenterFocus"
+        v-tooltip="'Centre'"
+      />
+      <ViewToolbarBtn
+        @click="increaseSpacing"
+        :icon="icons.mdiArrowExpand"
+        v-tooltip="'Increase Spacing'"
+      />
+      <ViewToolbarBtn
+        @click="decreaseSpacing"
+        :icon="icons.mdiArrowCollapse"
+        v-tooltip="'Decrease Spacing'"
+      />
+      <ViewToolbarBtn
+        v-model:toggle="groupCycle"
+        :icon="icons.mdiVectorSelection"
+        v-tooltip="'Group by cycle point'"
+      />
+    </ViewToolbar>
 
     <!-- the graph -->
     <svg
@@ -130,6 +164,7 @@ import {
   mdiVectorSelection
 } from '@mdi/js'
 import { isFlowNone } from '@/utils/tasks'
+import ViewToolbarBtn from '@/components/cylc/ViewToolbarBtn.vue'
 
 // NOTE: Use TaskProxies not nodesEdges{nodes} to list nodes as this is what
 // the tree view uses which allows the requests to overlap with this and other
@@ -230,7 +265,8 @@ export default {
   components: {
     GraphNode,
     GraphSubgraph,
-    ViewToolbar
+    ViewToolbar,
+    ViewToolbarBtn,
   },
 
   props: { initialOptions },
@@ -270,6 +306,15 @@ export default {
       spacing,
       groupCycle,
       isFlowNone,
+      icons: {
+        mdiTimer,
+        mdiImageFilterCenterFocus,
+        mdiArrowCollapse,
+        mdiArrowExpand,
+        mdiRefresh,
+        mdiFileRotateRight,
+        mdiVectorSelection,
+      },
     }
   },
 
@@ -333,61 +378,6 @@ export default {
     workflows () {
       return this.getNodes('workflow', this.workflowIDs)
     },
-    controlGroups () {
-      return [
-        {
-          title: 'Graph',
-          controls: [
-            {
-              title: 'Refresh',
-              icon: mdiRefresh,
-              action: 'callback',
-              callback: this.refresh,
-              disableIf: ['autoRefresh']
-            },
-            {
-              title: 'Auto Refresh',
-              icon: mdiTimer,
-              action: 'toggle',
-              value: this.autoRefresh,
-              key: 'autoRefresh'
-            },
-            {
-              title: 'Transpose',
-              icon: mdiFileRotateRight,
-              action: 'toggle',
-              value: this.transpose,
-              key: 'transpose'
-            },
-            {
-              title: 'Centre',
-              icon: mdiImageFilterCenterFocus,
-              action: 'callback',
-              callback: this.reset
-            },
-            {
-              title: 'Increase Spacing',
-              icon: mdiArrowExpand,
-              action: 'callback',
-              callback: this.increaseSpacing
-            },
-            {
-              title: 'Decrease Spacing',
-              icon: mdiArrowCollapse,
-              action: 'callback',
-              callback: this.decreaseSpacing
-            },
-            {
-              title: 'Group by cycle point',
-              icon: mdiVectorSelection,
-              action: 'toggle',
-              value: this.groupCycle,
-              key: 'groupCycle'
-            }
-          ]
-        }
-      ]
-    }
   },
 
   methods: {
@@ -833,9 +823,7 @@ export default {
       // turn the view toolbar into a floating component
       position: fixed;
       background-color: rgba(240,240,240,0.9);
-      border-radius: 0.75em;
       margin: 0.5em;
-      padding: 0.4em;
     }
   }
 </style>
