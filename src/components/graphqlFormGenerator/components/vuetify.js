@@ -24,6 +24,7 @@ import GList from '@/components/graphqlFormGenerator/components/List.vue'
 import GObject from '@/components/graphqlFormGenerator/components/Object.vue'
 import GBroadcastSetting from '@/components/graphqlFormGenerator/components/BroadcastSetting.vue'
 import GMapItem from '@/components/graphqlFormGenerator/components/MapItem.vue'
+import GRuntimeSubSection from '@/components/graphqlFormGenerator/components/RuntimeSubSection.vue'
 import { inputComponents } from '@/plugins/vuetify'
 
 const NumberFieldProps = {
@@ -183,7 +184,10 @@ export default {
     },
     [RUNTIME_SETTING]: {
       is: GMapItem
-    }
+    },
+    RuntimeEvents: {
+      is: GRuntimeSubSection,
+    },
   },
 
   kinds: {
