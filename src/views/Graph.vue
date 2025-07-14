@@ -239,9 +239,7 @@ fragment FamilyData on Family {
     id
     name
   }
-  childFamilies {
-    name
-  }
+  ancestors
 }
 
 fragment AddedDelta on Added {
@@ -535,16 +533,15 @@ export default {
      */
     allParentLookUp () {
       const lookup = []
-      for (const namespace of this.namespaces) {
-        if (namespace.name === 'root') continue
-        const ancestors = []
-        let parent = namespace.node.firstParent
-        while (parent.name !== 'root') {
-          const parentNode = this.cylcTree.$index[parent.id]
-          ancestors.unshift(parentNode.name)
-          parent = parentNode.node.firstParent
+      for (const { name, node } of this.namespaces) {
+        if (node.__typename === 'Family' && name !== 'root') {
+          // Get ancestors sorted by highest-up to lowest-down the hierarchy,
+          // excluding the root node:
+          const ancestors = node.ancestors.length
+            ? node.ancestors.slice(0, -1).reverse()
+            : this.fallbackGetAncestors(node)
+          lookup.push([name, ancestors])
         }
-        lookup.push([namespace.name, ancestors])
       }
       // Sort by shortest ancestor list to longest:
       return new Map(lookup.sort((a, b) => a[1].length - b[1].length))
@@ -700,6 +697,24 @@ export default {
   },
 
   methods: {
+    /**
+     * Return the first-parent ancestry of this node for pre-8.5.0 workflows.
+     *
+     * @param {Node} node - Namespace node.
+     * @returns {string[]} Ancestors sorted by highest-up to lowest-down the hierarchy,
+     * excluding the root node.
+     */
+    fallbackGetAncestors (node) {
+      const ancestors = []
+      let parent = node.firstParent
+      while (parent.name !== 'root') {
+        const parentNode = this.cylcTree.$index[parent.id]
+        ancestors.unshift(parentNode.name)
+        parent = parentNode.node.firstParent
+      }
+      return ancestors
+    },
+
     /**
      * Get a nested object of families
      *
