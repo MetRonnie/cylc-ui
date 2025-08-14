@@ -85,6 +85,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           <v-treeview
             v-model:selected="collapseFamily"
             :items="treeDropDownFamily"
+            @click:select="disableChildren"
           />
         </v-menu>
       </ViewToolbarBtn>
@@ -202,6 +203,7 @@ import {
   mdiAlphaFCircle,
 } from '@mdi/js'
 import { isFlowNone } from '@/utils/tasks'
+import { ref } from 'vue'
 
 /** @typedef {import('@/utils/uid').Tokens} Tokens */
 
@@ -502,6 +504,12 @@ export default {
      */
     const collapseFamily = useInitialOptions('collapseFamily', { props, emit }, [])
 
+    /**
+     * Gets the Family tree as a nested object for use in vuetify toolbar drop down
+     * @returns {Family[]} array containing nested structure of families
+     */
+    const treeDropDownFamily = ref([])
+
     return {
       jobTheme: useJobTheme(),
       transpose,
@@ -512,6 +520,7 @@ export default {
       collapseCycle,
       collapseFamily,
       isFlowNone,
+      treeDropDownFamily,
       icons: {
         mdiTimer,
         mdiImageFilterCenterFocus,
@@ -550,6 +559,7 @@ export default {
       // supports loading graph when component is mounted and autoRefresh is off.
       // true if page is loading for the first time and nodeDimensions are yet to be calculated
       initialLoad: true,
+      opened: [],
     }
   },
 
@@ -589,13 +599,6 @@ export default {
     },
     namespaces () {
       return this.workflows[0]?.$namespaces || []
-    },
-    /**
-     * Gets the Family tree as a nested object for use in vuetify toolbar drop down
-     * @returns {Family[]} array containing nested structure of families
-     */
-    treeDropDownFamily () {
-      return this.allParentLookUp.size ? this.getTree() : [{ name: 'No families', disabled: true }]
     },
     /**
      * Gets the array of cycles
@@ -707,6 +710,18 @@ export default {
   },
 
   methods: {
+    disableChildren (e) {
+      // let pointer = this.treeDropDownFamily
+      // for (const family of e.path) {
+      //   pointer = pointer.find(({name}) => name === family.name).children
+      // }
+      // if (pointer)
+      // Remove e.id from this.opened array if it is in there:
+      const index = this.opened.indexOf(e.id)
+      if (index !== -1) {
+        this.opened.splice(index, 1)
+      }
+    },
     /**
      * Get a nested object of families
      *
@@ -1442,6 +1457,13 @@ export default {
       this.graphID = null
       this.refresh()
       // if (newValue === true) { this.groupCycle = false }
+    },
+    allParentLookUp: {
+      handler () {
+        this.treeDropDownFamily = this.allParentLookUp.size ? this.getTree() : [{ name: 'No families', disabled: true }]
+      },
+      deep: true,
+      immediate: true,
     }
   }
 }

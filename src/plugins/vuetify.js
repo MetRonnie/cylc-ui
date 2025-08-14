@@ -88,6 +88,7 @@ export const vuetifyOptions = {
       itemTitle: 'name',
       itemValue: 'name',
       openAll: true,
+      openOnClick: false,
     },
   },
 }
