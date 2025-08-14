@@ -18,10 +18,77 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <template>
   <div class="c-graph w-100 h-100">
     <!-- the controls -->
-    <ViewToolbar
-      :groups="controlGroups"
-      @setOption="setOption"
-    />
+    <ViewToolbar rounded="lg">
+      <ViewToolbarBtn
+        @click="refresh"
+        :icon="icons.mdiRefresh"
+        v-tooltip="'Refresh'"
+        :disabled="autoRefresh"
+      />
+      <ViewToolbarBtn
+        v-model:toggle="autoRefresh"
+        :icon="icons.mdiTimer"
+        v-tooltip="'Auto Refresh'"
+      />
+      <ViewToolbarBtn
+        v-model:toggle="transpose"
+        :icon="icons.mdiFileRotateRight"
+        v-tooltip="'Transpose'"
+      />
+      <ViewToolbarBtn
+        @click="reset"
+        :icon="icons.mdiImageFilterCenterFocus"
+        v-tooltip="'Centre'"
+      />
+      <ViewToolbarBtn
+        @click="increaseSpacing"
+        :icon="icons.mdiArrowExpand"
+        v-tooltip="'Increase Spacing'"
+      />
+      <ViewToolbarBtn
+        @click="decreaseSpacing"
+        :icon="icons.mdiArrowCollapse"
+        v-tooltip="'Decrease Spacing'"
+      />
+      <ViewToolbarBtn
+        v-model:toggle="groupCycle"
+        :icon="icons.mdiVectorSelection"
+        v-tooltip="'Group by cycle point'"
+      />
+      <ViewToolbarBtn
+        :icon="icons.mdiVectorCombine"
+        v-tooltip="'Group by family'"
+      >
+        <v-menu>
+          <v-treeview
+            v-model:selected="groupFamily"
+            :items="treeDropDownFamily"
+          />
+        </v-menu>
+      </ViewToolbarBtn>
+      <ViewToolbarBtn
+        :icon="icons.mdiAlphaCCircle"
+        v-tooltip="'Collapse by cycle point'"
+      >
+        <v-menu>
+          <v-treeview
+            v-model:selected="collapseCycle"
+            :items="cycles.map((name) => ({ name }))"
+          />
+        </v-menu>
+      </ViewToolbarBtn>
+      <ViewToolbarBtn
+        :icon="icons.mdiAlphaFCircle"
+        v-tooltip="'Collapse by family'"
+      >
+        <v-menu>
+          <v-treeview
+            v-model:selected="collapseFamily"
+            :items="treeDropDownFamily"
+          />
+        </v-menu>
+      </ViewToolbarBtn>
+    </ViewToolbar>
 
     <!-- the graph -->
     <svg
@@ -114,6 +181,8 @@ import SubscriptionQuery from '@/model/SubscriptionQuery.model'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import GraphSubgraph from '@/components/cylc/GraphSubgraph.vue'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
+import ViewToolbarBtn from '@/components/cylc/ViewToolbarBtn.vue'
+import { VTreeview } from 'vuetify/labs/VTreeview'
 import {
   posToPath,
   nonCryptoHash
@@ -130,7 +199,7 @@ import {
   mdiVectorSelection,
   mdiVectorCombine,
   mdiAlphaCCircle,
-  mdiAlphaFCircle
+  mdiAlphaFCircle,
 } from '@mdi/js'
 import { isFlowNone } from '@/utils/tasks'
 
@@ -341,14 +410,14 @@ export const childArray = (nodeArray) => {
 }
 
 /**
- * Convert a mapping to a format that VTreeView can handle.
- * @param {Map<string, { children: Map, diabled: Boolean }>} map - The mapping to convert
+ * Convert a mapping to a format that VTreeview can handle.
+ * @param {Map<string, { children: Map, disabled: Boolean }>} map - The mapping to convert
  * @returns {Object[]} - The converted mapping
  */
 export function convertTree (map) {
   return Array.from(map, ([name, { children, disabled }]) => ({
     name,
-    children: convertTree(children),
+    children: children.size ? convertTree(children) : null,
     disabled,
   }))
 }
@@ -377,7 +446,9 @@ export default {
   components: {
     GraphNode,
     GraphSubgraph,
-    ViewToolbar
+    ViewToolbar,
+    ViewToolbarBtn,
+    VTreeview,
   },
 
   props: { initialOptions },
@@ -441,6 +512,18 @@ export default {
       collapseCycle,
       collapseFamily,
       isFlowNone,
+      icons: {
+        mdiTimer,
+        mdiImageFilterCenterFocus,
+        mdiArrowCollapse,
+        mdiArrowExpand,
+        mdiRefresh,
+        mdiFileRotateRight,
+        mdiVectorSelection,
+        mdiVectorCombine,
+        mdiAlphaCCircle,
+        mdiAlphaFCircle,
+      },
     }
   },
 
@@ -621,85 +704,6 @@ export default {
       }
       return lookup
     },
-    controlGroups () {
-      return [
-        {
-          title: 'Graph',
-          controls: [
-            {
-              title: 'Refresh',
-              icon: mdiRefresh,
-              action: 'callback',
-              callback: this.refresh,
-              disableIf: ['autoRefresh']
-            },
-            {
-              title: 'Auto Refresh',
-              icon: mdiTimer,
-              action: 'toggle',
-              value: this.autoRefresh,
-              key: 'autoRefresh'
-            },
-            {
-              title: 'Transpose',
-              icon: mdiFileRotateRight,
-              action: 'toggle',
-              value: this.transpose,
-              key: 'transpose'
-            },
-            {
-              title: 'Centre',
-              icon: mdiImageFilterCenterFocus,
-              action: 'callback',
-              callback: this.reset
-            },
-            {
-              title: 'Increase Spacing',
-              icon: mdiArrowExpand,
-              action: 'callback',
-              callback: this.increaseSpacing
-            },
-            {
-              title: 'Decrease Spacing',
-              icon: mdiArrowCollapse,
-              action: 'callback',
-              callback: this.decreaseSpacing
-            },
-            {
-              title: 'Group by cycle point',
-              icon: mdiVectorSelection,
-              action: 'toggle',
-              value: this.groupCycle,
-              key: 'groupCycle'
-            },
-            {
-              title: 'Group by family',
-              icon: mdiVectorCombine,
-              action: 'select-tree',
-              value: this.groupFamily,
-              key: 'groupFamily',
-              items: this.treeDropDownFamily,
-            },
-            {
-              title: 'Collapse by cycle point',
-              icon: mdiAlphaCCircle,
-              action: 'select-tree',
-              value: this.collapseCycle,
-              key: 'collapseCycle',
-              items: this.cycles.map((name) => ({ name })),
-            },
-            {
-              title: 'Collapse by family',
-              icon: mdiAlphaFCircle,
-              action: 'select-tree',
-              value: this.collapseFamily,
-              key: 'collapseFamily',
-              items: this.treeDropDownFamily,
-            }
-          ]
-        }
-      ]
-    }
   },
 
   methods: {
@@ -1451,9 +1455,7 @@ export default {
       // turn the view toolbar into a floating component
       position: fixed;
       background-color: rgba(240,240,240,0.9);
-      border-radius: 0.75em;
       margin: 0.5em;
-      padding: 0.4em;
     }
   }
 </style>

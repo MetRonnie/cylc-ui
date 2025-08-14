@@ -31,10 +31,12 @@ export function btnIconFontSize (btnSize) {
   return `${2 * Math.round(0.2 * size) / 16}rem`
 }
 
-export const btnProps = (size) => ({
-  icon: true,
+export const btnProps = (size, rounded = true) => ({
+  // active: true,
+  // activeColor: 'blue',
   variant: 'text',
   size,
+  rounded,
   style: {
     fontSize: btnIconFontSize(size)
   },

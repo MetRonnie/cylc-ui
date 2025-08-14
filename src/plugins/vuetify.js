@@ -80,7 +80,15 @@ export const vuetifyOptions = {
       activator: 'parent',
       location: 'bottom',
     },
-    ...inputDefaults
+    ...inputDefaults,
+    VTreeview: {
+      selectable: true,
+      selectStrategy: 'independent',
+      itemProps: true,
+      itemTitle: 'name',
+      itemValue: 'name',
+      openAll: true,
+    },
   },
 }
 
