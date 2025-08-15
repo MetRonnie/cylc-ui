@@ -200,6 +200,7 @@ import { debounce } from 'lodash-es'
 import CopyBtn from '@/components/core/CopyBtn.vue'
 import { Alert } from '@/model/Alert.model'
 import { getJobLogFileFromState } from '@/model/JobState.model'
+import { useLogWordWrapDefault } from '@/composables/localStorage'
 
 /**
  * Query used to retrieve data for the Log view.
@@ -363,7 +364,7 @@ export default {
     const timestamps = useInitialOptions('timestamps', { props, emit }, true)
 
     /** Wrap lines? */
-    const wordWrap = useInitialOptions('wordWrap', { props, emit }, false)
+    const wordWrap = useInitialOptions('wordWrap', { props, emit }, useLogWordWrapDefault().value)
 
     /** The log subscription results */
     const results = ref(new Results())
