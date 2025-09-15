@@ -25,6 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <WorkflowIcon
       v-if="node.type === 'workflow'"
       :status="node.node.status"
+      :status-msg="node.node.statusMsg"
       v-command-menu="node"
       :class="nodeClass"
       class="flex-shrink-0"

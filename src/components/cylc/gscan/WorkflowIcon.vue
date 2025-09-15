@@ -15,39 +15,43 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
+<!-- GScan workflow icon. -->
+
 <template>
-  <v-icon>
-    {{ getIcon() }}
-  </v-icon>
+  <v-icon v-bind="{ icon, color }"/>
 </template>
 
-<script>
+<script setup>
+import { computed } from 'vue'
 import WorkflowState from '@/model/WorkflowState.model'
-import { mdiHelpCircle } from '@mdi/js'
+import {
+  mdiAlertCircle,
+  mdiHelpCircle,
+} from '@mdi/js'
+
+const props = defineProps({
+  status: {
+    type: String,
+    required: true,
+  },
+  statusMsg: {
+    type: String,
+    default: '',
+  },
+})
+
+const isStalled = computed(() => props.statusMsg.toLowerCase() === 'stalled')
 
 /**
- * GScan workflow icon.
+ * Return the workflow icon, based on the status prop. If the state is
+ * not valid, we return an unknown state icon.
+ * @returns {string} icon
  */
-export default {
-  name: 'WorkflowIcon',
+const icon = computed(() => {
+  if (isStalled.value) return mdiAlertCircle
+  const state = WorkflowState.enumValues.find(({ name }) => name === props.status)
+  return state?.icon || mdiHelpCircle
+})
 
-  props: {
-    status: {
-      required: true,
-      type: String
-    }
-  },
-
-  methods: {
-    /**
-     * Return the workflow icon, based on the status prop. If the state is
-     * not valid, we return an unknown state icon.
-     * @returns {string} icon
-     */
-    getIcon () {
-      const state = WorkflowState.enumValues.find(({ name }) => name === this.status)
-      return state?.icon || mdiHelpCircle
-    }
-  }
-}
+const color = computed(() => isStalled.value ? 'amber-darken-4' : null)
 </script>
