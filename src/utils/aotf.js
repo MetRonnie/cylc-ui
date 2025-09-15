@@ -28,21 +28,24 @@ import {
   print
 } from 'graphql'
 import {
+  mdiAccessPoint,
+  mdiAlphaNBoxOutline,
   mdiBullhorn,
   mdiCloseCircle,
   mdiCog,
-  mdiCursorPointer,
   mdiDelete,
-  mdiEmail,
   mdiFileDocumentOutline,
+  mdiGestureDoubleTap,
   mdiInformationOutline,
+  mdiMessageTextOutline,
   mdiMinusCircleOutline,
+  mdiMotionPauseOutline,
+  mdiMotionPlayOutline,
   mdiPause,
   mdiPauseCircleOutline,
   mdiPlay,
   mdiPlayCircleOutline,
   mdiPlaylistEdit,
-  mdiRefreshCircle,
   mdiReload,
   mdiStop,
   mdiVectorPolylineEdit,
@@ -133,17 +136,20 @@ export function getMutationIcon (name) {
     case 'info': return mdiInformationOutline
     case 'kill': return mdiCloseCircle
     case 'log': return mdiFileDocumentOutline
-    case 'message': return mdiEmail
+    case 'message': return mdiMessageTextOutline
     case 'pause': return mdiPause
     case 'play': return mdiPlay
-    case 'poll': return mdiRefreshCircle
+    case 'poll': return mdiAccessPoint
     case 'release': return mdiPlayCircleOutline // to distinguish from play
     case 'reload': return mdiReload
     case 'remove': return mdiMinusCircleOutline
     case 'resume': return mdiPlay
+    case 'setHoldPoint': return mdiMotionPauseOutline
+    case 'releaseHoldPoint': return mdiMotionPlayOutline
     case 'set': return mdiVectorPolylineEdit
+    case 'setGraphWindowExtent': return mdiAlphaNBoxOutline
     case 'stop': return mdiStop
-    case 'trigger': return mdiCursorPointer
+    case 'trigger': return mdiGestureDoubleTap
     default: return mdiCog
   }
 }

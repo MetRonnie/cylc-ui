@@ -44,11 +44,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               data-cy="toggle-families"
             >
               <v-icon size="x-large">
-                {{ flat? $options.icons.mdiFormatAlignRight : $options.icons.mdiFormatAlignJustify }}
+                {{ flat? $options.icons.mdiAlphaFCircleOutline : $options.icons.mdiAlphaFCircle }}
               </v-icon>
               <v-tooltip>
                 {{ flat ? "Show Families" : "Hide Families" }}
               </v-tooltip>
+            </v-btn>
+            <v-btn
+              @click="expandAll = []"
+              icon
+              variant="flat"
+              size="small"
+              data-cy="collapse-all"
+              >
+              <v-icon size="x-large">{{ $options.icons.mdiArrowCollapseVertical }}</v-icon>
+              <v-tooltip>Collapse all</v-tooltip>
             </v-btn>
             <v-btn
               @click="expandAll = ['workflow', 'cycle', 'family']"
@@ -57,18 +67,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               size="small"
               data-cy="expand-all"
             >
-              <v-icon size="x-large">{{ $options.icons.mdiPlus }}</v-icon>
+              <v-icon size="x-large">{{ $options.icons.mdiArrowExpandVertical }}</v-icon>
               <v-tooltip>Expand all</v-tooltip>
-            </v-btn>
-            <v-btn
-              @click="expandAll = []"
-              icon
-              variant="flat"
-              size="small"
-              data-cy="collapse-all"
-            >
-              <v-icon size="x-large">{{ $options.icons.mdiMinus }}</v-icon>
-              <v-tooltip>Collapse all</v-tooltip>
             </v-btn>
           </div>
         </v-col>
@@ -98,7 +98,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import { mapState, mapGetters } from 'vuex'
-import { mdiPlus, mdiMinus, mdiFormatAlignRight, mdiFormatAlignJustify } from '@mdi/js'
+import {
+  mdiArrowCollapseVertical,
+  mdiArrowExpandVertical,
+  mdiAlphaFCircleOutline,
+  mdiAlphaFCircle,
+} from '@mdi/js'
 import gql from 'graphql-tag'
 import graphqlMixin from '@/mixins/graphql'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
@@ -324,10 +329,10 @@ export default {
   },
 
   icons: {
-    mdiPlus,
-    mdiMinus,
-    mdiFormatAlignRight,
-    mdiFormatAlignJustify,
+    mdiArrowCollapseVertical,
+    mdiArrowExpandVertical,
+    mdiAlphaFCircleOutline,
+    mdiAlphaFCircle,
   },
 }
 </script>

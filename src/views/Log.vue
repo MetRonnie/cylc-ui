@@ -208,7 +208,7 @@ import { ref, computed, watch } from 'vue'
 import { refWithControl, usePrevious, whenever } from '@vueuse/core'
 import { useStore } from 'vuex'
 import {
-  mdiClockOutline,
+  mdiTimelineClockOutline,
   mdiFolderRefresh,
   mdiPowerPlugOff,
   mdiPowerPlug,
@@ -506,7 +506,7 @@ export default {
           controls: [
             {
               title: 'Timestamps',
-              icon: mdiClockOutline,
+              icon: mdiTimelineClockOutline,
               action: 'toggle',
               value: this.timestamps,
               key: 'timestamps'

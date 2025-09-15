@@ -33,7 +33,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           to="/"
         >
           <template v-slot:prepend>
-            <v-icon style="opacity: 1;">{{ mdiHome }}</v-icon>
+            <v-icon style="opacity: 1;">{{ mdiHomeVariant }}</v-icon>
           </template>
           <v-list-item-title>Dashboard</v-list-item-title>
         </v-list-item>
@@ -85,7 +85,7 @@ import { inject, nextTick, ref, computed } from 'vue'
 import { useDisplay } from 'vuetify'
 import Header from '@/components/cylc/Header.vue'
 import Workflows from '@/views/Workflows.vue'
-import { mdiHome, mdiInformationOutline } from '@mdi/js'
+import { mdiHomeVariant, mdiInformationOutline } from '@mdi/js'
 import pkg from '@/../package.json'
 import { when } from '@/utils/reactivity'
 import { useDrawer } from '@/utils/toolbar'
@@ -164,7 +164,7 @@ export default {
       UIVersion: pkg.version,
       cylcVersionInfo,
       mdiInformationOutline,
-      mdiHome,
+      mdiHomeVariant,
       versionChipProps,
     }
   },

@@ -41,7 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           data-cy="gscan-filter-btn"
         >
           <v-icon size="x-large">
-            {{ $options.icons.mdiFilter }}
+            {{ $options.icons.mdiFilterVariant }}
           </v-icon>
         </v-btn>
       </v-badge>
@@ -81,7 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         @click="scanFilesystem()"
       >
         <v-icon size="x-large">
-          {{ $options.icons.mdiFolderRefresh }}
+          {{ $options.icons.mdiRefresh }}
         </v-icon>
         <v-tooltip text="Refresh workflows list" />
       </v-btn>
@@ -116,7 +116,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { mdiFilter, mdiFolderRefresh } from '@mdi/js'
+import { mdiFilterVariant, mdiRefresh } from '@mdi/js'
 import { TaskStateNames } from '@/model/TaskState.model'
 import { WorkflowStateNames } from '@/model/WorkflowState.model'
 import Tree from '@/components/cylc/tree/Tree.vue'
@@ -219,8 +219,8 @@ export default {
 
   // Misc options
   icons: {
-    mdiFilter,
-    mdiFolderRefresh
+    mdiFilterVariant,
+    mdiRefresh
   },
   /**
    * Lists of all the possible workflow and task states
