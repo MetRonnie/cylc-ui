@@ -26,23 +26,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <template #tree>
         <ViewToolbarBtn
           v-model:active.toggle="flat"
-          :icon="icons.mdiFormatAlignRight"
-          :active-icon="icons.mdiFormatAlignJustify"
+          :icon="icons.mdiAlphaFCircle"
+          :active-icon="icons.mdiAlphaFCircleOutline"
           :highlight="false"
           v-tooltip="'Toggle Families'"
           data-cy="control-flat"
         />
         <ViewToolbarBtn
-          @click="treeExpandAll()"
-          :icon="icons.mdiPlus"
-          v-tooltip="'Expand All'"
-          data-cy="control-ExpandAll"
-        />
-        <ViewToolbarBtn
           @click="treeCollapseAll()"
-          :icon="icons.mdiMinus"
+          :icon="icons.mdiArrowCollapseVertical"
           v-tooltip="'Collapse All'"
           data-cy="control-CollapseAll"
+        />
+        <ViewToolbarBtn
+          @click="treeExpandAll()"
+          :icon="icons.mdiArrowExpandVertical"
+          v-tooltip="'Expand All'"
+          data-cy="control-ExpandAll"
         />
       </template>
     </ViewToolbar>
@@ -63,10 +63,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { ref } from 'vue'
 import { mapState, mapGetters } from 'vuex'
 import {
-  mdiFormatAlignJustify,
-  mdiFormatAlignRight,
-  mdiMinus,
-  mdiPlus,
+  mdiArrowCollapseVertical,
+  mdiArrowExpandVertical,
+  mdiAlphaFCircleOutline,
+  mdiAlphaFCircle,
 } from '@mdi/js'
 import gql from 'graphql-tag'
 import { useGraphQL } from '@/mixins/graphql'
@@ -240,10 +240,10 @@ export default {
       workflowIDs,
       variables,
       icons: {
-        mdiFormatAlignJustify,
-        mdiFormatAlignRight,
-        mdiMinus,
-        mdiPlus,
+        mdiArrowCollapseVertical,
+        mdiArrowExpandVertical,
+        mdiAlphaFCircleOutline,
+        mdiAlphaFCircle,
       },
     }
   },

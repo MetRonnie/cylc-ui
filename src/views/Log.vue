@@ -32,7 +32,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         </v-btn-toggle>
         <ViewToolbarBtn
           v-model:active.toggle="timestamps"
-          :icon="icons.mdiClockOutline"
+          :icon="icons.mdiTimelineClockOutline"
           v-tooltip="'Timestamps'"
           data-cy="control-timestamps"
         />
@@ -199,7 +199,7 @@ import { ref, computed, watch } from 'vue'
 import { refWithControl, usePrevious, whenever } from '@vueuse/core'
 import { useStore } from 'vuex'
 import {
-  mdiClockOutline,
+  mdiTimelineClockOutline,
   mdiFolderRefresh,
   mdiPowerPlugOff,
   mdiPowerPlug,
@@ -462,7 +462,7 @@ export default {
       workflowID,
       variables,
       icons: {
-        mdiClockOutline,
+        mdiTimelineClockOutline,
         mdiFileAlertOutline,
         mdiFolderRefresh,
         mdiInformationOutline,

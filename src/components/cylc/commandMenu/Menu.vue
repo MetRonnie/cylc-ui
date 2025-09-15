@@ -64,15 +64,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </template>
           <template v-slot:append>
             <v-btn
-              icon
+              :icon="icons.mdiFormTextbox"
               variant="text"
               :disabled="!isEditable(mutation, authorised)"
               @click.stop="openDialog(mutation)"
               data-cy="mutation-edit"
               class="ml-2"
-            >
-              <v-icon>{{ icons.mdiPencil }}</v-icon>
-            </v-btn>
+              v-tooltip="'Edit'"
+              rounded="lg"
+              color="grey-lighten-2"
+            />
           </template>
         </v-list-item>
         <v-list-item v-if="canExpand">
@@ -119,7 +120,7 @@ import {
 } from '@/utils/aotf'
 import Mutation from '@/components/cylc/Mutation.vue'
 import {
-  mdiPencil,
+  mdiFormTextbox,
 } from '@mdi/js'
 import { mapGetters, mapState } from 'vuex'
 import WorkflowState from '@/model/WorkflowState.model'
@@ -168,7 +169,7 @@ export default {
       types: ref([]),
       target: ref(null),
       icons: {
-        mdiPencil,
+        mdiFormTextbox,
       },
     }
   },

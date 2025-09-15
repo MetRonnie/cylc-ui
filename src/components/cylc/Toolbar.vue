@@ -55,7 +55,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <v-btn
           id="workflow-mutate-button"
           v-command-menu="currentWorkflow"
-          :icon="icons.mdiMicrosoftXboxControllerMenu"
+          :icon="icons.mdiListBox"
           size="small"
           density="comfortable"
         />
@@ -260,10 +260,10 @@ import { mapState } from 'vuex'
 import { useDisplay } from 'vuetify'
 import {
   mdiCog,
-  mdiMicrosoftXboxControllerMenu,
+  mdiListBox,
   mdiPause,
   mdiPlay,
-  mdiPlusBoxMultiple,
+  mdiTabPlus,
   mdiStop,
   mdiAccount,
   mdiChevronDown,
@@ -364,12 +364,12 @@ export default {
       uisFlowVersion,
       workflowViews,
       icons: {
-        add: mdiPlusBoxMultiple,
+        add: mdiTabPlus,
         hold: mdiPause,
         info: mdiInformationOutline,
         mdiMenuOpen,
         mdiMenuClose,
-        mdiMicrosoftXboxControllerMenu,
+        mdiListBox,
         run: mdiPlay,
         stop: mdiStop,
         mdiCog,
