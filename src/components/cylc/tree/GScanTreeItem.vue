@@ -42,6 +42,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             {{ node.name || node.id }}
             <v-tooltip style="overflow-wrap: anywhere;">
               {{ node.id }}
+              <template v-if="node.type === 'workflow' && node.node.status !== WorkflowState.STOPPED.name">
+                <br/>
+                <span class="text-grey-lighten-1">
+                  Last activity: {{ useTimeAgo(node.node.lastUpdated * 1e3, opts5s) }}
+                </span>
+              </template>
             </v-tooltip>
           </span>
         </div>
@@ -86,6 +92,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script setup>
 import { computed } from 'vue'
+import { useTimeAgo } from '@vueuse/core'
 import TaskStateBadge from '@/components/cylc/TaskStateBadge.vue'
 import WorkflowIcon from '@/components/cylc/gscan/WorkflowIcon.vue'
 import TreeItem from '@/components/cylc/tree/TreeItem.vue'
@@ -94,6 +101,7 @@ import TaskState from '@/model/TaskState.model'
 import { WorkflowState } from '@/model/WorkflowState.model'
 import { taskHeld, taskRetry } from '@/utils/icons'
 import { useCompactMode, useWorkflowWarnings } from '@/composables/localStorage'
+import { opts5s } from '@/utils/datetime'
 
 const nodeTypes = ['workflow-part', 'workflow']
 

@@ -63,6 +63,7 @@ fragment WorkflowData on Workflow {
   stateTotals
   containsHeld
   containsRetry
+  lastUpdated
   logRecords {
     level
     message
