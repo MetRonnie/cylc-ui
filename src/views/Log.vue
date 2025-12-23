@@ -50,17 +50,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           <ViewToolbar>
             <div class="group">
               <ViewToolbarBtn
-                v-model:toggle="timestamps"
+                v-model:active.toggle="timestamps"
                 :icon="icons.mdiClockOutline"
                 v-tooltip="'Timestamps'"
               />
               <ViewToolbarBtn
-                v-model:toggle="wordWrap"
+                v-model:active.toggle="wordWrap"
                 :icon="icons.mdiWrap"
                 v-tooltip="'Word wrap'"
               />
               <ViewToolbarBtn
-                v-model:toggle="autoScroll"
+                v-model:active.toggle="autoScroll"
                 :icon="icons.mdiMouseMoveDown"
                 v-tooltip="'Auto scroll'"
               />

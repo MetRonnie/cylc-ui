@@ -23,7 +23,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <TaskFilter v-model="tasksFilter"/>
       <div class="group">
         <ViewToolbarBtn
-          v-model:toggle="flat"
+          v-model:active.toggle="flat"
           :icon="icons.mdiFormatAlignRight"
           :active-icon="icons.mdiFormatAlignJustify"
           :active-color="null"

@@ -27,12 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           :disabled="autoRefresh"
         />
         <ViewToolbarBtn
-          v-model:toggle="autoRefresh"
+          v-model:active.toggle="autoRefresh"
           :icon="icons.mdiTimer"
           v-tooltip="'Auto Refresh'"
         />
         <ViewToolbarBtn
-          v-model:toggle="transpose"
+          v-model:active.toggle="transpose"
           :icon="icons.mdiFileRotateRight"
           v-tooltip="'Transpose'"
         />
@@ -52,7 +52,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           v-tooltip="'Decrease Spacing'"
         />
         <ViewToolbarBtn
-          v-model:toggle="groupCycle"
+          v-model:active.toggle="groupCycle"
           :icon="icons.mdiVectorSelection"
           v-tooltip="'Group by cycle point'"
         />

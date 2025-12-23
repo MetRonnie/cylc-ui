@@ -16,11 +16,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <template>
   <v-btn
-    :color="isActive ? activeColor : undefined"
-    v-bind="$attrs"
-    @click="toggleActive?.()"
-    :role="toggleActive ? 'switch' : undefined"
-    :aria-checked="toggle"
+    v-bind="{ ...$attrs, ...roleProps }"
+    :color="active ? activeColor : undefined"
   >
     <v-icon :icon="displayIcon"/>
     <template v-if="$slots.default" #default>
@@ -52,24 +49,30 @@ const props = defineProps({
   },
 })
 
-const toggle = defineModel('toggle', {
-  type: [Boolean, Array],
+const [active, { toggle }] = defineModel('active', {
+  type: [Boolean, Number],
   default: null,
 })
 
-/** Toggle active state only if `v-model:toggle` is provided (and is not an array) */
-const toggleActive = toggle.value == null || Array.isArray(toggle.value)
-  ? null
-  : () => {
-      toggle.value = !toggle.value
-    }
-
-const isActive = computed(
-  () => Boolean(toggle.value?.length ?? toggle.value)
+/**
+ * Button props related to the "toggle" mode of operation.
+ *
+ * When `v-model:active.toggle="boundValue"` is provided, the button automatically toggles the bound value.
+ */
+const roleProps = computed(
+  () => toggle
+    ? {
+        onClick () {
+          active.value = !active.value
+        },
+        role: 'switch',
+        ariaChecked: active.value,
+      }
+    : {}
 )
 
 const displayIcon = computed(
-  () => (isActive.value && props.activeIcon) || props.icon
+  () => (active.value && props.activeIcon) || props.icon
 )
 
 </script>
