@@ -14,6 +14,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { upperFirst } from 'lodash-es'
 import {
   GenericModifiers,
   TaskModifier,
@@ -39,13 +40,15 @@ export function btnIconFontSize (btnSize) {
   return `${2 * Math.round(0.2 * size) / 16}rem`
 }
 
-export const btnProps = (size) => ({
-  icon: true,
+export const btnProps = (size = 40, rounded = true) => ({
   variant: 'text',
   size,
+  rounded,
   style: {
     fontSize: btnIconFontSize(size)
   },
+  class: 'control-btn',
+  density: 'compact',
 })
 
 function getProps (modifier) {
@@ -60,13 +63,13 @@ function getProps (modifier) {
 
 export const taskStateItems = [
   {
-    title: TaskState.WAITING.name,
+    title: upperFirst(TaskState.WAITING.name),
     value: TaskState.WAITING.name,
     taskProps: { state: TaskState.WAITING.name },
     children: WaitingStateModifiers
       .map((modifier) => {
         return {
-          title: modifier.title,
+          title: upperFirst(modifier.title),
           value: modifier.field,
           taskProps: getProps(modifier)
         }
@@ -76,7 +79,7 @@ export const taskStateItems = [
     .filter((name) => name !== TaskState.WAITING.name)
     .map((name) => {
       return {
-        title: name,
+        title: upperFirst(name),
         value: name,
         taskProps: { state: name }
       }
@@ -85,7 +88,7 @@ export const taskStateItems = [
   ...GenericModifiers
     .map((modifier) => {
       return {
-        title: modifier.title,
+        title: upperFirst(modifier.title),
         value: modifier.field,
         taskProps: getProps(modifier)
       }
