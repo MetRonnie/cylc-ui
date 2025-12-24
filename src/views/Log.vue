@@ -53,11 +53,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 v-model:active.toggle="timestamps"
                 :icon="icons.mdiClockOutline"
                 v-tooltip="'Timestamps'"
+                data-cy="control-timestamps"
               />
               <ViewToolbarBtn
                 v-model:active.toggle="wordWrap"
                 :icon="icons.mdiWrap"
                 v-tooltip="'Word wrap'"
+                data-cy="control-wordWrap"
               />
               <ViewToolbarBtn
                 v-model:active.toggle="autoScroll"
@@ -87,10 +89,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <template #prepend-inner>
               <v-btn
                 :disabled="!relativeTokens || jobNode === false"
-                v-bind="toolbarBtnProps"
                 size="medium"
                 variant="plain"
                 @click="() => jobNode ?? fetchJobData()"
+                icon
+                density="compact"
                 data-cy="job-info-btn"
               >
                 <v-icon :icon="icons.mdiInformationOutline"/>
@@ -137,9 +140,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             v-model="file"
             :menu-props="{ 'data-cy': 'file-input-menu' }"
           />
-          <v-btn
-            @click="() => this.updateLogFileList()"
-            v-bind="toolbarBtnProps"
+          <ViewToolbarBtn
+            @click="updateLogFileList()"
             data-cy="refresh-files"
             :icon="icons.mdiFolderRefresh"
             v-tooltip="'Refresh file list'"
@@ -230,7 +232,6 @@ import {
   mdiMouseMoveDown,
   mdiInformationOutline,
 } from '@mdi/js'
-import { btnProps } from '@/utils/viewToolbar'
 import graphqlMixin from '@/mixins/graphql'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
 import {
@@ -480,7 +481,6 @@ export default {
       wordWrap,
       autoScroll,
       reset,
-      toolbarBtnProps: btnProps(),
       jobNode: ref(null),
       icons: {
         mdiClockOutline,

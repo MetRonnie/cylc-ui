@@ -27,10 +27,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       @focus="autoResizeInput"
       @blur="autoResizeInput"
       placeholder="Search     (globs supported)"
+      data-cy="control-taskIDFilter"
     />
     <ViewToolbarBtn
       :active="taskStates?.length"
       :icon="mdiFilter"
+      data-cy="control-taskStateFilter"
     >
       <v-menu
         activator="parent"
@@ -43,7 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             @click="resetTaskStates()"
             block
             spaced="end"
-            :data-cy="`control-taskFilter-reset`"
+            :data-cy="`control-taskStateFilter-reset`"
           >
             Reset
           </v-btn>
@@ -76,7 +78,7 @@ import { mdiFilter, mdiMagnify, mdiUndo } from '@mdi/js'
 import { TaskState, WaitingStateModifierNames } from '@/model/TaskState.model'
 import Task from '@/components/cylc/Task.vue'
 import { computed } from 'vue'
-import { taskStateItems } from '@/utils/viewToolbar'
+import { taskStateItems } from '@/components/cylc/viewToolbar/util'
 import ViewToolbarBtn from '@/components/cylc/viewToolbar/ViewToolbarBtn.vue'
 
 /** @type {import('vue').Ref<{ id: string?, states: string[]? }>} */

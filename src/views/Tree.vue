@@ -28,16 +28,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           :active-icon="icons.mdiFormatAlignJustify"
           :active-color="null"
           v-tooltip="'Toggle Families'"
+          data-cy="control-flat"
         />
         <ViewToolbarBtn
           @click="treeExpandAll()"
           :icon="icons.mdiPlus"
           v-tooltip="'Expand All'"
+          data-cy="control-ExpandAll"
         />
         <ViewToolbarBtn
           @click="treeCollapseAll()"
           :icon="icons.mdiMinus"
           v-tooltip="'Collapse All'"
+          data-cy="control-CollapseAll"
         />
       </div>
     </ViewToolbar>

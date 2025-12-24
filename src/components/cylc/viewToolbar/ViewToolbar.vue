@@ -16,36 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
 <template>
-  <div
-    class="c-view-toolbar"
-    :class="roundedClass"
-  >
-    <v-defaults-provider
-      :defaults="{
-        VBtn: btnProps(size),
-      }"
-    >
-      <slot/>
-    </v-defaults-provider>
+  <div class="c-view-toolbar">
+    <slot/>
   </div>
 </template>
-
-<script setup>
-import { btnProps } from '@/utils/viewToolbar'
-
-defineProps({
-  /**
-   * Button size in px or vuetify named size
-   *
-   * px sizes are converted to rem.
-   */
-  size: {
-    type: [Number, String],
-    default: 40,
-  },
-})
-
-</script>
 
 <style lang="scss">
   .c-view-toolbar {

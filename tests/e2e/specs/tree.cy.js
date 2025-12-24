@@ -15,8 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import TaskState from '@/model/TaskState.model'
-
 describe('Tree view', () => {
   it('Should display cycle points for the mocked workflow', () => {
     cy.visit('/#/workspace/one')
@@ -205,7 +203,7 @@ describe('Tree view', () => {
       cy.get('[data-cy="control-taskStateFilter"]')
         .click()
         .get('.v-list-item')
-        .contains(new RegExp(`^${TaskState.FAILED.name}$`))
+        .contains(/^Failed$/)
         .click()
       for (const name of [/^succeeded$/, /^retrying$/]) {
         cy.get('.node-data-task')
@@ -232,7 +230,7 @@ describe('Tree view', () => {
         .get('[data-cy="control-taskStateFilter"]')
         .click()
         .get('.v-list-item')
-        .contains(TaskState.WAITING.name)
+        .contains('Waiting')
         .click({ force: true })
       cy
         .get('.node-data-task:visible')
@@ -253,7 +251,7 @@ describe('Tree view', () => {
         .get('[data-cy="control-taskStateFilter"]')
         .click()
         .get('.v-list-item')
-        .contains(TaskState.WAITING.name)
+        .contains('Waiting')
         .click({ force: true })
       // Navigate away
       cy.visit('/#/')
@@ -274,12 +272,12 @@ describe('Tree view', () => {
 
       // select some states
       for (const state of [
-        TaskState.WAITING,
-        TaskState.PREPARING,
-        TaskState.SUBMITTED]
+        'Waiting',
+        'Preparing',
+        'Submitted']
       ) {
         cy.get('@filters')
-          .contains(state.name)
+          .contains(state)
           .click()
       }
 

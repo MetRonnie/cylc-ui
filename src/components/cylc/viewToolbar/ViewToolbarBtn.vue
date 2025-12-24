@@ -16,7 +16,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <template>
   <v-btn
-    v-bind="{ ...$attrs, ...roleAttrs }"
+    size="40"
+    variant="text"
+    density="compact"
+    rounded="lg"
+    icon
+    v-bind="{ ...$attrs, ...btnProps }"
     :color="active ? activeColor : undefined"
   >
     <slot name="icon">
@@ -39,10 +44,12 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  /** Color to use when active. */
   activeColor: {
     type: String,
     default: 'blue',
   },
+  /** Icon to show when active. */
   activeIcon: {
     type: String,
   },
@@ -50,15 +57,11 @@ const props = defineProps({
 
 const [active, { toggle }] = defineModel('active', {
   type: [Boolean, Number],
-  default: null,
+  default: false,
 })
 
-/**
- * Button attributes & props related to the "toggle" mode of operation.
- *
- * When `v-model:active.toggle="boundValue"` is provided, the button automatically toggles the bound value.
- */
-const roleAttrs = computed(
+// When `v-model:active.toggle="boundValue"` is provided, the button automatically toggles the bound value.
+const btnProps = computed(
   () => toggle
     ? {
         onClick () {

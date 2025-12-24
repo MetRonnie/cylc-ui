@@ -23,34 +23,6 @@ import {
   WaitingStateModifiers,
 } from '@/model/TaskState.model'
 
-/**
- * Scale icon size to button size.
- * https://github.com/vuetifyjs/vuetify/issues/16288
- *
- * @param {string} btnSize - button size
- * @returns {string=} font size
- */
-export function btnIconFontSize (btnSize) {
-  const size = parseInt(btnSize)
-  if (Number.isNaN(size)) {
-    // do nothing for named sizes ('small', 'large', etc.)
-    return undefined
-  }
-  // Round to even px then convert to rem
-  return `${2 * Math.round(0.2 * size) / 16}rem`
-}
-
-export const btnProps = (size = 40, rounded = 'lg') => ({
-  variant: 'text',
-  size,
-  rounded,
-  style: {
-    fontSize: btnIconFontSize(size)
-  },
-  class: 'control-btn',
-  density: 'compact',
-})
-
 function getProps (modifier) {
   const ret = {}
   if (modifier === TaskModifier.isSkip) {
