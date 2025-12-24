@@ -16,15 +16,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <template>
   <v-btn
-    v-bind="{ ...$attrs, ...roleProps }"
+    v-bind="{ ...$attrs, ...roleAttrs }"
     :color="active ? activeColor : undefined"
   >
-    <v-icon :icon="displayIcon"/>
-    <template v-if="$slots.default" #default>
-      <!-- Ensure icon is still rendered when parent overrides default slot -->
+    <slot name="icon">
+      <!-- Separate named slot to ensure icon is still rendered when parent overrides default slot -->
       <v-icon :icon="displayIcon"/>
-      <slot/>
-    </template>
+    </slot>
+    <slot/>
   </v-btn>
 </template>
 
@@ -55,11 +54,11 @@ const [active, { toggle }] = defineModel('active', {
 })
 
 /**
- * Button props related to the "toggle" mode of operation.
+ * Button attributes & props related to the "toggle" mode of operation.
  *
  * When `v-model:active.toggle="boundValue"` is provided, the button automatically toggles the bound value.
  */
-const roleProps = computed(
+const roleAttrs = computed(
   () => toggle
     ? {
         onClick () {

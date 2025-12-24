@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <template>
   <div class="c-graph w-100 h-100">
     <!-- the controls -->
-    <ViewToolbar rounded="lg">
+    <ViewToolbar class="rounded-lg">
       <div class="group">
         <ViewToolbarBtn
           @click="refresh()"

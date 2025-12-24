@@ -40,7 +40,7 @@ export function btnIconFontSize (btnSize) {
   return `${2 * Math.round(0.2 * size) / 16}rem`
 }
 
-export const btnProps = (size = 40, rounded = true) => ({
+export const btnProps = (size = 40, rounded = 'lg') => ({
   variant: 'text',
   size,
   rounded,

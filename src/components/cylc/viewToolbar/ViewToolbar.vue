@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   >
     <v-defaults-provider
       :defaults="{
-        VBtn: btnProps(size, rounded),
+        VBtn: btnProps(size),
       }"
     >
       <slot/>
@@ -31,10 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { btnProps } from '@/utils/viewToolbar'
 
-const props = defineProps({
+defineProps({
   /**
    * Button size in px or vuetify named size
    *
@@ -44,17 +43,6 @@ const props = defineProps({
     type: [Number, String],
     default: 40,
   },
-  /** @see https://vuetifyjs.com/en/styles/border-radius/ */
-  rounded: {
-    type: [String, Boolean],
-    default: 'lg',
-  },
-})
-
-const roundedClass = computed(() => {
-  if (!props.rounded) return
-  if (props.rounded === true) return 'rounded'
-  return `rounded-${props.rounded}`
 })
 
 </script>
