@@ -140,23 +140,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         class="flex-0-0"
       >
         <v-col
-          v-if="results.connected != null"
+          v-if="logLines || results.connected != null"
           class="d-flex align-center"
         >
           <v-chip
             data-cy="connected-icon"
             variant="outlined"
             class="flex-shrink-0"
-            v-bind="results.connected ? {
-              color: 'success',
-              prependIcon: $options.icons.mdiPowerPlug,
-            } : {
-              color: 'error',
-              prependIcon: $options.icons.mdiPowerPlugOff,
-              onClick: updateQuery
-            }"
+            v-bind="connectionChipProps"
           >
-            {{ results.connected ? 'Connected' : 'Reconnect' }}
+            <template #prepend v-if="showCachedLogs">
+              <v-progress-circular
+                indeterminate
+                size="16"
+                width="2"
+                class="ml-n1 mr-2"
+              />
+            </template>
           </v-chip>
           <template v-if="results.path">
             <div
@@ -189,25 +189,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </v-container>
 
     <!-- the log file viewer -->
-    <v-skeleton-loader
-      v-if="id && file && results.connected == null"
-      type="text@5"
-      class="align-content-start"
-    />
     <log-component
-      v-else
+      v-if="logLines"
       data-cy="log-viewer"
-      :logs="results.lines"
+      :logs="logLines"
       :timestamps="timestamps"
       :word-wrap="wordWrap"
       v-model:autoScroll="autoScroll"
+      :class="showCachedLogs ? 'text-medium-emphasis' : ''"
+    />
+    <v-skeleton-loader
+      v-else-if="id && file && results.connected == null"
+      type="text@5"
+      class="align-content-start"
     />
   </v-container>
 </template>
 
 <script>
 import { ref, computed, watch } from 'vue'
-import { refWithControl, usePrevious, whenever } from '@vueuse/core'
+import { computedAsync, refWithControl, usePrevious, whenever } from '@vueuse/core'
 import { useStore } from 'vuex'
 import {
   mdiClockOutline,
@@ -233,13 +234,14 @@ import { Tokens } from '@/utils/uid'
 import gql from 'graphql-tag'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
 import DeltasCallback from '@/services/callbacks'
-import { debounce } from 'lodash-es'
+import { debounce, throttle } from 'lodash-es'
 import CopyBtn from '@/components/core/CopyBtn.vue'
 import { Alert } from '@/model/Alert.model'
 import { getJobLogFileFromState } from '@/model/JobState.model'
 import JobDetails from '@/components/cylc/common/JobDetails.vue'
 import { useLogWordWrapDefault } from '@/composables/localStorage'
 import { eventBus } from '@/services/eventBus'
+import { housekeepCache, useLogsCache } from '@/composables/cacheStorage'
 
 /**
  * Query used to retrieve data for the Log view.
@@ -315,9 +317,10 @@ class LogsCallback extends DeltasCallback {
   /**
    * @param {Results} results
    */
-  constructor (results) {
+  constructor (results, cacheFunc) {
     super()
     this.results = results
+    this.cacheFunc = cacheFunc
   }
 
   onAdded (added, store, errors) {
@@ -327,6 +330,7 @@ class LogsCallback extends DeltasCallback {
     }
     if (added.lines) {
       this.results.lines.push(...added.lines)
+      throttle(() => this.cacheFunc(this.results.lines), 20e3)()
     }
     if (added.connected != null) {
       this.results.connected = added.connected
@@ -371,7 +375,7 @@ export default {
   setup (props, { emit }) {
     const store = useStore()
 
-    const { workflowID, variables } = useGraphQL(props)
+    const { workflowID } = useGraphQL(props)
 
     /**
      * The task/job ID.
@@ -380,6 +384,12 @@ export default {
     const relativeID = useInitialOptions('relativeID', { props, emit })
 
     const previousRelativeID = usePrevious(relativeID)
+
+    /**
+     * Toggle between viewing workflow logs (0) and job logs (1).
+     * Default to displaying workflow logs unless initial task/job ID is provided.
+     */
+    const jobLog = ref(relativeID.value == null ? 0 : 1)
 
     /**
      * The user input for task/job ID.
@@ -391,8 +401,8 @@ export default {
       }, 500)
     })
 
-    function validateInputID (id) {
-      return !id || (Tokens.validate(id, true) ?? true)
+    function validateInputID (input) {
+      return !input || (Tokens.validate(input, true) ?? true)
     }
 
     /** @type {import('vue').Ref<Tokens>} */
@@ -406,6 +416,17 @@ export default {
         } catch {}
       }
       return null
+    })
+
+    /** Tokens for the workflow this view was opened for */
+    const workflowTokens = computed(() => new Tokens(workflowID.value))
+
+    /** The ID of the workflow/task/job we are subscribed to or null if not subscribed */
+    const id = computed(() => {
+      if (jobLog.value) {
+        return relativeTokens.value?.clone(workflowTokens.value)?.id
+      }
+      return workflowID.value
     })
 
     /**
@@ -441,33 +462,72 @@ export default {
       () => { results.value.connected = false }
     )
 
+    const logsCache = useLogsCache()
+    const logsCacheExpiryMs = 3600e3
+    const logsCacheKey = computed(
+      () => (logsCache && id.value && file.value) ? `${id.value}::${file.value}` : null
+    )
+
+    const cachedLogLines = computedAsync(async () => {
+      if (!logsCacheKey.value) return
+      const cache = await logsCache
+      const response = await cache.match(logsCacheKey.value)
+      if (!response) return
+      const { lines, expiry } = await response.json()
+      if (Date.now() > expiry) {
+        cache.delete(logsCacheKey.value)
+        return
+      }
+      housekeepCache(cache)
+      return lines.length ? lines : undefined
+    })
+
+    async function putLogsCache (lines) {
+      if (!logsCacheKey.value) return
+      const cache = await logsCache
+      await cache.put(logsCacheKey.value, new Response(
+        JSON.stringify({ lines, expiry: Date.now() + logsCacheExpiryMs })
+      ))
+    }
+
+    const showCachedLogs = computed(
+      () => results.value.connected == null && cachedLogLines.value?.length
+    )
+
     /** AutoScroll? */
     const autoScroll = useInitialOptions('autoScroll', { props, emit }, true)
 
     /** View toolbar button size */
     const toolbarBtnSize = '40'
 
+    const logLines = computed(
+      () => results.value.lines?.length ? results.value.lines : cachedLogLines.value
+    )
+
     return {
       // the log subscription query
       query: ref(null),
       // list of log files for the selected workflow/task/job
       logFiles: ref([]),
+      logLines,
       results,
+      showCachedLogs,
+      putLogsCache,
       parentPath,
+      id,
       relativeID,
       previousRelativeID,
       inputID,
       validateInputID,
       relativeTokens,
+      workflowTokens,
       Tokens,
       file,
       // the label for the file input
       fileLabel: ref('Select File'),
       // turns the file input off (e.g. when the file list is being loaded)
       fileDisabled: ref(false),
-      // toggle between viewing workflow logs (0) and job logs (1).
-      // default to displaying workflow logs unless initial task/job ID is provided.
-      jobLog: ref(relativeID.value == null ? 0 : 1),
+      jobLog,
       timestamps,
       wordWrap,
       autoScroll,
@@ -476,7 +536,6 @@ export default {
       toolbarBtnProps: btnProps(toolbarBtnSize),
       jobNode: ref(null),
       workflowID,
-      variables,
     }
   },
 
@@ -511,17 +570,27 @@ export default {
   },
 
   computed: {
-    workflowTokens () {
-      // tokens for the workflow this view was opened for
-      return new Tokens(this.workflowID)
-    },
-    id () {
-      // the ID of the workflow/task/job we are subscribed to
-      // OR null if not subscribed
-      if (this.jobLog) {
-        return this.relativeTokens?.clone(this.workflowTokens)?.id
+    connectionChipProps () {
+      if (this.showCachedLogs) {
+        return {
+          text: 'Cached',
+          color: 'blue-grey',
+          prependIcon: mdiPowerPlugOff,
+        }
       }
-      return this.workflowID
+      if (this.results.connected) {
+        return {
+          text: 'Connected',
+          color: 'success',
+          prependIcon: mdiPowerPlug,
+        }
+      }
+      return {
+        text: 'Reconnect',
+        color: 'error',
+        prependIcon: mdiPowerPlugOff,
+        onClick: this.updateQuery,
+      }
     },
     controlGroups () {
       return [
@@ -575,7 +644,7 @@ export default {
         { id: this.id, file: this.file },
         `log-query-${this._uid}`,
         [
-          new LogsCallback(this.results)
+          new LogsCallback(this.results, this.putLogsCache)
         ],
         /* isDelta */ false,
         /* isGlobalCallback */ false

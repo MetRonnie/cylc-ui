@@ -65,7 +65,7 @@ import { watchWithControl } from '@/utils/reactivity'
 import { replacer, reviver } from '@/utils/json'
 import { useDefaultView } from '@/views/views'
 import { eventBus } from '@/services/eventBus'
-import { useWorkspaceLayoutsCache } from '@/composables/cacheStorage'
+import { housekeepCache, useWorkspaceLayoutsCache } from '@/composables/cacheStorage'
 
 import '@lumino/default-theme/style'
 
@@ -237,10 +237,7 @@ async function saveLayout () {
     serializedLayout,
     { headers: { 'Content-Type': 'application/json' } }
   ))
-  const keys = await cache.keys()
-  if (keys.length > 100) {
-    await cache.delete(keys[0])
-  }
+  await housekeepCache(cache)
 }
 
 /**

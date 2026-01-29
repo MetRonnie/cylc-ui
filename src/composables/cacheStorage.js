@@ -47,3 +47,24 @@ export function useWorkspaceLayoutsCache () {
     },
   })
 }
+
+/**
+ * Cached log files.
+ * @returns {Promise<Cache>?}
+ */
+export function useLogsCache () {
+  return window.caches?.open('cylc-logs')
+}
+
+/**
+ * FIFO housekeeping for a Cache instance.
+ * @param {Cache} cache
+ * @param {Number} maxEntries
+ */
+export async function housekeepCache (cache, maxEntries = 100) {
+  const keys = await cache.keys()
+  while (keys.length > maxEntries) {
+    await cache.delete(keys[0])
+    keys.shift()
+  }
+}
