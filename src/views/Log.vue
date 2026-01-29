@@ -330,7 +330,8 @@ class LogsCallback extends DeltasCallback {
     }
     if (added.lines) {
       this.results.lines.push(...added.lines)
-      throttle(() => this.cacheFunc(this.results.lines), 20e3)()
+      console.log('Received lines:', this.results.lines.length)
+      this.cacheFunc(this.results.lines)
     }
     if (added.connected != null) {
       this.results.connected = added.connected
@@ -484,6 +485,7 @@ export default {
 
     async function putLogsCache (lines) {
       if (!logsCacheKey.value) return
+      console.log('Caching lines:', lines.length)
       const cache = await logsCache
       await cache.put(logsCacheKey.value, new Response(
         JSON.stringify({ lines, expiry: Date.now() + logsCacheExpiryMs })
@@ -644,7 +646,7 @@ export default {
         { id: this.id, file: this.file },
         `log-query-${this._uid}`,
         [
-          new LogsCallback(this.results, this.putLogsCache)
+          new LogsCallback(this.results, throttle(this.putLogsCache, 5e3))
         ],
         /* isDelta */ false,
         /* isGlobalCallback */ false
