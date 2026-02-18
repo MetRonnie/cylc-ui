@@ -287,9 +287,6 @@ fragment UpdatedDelta on Updated {
   jobs {
     ...JobData
   }
-  families {
-    ...FamilyData
-  }
 }
 
 fragment PrunedDelta on Pruned {
