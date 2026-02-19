@@ -133,6 +133,7 @@ import {
   mdiAlphaFCircle
 } from '@mdi/js'
 import { isFlowNone } from '@/utils/tasks'
+import { cloneDeep } from 'lodash-es'
 
 /** @typedef {import('@/utils/uid').Tokens} Tokens */
 
@@ -724,7 +725,31 @@ export default {
           ]
         }
       ]
-    }
+    },
+
+    nodes () {
+      return this.workflows.flatMap(
+        (workflow) => workflow.children.flatMap(
+          (cycle) => cycle.children
+        )
+      )
+    },
+
+    edges () {
+      return new Map(this.workflows.flatMap(
+        (workflow) => workflow.$edges?.map(
+          ({ tokens }) => [tokens.id, new Edge(tokens)]
+        ) || []
+      ))
+    },
+
+    /** A unique hash for the current graph based on its nodes and edges. */
+    hash () {
+      return nonCryptoHash(
+        this.nodes.reduce((acc, n) => acc + n.id, '') +
+        Array.from(this.edges.keys()).reduce((acc, id) => acc + id, '')
+      )
+    },
   },
 
   methods: {
@@ -883,26 +908,6 @@ export default {
     decreaseSpacing () {
       // decrease graph layout node spacing by 10%
       this.spacing = this.spacing * (10 / 11)
-    },
-
-    getGraphNodes () {
-      // list graph nodes from the store (non reactive list)
-      return this.workflows.flatMap(
-        (workflow) => workflow.children.flatMap(
-          (cycle) => cycle.children
-        )
-      )
-    },
-
-    getGraphEdges () {
-      // map graph edges from the store (non reactive)
-      const ret = new Map()
-      for (const { $edges } of this.workflows) {
-        for (const { tokens } of $edges || []) {
-          ret.set(tokens.id, new Edge(tokens))
-        }
-      }
-      return ret
     },
 
     /**
@@ -1108,18 +1113,6 @@ export default {
       return ret.join('\n')
     },
 
-    /**
-     * Generate a hash for this list of nodes and edges.
-     * @param {Node[]} nodes
-     * @param {Map<string, Edge>} edges
-     */
-    hashGraph (nodes, edges) {
-      return nonCryptoHash(
-        nodes.reduce((acc, n) => acc + n.id, '') +
-        Array.from(edges.keys()).reduce((acc, id) => acc + id, '')
-      )
-    },
-
     reset () {
       // pan / zoom so that the graph is centered and in frame
       this.panZoomTo(
@@ -1160,11 +1153,8 @@ export default {
       this.updating = true
 
       // extract the graph (non reactive lists of nodes & edges)
-      let nodes = await this.waitFor(() => {
-        const nodes = this.getGraphNodes()
-        return nodes.length ? nodes : false
-      })
-      const edges = this.getGraphEdges()
+      let nodes = [...this.nodes]
+      const edges = cloneDeep(this.edges) // temp
 
       for (const cycle of this.collapseCycle) {
         const cycleNode = this.cylcTree.$index[
@@ -1255,7 +1245,7 @@ export default {
         }
       }
 
-      if (!nodes || !nodes.length) {
+      if (!nodes.length) {
         // we can't graph this, reset and wait for something to draw
         this.graphID = null
         this.updating = false
@@ -1263,9 +1253,8 @@ export default {
       }
 
       const cyclesToNodes = getCyclesToNodes(nodes)
-      // compute the graph ID
-      const graphID = this.hashGraph(nodes, edges)
-      if (this.graphID === graphID) {
+      // check the graph ID
+      if (this.graphID === this.hash) {
         // the graph has not changed => do nothing
         this.updating = false
         return
@@ -1328,7 +1317,7 @@ export default {
         this.reset()
       }
 
-      this.graphID = graphID
+      this.graphID = this.hash
       this.updating = false
     },
 
