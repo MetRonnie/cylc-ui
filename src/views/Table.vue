@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     class="c-table pa-2 pb-0 h-100 flex-column d-flex"
   >
     <ViewToolbar>
-      <TaskFilter v-model="tasksFilter"/>
+      <TaskFilter v-model="tasksFilter" title="Filter Tasks" />
     </ViewToolbar>
     <div class="overflow-hidden">
       <TableComponent

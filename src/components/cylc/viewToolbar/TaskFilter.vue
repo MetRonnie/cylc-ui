@@ -57,7 +57,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             activatable
             active-strategy="independent"
             item-value="value"
-            color="blue"
+            :color="activeColor"
             indent-lines
             density="compact"
             class="pt-0"
@@ -77,14 +77,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { mdiFilter, mdiMagnify, mdiUndo } from '@mdi/js'
 import { TaskState, WaitingStateModifierNames } from '@/model/TaskState.model'
 import Task from '@/components/cylc/Task.vue'
-import { computed } from 'vue'
-import { taskStateItems } from '@/components/cylc/viewToolbar/util'
+import { computed, defineProps } from 'vue'
+import { activeColor, taskStateItems } from '@/components/cylc/viewToolbar/util'
 import ViewToolbarBtn from '@/components/cylc/viewToolbar/ViewToolbarBtn.vue'
 
 /** @type {import('vue').Ref<{ id: string?, states: string[]? }>} */
 const model = defineModel({
   type: Object,
   required: true,
+})
+
+defineProps({
+  title: {
+    type: String,
+    required: true,
+  },
 })
 
 function autoResizeInput (e) {

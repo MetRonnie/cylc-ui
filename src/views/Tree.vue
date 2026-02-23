@@ -20,29 +20,28 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <ViewToolbar
       class="toolbar"
     >
-      <TaskFilter v-model="tasksFilter"/>
-      <div class="group">
+      <template #filter>
+        <TaskFilter v-model="tasksFilter" title="Filter Tasks" />
+      </template>
+      <template #tree>
         <ViewToolbarBtn
           v-model:active.toggle="flat"
           :icon="icons.mdiFormatAlignRight"
           :active-icon="icons.mdiFormatAlignJustify"
-          :active-color="null"
-          v-tooltip="'Toggle Families'"
-          data-cy="control-flat"
+          :highlight="false"
+          title="Toggle Families"
         />
         <ViewToolbarBtn
           @click="treeExpandAll()"
           :icon="icons.mdiPlus"
-          v-tooltip="'Expand All'"
-          data-cy="control-ExpandAll"
+          title="Expand All"
         />
         <ViewToolbarBtn
           @click="treeCollapseAll()"
           :icon="icons.mdiMinus"
-          v-tooltip="'Collapse All'"
-          data-cy="control-CollapseAll"
+          title="Collapse All"
         />
-      </div>
+      </template>
     </ViewToolbar>
     <TreeComponent
       class="tree"

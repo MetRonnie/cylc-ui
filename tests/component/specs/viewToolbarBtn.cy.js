@@ -79,22 +79,18 @@ describe('View Toolbar Button Component', () => {
       })
   })
 
-  it('can use a different icon and color when active', () => {
+  it('can use a different icon when active', () => {
     mountFunc({
       icon: mdiGestureTap,
       activeIcon: mdiCog,
-      activeColor: 'red',
     })
     cy.get('button svg path')
       .should('have.attr', 'd', mdiGestureTap)
-      .should('not.have.class', 'text-red')
     cy.get('@wrapper').then((wrapper) => {
       wrapper.setProps({ active: true })
     })
     cy.get('button svg path')
       .should('have.attr', 'd', mdiCog)
-    cy.get('button')
-      .should('have.class', 'text-red')
   })
 
   // TODO: visual regression test

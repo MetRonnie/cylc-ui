@@ -16,13 +16,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <template>
   <v-btn
-    size="40"
-    variant="text"
-    density="compact"
-    rounded="lg"
     icon
+    variant="text"
     v-bind="{ ...$attrs, ...btnProps }"
-    :color="active ? activeColor : undefined"
+    :color="active && highlight ? activeColor : undefined"
   >
     <slot name="icon">
       <!-- Separate named slot to ensure icon is still rendered when parent overrides default slot -->
@@ -34,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script setup>
 import { computed } from 'vue'
+import { activeColor } from './util'
 
 defineOptions({
   inheritAttrs: false,
@@ -44,14 +42,18 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  /** Color to use when active. */
-  activeColor: {
-    type: String,
-    default: 'blue',
+  /** Whether to highlight the button when active */
+  highlight: {
+    type: Boolean,
+    default: true,
   },
   /** Icon to show when active. */
   activeIcon: {
     type: String,
+  },
+  title: {
+    type: String,
+    required: true,
   },
 })
 
