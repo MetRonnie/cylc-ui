@@ -87,7 +87,7 @@ const model = defineModel({
   required: true,
 })
 
-const props = defineProps({
+defineProps({
   title: {
     type: String,
     required: true,
