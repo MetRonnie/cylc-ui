@@ -19,47 +19,42 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <div class="c-graph w-100 h-100">
     <!-- the controls -->
     <ViewToolbar class="rounded-lg pa-1">
-      <div class="group">
-        <ViewToolbarBtn
-          @click="refresh()"
-          :icon="icons.mdiRefresh"
-          v-tooltip="'Refresh'"
-          :disabled="autoRefresh"
-        />
-        <ViewToolbarBtn
-          v-model:active.toggle="autoRefresh"
-          :icon="icons.mdiTimer"
-          v-tooltip="'Auto Refresh'"
-          data-cy="control-autoRefresh"
-        />
-        <ViewToolbarBtn
-          v-model:active.toggle="transpose"
-          :icon="icons.mdiFileRotateRight"
-          v-tooltip="'Transpose'"
-          data-cy="control-transpose"
-        />
-        <ViewToolbarBtn
-          @click="reset()"
-          :icon="icons.mdiImageFilterCenterFocus"
-          v-tooltip="'Centre'"
-        />
-        <ViewToolbarBtn
-          @click="increaseSpacing()"
-          :icon="icons.mdiArrowExpand"
-          v-tooltip="'Increase Spacing'"
-        />
-        <ViewToolbarBtn
-          @click="decreaseSpacing()"
-          :icon="icons.mdiArrowCollapse"
-          v-tooltip="'Decrease Spacing'"
-        />
-        <ViewToolbarBtn
-          v-model:active.toggle="groupCycle"
-          :icon="icons.mdiVectorSelection"
-          v-tooltip="'Group by cycle point'"
-          data-cy="control-groupCycle"
-        />
-      </div>
+      <ViewToolbarBtn
+        @click="refresh()"
+        :icon="icons.mdiRefresh"
+        title="Refresh"
+        :disabled="autoRefresh"
+      />
+      <ViewToolbarBtn
+        v-model:active.toggle="autoRefresh"
+        :icon="icons.mdiTimer"
+        title="Auto Refresh"
+      />
+      <ViewToolbarBtn
+        v-model:active.toggle="transpose"
+        :icon="icons.mdiFileRotateRight"
+        title="Transpose"
+      />
+      <ViewToolbarBtn
+        @click="reset()"
+        :icon="icons.mdiImageFilterCenterFocus"
+        title="Centre"
+      />
+      <ViewToolbarBtn
+        @click="increaseSpacing()"
+        :icon="icons.mdiArrowExpand"
+        title="Increase Spacing"
+      />
+      <ViewToolbarBtn
+        @click="decreaseSpacing()"
+        :icon="icons.mdiArrowCollapse"
+        title="Decrease Spacing"
+      />
+      <ViewToolbarBtn
+        v-model:active.toggle="groupCycle"
+        :icon="icons.mdiVectorSelection"
+        title="Group by cycle point"
+      />
     </ViewToolbar>
 
     <!-- the graph -->

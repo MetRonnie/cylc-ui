@@ -117,7 +117,7 @@ describe('Graph View', () => {
     cy.visit('/#/graph/one')
     waitForGraphLayout()
     cy
-      .get('[data-cy="control-groupCycle"]')
+      .get('[data-cy=control-groupByCyclePoint]')
       .click()
     cy
       .get('.c-graph:first')
@@ -143,7 +143,7 @@ describe('Graph View', () => {
     cy.visit('/#/workspace/one')
     addView('Graph')
     waitForGraphLayout()
-    checkRememberToolbarSettings('[data-cy="control-groupCycle"]', false, true)
+    checkRememberToolbarSettings('[data-cy=control-groupByCyclePoint]', false, true)
   })
 
   describe('Flow nums', () => {
