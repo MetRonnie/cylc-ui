@@ -46,19 +46,38 @@ describe('useInitialOptions', () => {
     )
   })
 
-  it('uses the default value when the property is not in initialOptions', () => {
-    const ctx = {
-      props: {
-        initialOptions: { ship: 'In Amber Clad' },
-      },
-      emit () {},
-    }
+  describe('default value parameter', () => {
+    it.each([
+      { propVal: 'In Amber Clad', defaultVal: 'Forward Unto Dawn', expected: 'In Amber Clad' },
+      { defaultVal: 'Forward Unto Dawn', expected: 'Forward Unto Dawn' },
+      { expected: undefined },
+    ])('prop: $propVal, default: $defaultVal, expected: $expected', ({ propVal, defaultVal, expected }) => {
+      const ctx = {
+        props: {
+          initialOptions: { ship: propVal },
+        },
+        emit () {},
+      }
+      const ship = useInitialOptions('ship', ctx, defaultVal)
+      expect(ship.value).toBe(expected)
+    })
 
-    const name = useInitialOptions('name', ctx, 'Miranda Keyes')
-    expect(name.value).toBe('Miranda Keyes')
-    const ship = useInitialOptions('ship', ctx, 'Forward Unto Dawn')
-    expect(ship.value).toBe('In Amber Clad')
-    const rank = useInitialOptions('rank', ctx)
-    expect(rank.value).toBe(undefined)
+    it('accepts a function as default value', ({ propVal, defaultCalled, expected }) => {
+      const emit = () => {}
+      const props = {
+        initialOptions: { ship: 'In Amber Clad' },
+      }
+      const expensiveFunc = vi.fn(() => 'default')
+
+      const ship = useInitialOptions('ship', { props, emit }, expensiveFunc)
+      expect(ship.value).toBe('In Amber Clad')
+      expect(expensiveFunc).not.toHaveBeenCalled()
+
+      expensiveFunc.mockReset()
+
+      const name = useInitialOptions('name', { props, emit }, expensiveFunc)
+      expect(name.value).toBe('default')
+      expect(expensiveFunc).toHaveBeenCalled()
+    })
   })
 })

@@ -19,7 +19,7 @@
 filters, inputs, toggles etc. that can be loaded when creating the view.
 This is used for saving the view state along with the tab layout. */
 
-import { ref, watch } from 'vue'
+import { ref, toValue, watch } from 'vue'
 
 /**
  * @callback emitter
@@ -50,7 +50,7 @@ export const updateInitialOptionsEvent = 'update:initialOptions'
  * @returns {import('vue').Ref<T>}
  */
 export function useInitialOptions (name, { props, emit }, defaultValue) {
-  const _ref = ref(props.initialOptions[name] ?? defaultValue)
+  const _ref = ref(props.initialOptions[name] ?? toValue(defaultValue))
   watch(
     _ref,
     (val, old) => emit(
