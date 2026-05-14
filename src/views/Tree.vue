@@ -195,8 +195,7 @@ export default {
       QUERY,
       variables.value,
       'workflow',
-      [],
-      { isDelta: true, isGlobalCallback: true },
+      { runGlobalCallback: true },
     ))
 
     /**

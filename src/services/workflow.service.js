@@ -18,7 +18,7 @@
 import { cloneDeep, isEqual } from 'lodash'
 import gql from 'graphql-tag'
 import ViewState from '@/model/ViewState.model'
-import Subscription from '@/model/Subscription.model'
+import { Subscription } from '@/model/Subscription.model'
 import {
   dummyMutations,
   extractFields,
@@ -36,8 +36,7 @@ import { store } from '@/store/index'
 import { createApolloClient } from '@/graphql/index'
 import { print } from 'graphql'
 import mergeQueries from '@/graphql/merge'
-import { Alert } from '@/model/Alert.model'
-import CylcTreeCallback from '@/services/treeCallback'
+import { DeltasCallback } from '@/services/callbacks'
 
 /** @typedef {import('graphql').DocumentNode} DocumentNode */
 /** @typedef {import('graphql').IntrospectionInputType} IntrospectionInputType */
@@ -54,11 +53,44 @@ import CylcTreeCallback from '@/services/treeCallback'
  * @property {IntrospectionInputType[]} types
  */
 
-/**
- * @typedef {Object} SubscriptionOptions
- * @property {Function} next
- * @property {Function} error
- */
+class GlobalTreeCallback extends DeltasCallback {
+  constructor () {
+    super()
+    store.commit('workflows/CREATE')
+  }
+
+  before (deltas) {
+    // Wipe all child nodes from a workflow in the data store if a reloaded
+    // delta is received. Reloaded deltas are sent whenever a workflow is
+    // restarted or reloaded (note, restarting a workflow implicitly reloads
+    // it).
+    //
+    // When a workflow reloads it is hard to generate the relevant pruned
+    // and updated deltas to remove any objects which have been wiped out by
+    // the configuration change, so the easiest solution is to wipe the
+    // entire tree under the workflow and rebuild from scratch. If we don't
+    // do this, we can end up with nodes in the store which aren't meant to be
+    // there and won't get pruned.
+    if (deltas.updated?.workflow?.reloaded) {
+      store.commit('workflows/REMOVE_CHILDREN', (deltas.updated.workflow.id))
+    }
+    if (deltas.added?.workflow?.reloaded) {
+      store.commit('workflows/REMOVE_CHILDREN', (deltas.added.workflow.id))
+    }
+  }
+
+  onAdded (added) {
+    store.commit('workflows/UPDATE_DELTAS', added)
+  }
+
+  onUpdated (updated) {
+    store.commit('workflows/UPDATE_DELTAS', updated)
+  }
+
+  onPruned (pruned) {
+    store.commit('workflows/REMOVE_DELTAS', pruned)
+  }
+}
 
 export class WorkflowService {
   /**
@@ -92,8 +124,7 @@ export class WorkflowService {
     this.introspection = this.loadTypes()
 
     // create & start the global callback
-    this.globalCallback = new CylcTreeCallback()
-    this.globalCallback.init(store, [])
+    this.globalCallback = new GlobalTreeCallback()
   }
 
   // --- Mutations
@@ -231,25 +262,11 @@ export class WorkflowService {
   subscribe (uid, query) {
     // First we retrieve the existing, or create a new subscription (and add to the pool).
     const subscription = this.getOrCreateSubscription(query)
-    if (!subscription.subscribers[uid]) {
+    if (!subscription.subscribers.has(uid)) {
       // NOTE: make sure to remove it afterwards to avoid memory leaks!
-      subscription.subscribers[uid] = query
+      subscription.subscribers.set(uid, query)
       // Then we recompute the query, checking if variables match, and action name is set.
       this.recompute(subscription)
-      const errors = []
-      // if the callbacks class has an init method defined, use it
-      for (const callback of subscription.callbacks) {
-        // if any of the views currently using this subscription have an init hook, trigger it (which will check if its needed)
-        if (callback.init) {
-          callback.init(store, errors)
-          // TODO: this error handling is unused and possibly broken.
-          // for (const error of errors) {
-          //   store.commit('SET_ALERT', new Alert(error[0], 'error'), { root: true })
-          //   console.warn(...error)
-          //   subscription.handleViewState(ViewState.ERROR, error('Error presetting view state'))
-          // }
-        }
-      }
     }
     // Otherwise we are calling subscribe for a component or view already subscribed.
   }
@@ -258,11 +275,11 @@ export class WorkflowService {
    * Start any pending subscriptions.
    */
   startSubscriptions () {
-    const pendingSubscriptions = Object.values(this.subscriptions)
-      .filter(subscription => {
-        return subscription.observable === null || subscription.reload
-      })
-    pendingSubscriptions.forEach(subscription => this.startSubscription(subscription))
+    for (const subscription of Object.values(this.subscriptions)) {
+      if (!subscription.observable || subscription.reload) {
+        this.startSubscription(subscription)
+      }
+    }
   }
 
   /**
@@ -281,7 +298,7 @@ export class WorkflowService {
     subscription.handleViewState(ViewState.LOADING)
 
     // Stop if already running.
-    if (subscription.observable !== null) {
+    if (subscription.observable) {
       if (this.debug) {
         // eslint-disable-next-line no-console
         console.debug(
@@ -289,92 +306,49 @@ export class WorkflowService {
       }
       this.stopSubscription(subscription, true)
     }
-    if (subscription.query.isDelta === false & subscription.query.isGlobalCallback === false) {
-      try {
-        // Then start subscription.
-        subscription.observable = this.startCylcSubscription(
-          subscription.query.query,
-          subscription.query.variables,
-          {
-            next: function next (response) {
-              if (subscription.callbacks.length === 0) {
-                return
-              }
-              const errors = []
-              for (const callback of subscription.callbacks) {
-                callback.onAdded(response.data.logs, store, errors)
-                callback.commit(store, errors)
-              }
-            },
-            error: function error (err) {
-              subscription.handleViewState(ViewState.ERROR, err)
-            },
-          }
-        )
-        this.subscriptions[subscription.query.name] = subscription
-        // All done!
-        subscription.handleViewState(ViewState.COMPLETE)
-        subscription.reload = false
-      } catch (e) {
-        subscription.handleViewState(ViewState.ERROR, e)
-      }
-    } else {
-      const globalCallback = this.globalCallback
-      try {
-        // Then start subscription.
-        subscription.observable = this.startCylcSubscription(
-          subscription.query.query,
-          subscription.query.variables,
-          {
-            next: function next (response) {
-              const deltas = response.data.deltas || {}
-              const added = deltas.added || {}
-              const updated = deltas.updated || {}
-              const pruned = deltas.pruned || {}
-              const errors = []
 
-              // run the global callback first
-              globalCallback.before(deltas, store, errors)
-              globalCallback.onAdded(added, store, errors)
-              globalCallback.onUpdated(updated, store, errors)
-              globalCallback.onPruned(pruned, store, errors)
+    try {
+      // Then start subscription.
+      subscription.observable = this.startCylcSubscription(subscription.query).subscribe({
+        next: subscription.query.next ?? (
+          (response) => {
+            const deltas = response.data.deltas || {}
+            const added = deltas.added || {}
+            const updated = deltas.updated || {}
+            const pruned = deltas.pruned || {}
 
-              // then run the local callbacks if there are any
-              if (subscription.callbacks.length === 0) {
-                return
-              }
-              for (const callback of subscription.callbacks) {
-                callback.before(deltas, store, errors)
-                callback.onAdded(added, store, errors)
-                callback.onUpdated(updated, store, errors)
-                callback.commit(store, errors)
-              }
-              for (const callback of [...subscription.callbacks].reverse()) {
-                callback.onPruned(pruned, store, errors)
-                callback.after(deltas, store, errors)
-                callback.commit(store, errors)
-              }
-              for (const error of errors) {
-                store.commit(
-                  'SET_ALERT',
-                  new Alert(error[0], 'error'),
-                  { root: true }
-                )
-                console.warn(...error)
-              }
-            },
-            error: function error (err) {
-              subscription.handleViewState(ViewState.ERROR, err)
-            },
+            // run the global callback first
+            if (subscription.query.runGlobalCallback) {
+              this.globalCallback.before(deltas)
+              this.globalCallback.onAdded(added)
+              this.globalCallback.onUpdated(updated)
+              this.globalCallback.onPruned(pruned)
+            }
+
+            // then run the local callbacks if there are any
+            for (const callback of subscription.callbacks) {
+              callback.before(deltas)
+              callback.onAdded(added)
+              callback.onUpdated(updated)
+            }
+            for (const callback of [...subscription.callbacks].reverse()) {
+              callback.onPruned(pruned)
+              callback.after(deltas)
+            }
           }
-        )
-        this.subscriptions[subscription.query.name] = subscription
-        // All done!
-        subscription.handleViewState(ViewState.COMPLETE)
-        subscription.reload = false
-      } catch (e) {
-        subscription.handleViewState(ViewState.ERROR, e)
-      }
+        ),
+        error: (err) => {
+          // Note: Apollo docs claim this is never called, but it can be
+          // e.g. if the subscription query requests a non-existent field
+          subscription.handleViewState(ViewState.ERROR, err)
+        },
+      })
+      this.subscriptions[subscription.query.name] = subscription
+      // All done!
+      subscription.handleViewState(ViewState.COMPLETE)
+      subscription.reload = false
+    } catch (e) {
+      subscription.handleViewState(ViewState.ERROR, e)
     }
   }
 
@@ -383,17 +357,12 @@ export class WorkflowService {
    * Observable being created to monitor the subscription. Apollo Client is
    * used here to create the observer and the subscription.
    *
-   * @param {DocumentNode} query - an already parsed GraphQL query (i.e. not a `string`)
-   * @param {Object} variables
-   * @param {SubscriptionOptions} subscriptionOptions - { next(), error() }
-   * @returns {Subscription}
+   * @param {SubscriptionQuery} subscriptionQuery
+   * @returns {import('zen-observable-ts').Observable}
    */
-  startCylcSubscription (query, variables, subscriptionOptions) {
+  startCylcSubscription ({ query, variables }) {
     if (!query) {
       throw new Error('You must provide a query for the subscription')
-    }
-    if (!variables) {
-      variables = {}
     }
     if (this.debug) {
       // eslint-disable-next-line no-console
@@ -405,13 +374,6 @@ export class WorkflowService {
       query,
       variables,
       fetchPolicy: 'no-cache',
-    }).subscribe({
-      next (value) {
-        subscriptionOptions.next(value)
-      },
-      error (errorValue) {
-        subscriptionOptions.error(errorValue)
-      },
     })
   }
 
@@ -428,9 +390,9 @@ export class WorkflowService {
       return
     }
     // Remove viewOrComponent subscriber
-    delete subscription.subscribers[uid]
+    subscription.subscribers.delete(uid)
     // If no more subscribers, then stop the subscription.
-    if (Object.keys(subscription.subscribers).length === 0) {
+    if (!subscription.subscribers.size) {
       this.stopSubscription(subscription)
     }
     // TODO: recompute, unsubscribe and wipe unwanted store data
@@ -444,10 +406,14 @@ export class WorkflowService {
     // store.commit(...)
   }
 
-  /* Stop a subscription.
+  /**
+   * Stop a subscription.
    *
    * If the subscription is the "workflow" subscription the datastore
    * housekeeping will be invoked unless `reload === true`.
+   *
+   * @param {Subscription} subscription
+   * @param {boolean} reload
    */
   stopSubscription (subscription, reload) {
     // Stop WebSockets subscription.
@@ -457,7 +423,7 @@ export class WorkflowService {
     }
     subscription.observable.unsubscribe()
     for (const callback of subscription.callbacks) {
-      callback.tearDown(store)
+      callback.tearDown()
     }
     if (!reload && subscription.query.name === 'workflow') {
       // Remove all children in the store for each workflow in the subscription.
@@ -485,21 +451,21 @@ export class WorkflowService {
    * @param {Subscription} subscription
    */
   recompute (subscription) {
-    const subscriberQueries = Object.values(subscription.subscribers)
-    if (!subscriberQueries.length) {
+    if (!subscription.subscribers.size) {
       throw new Error('Error recomputing subscription: No Subscribers.')
     }
-
-    // We will use the first subscriber to compare its variables, and also will
+    const subscribersIter = subscription.subscribers.values()
+    // We will pop the first subscriber to compare its variables, and also will
     // merge other queries into a copy of the base query
-    const baseSubscriberQuery = subscriberQueries[0]
+    const baseSubscriberQuery = subscribersIter.next().value
 
     // Reset.
     const initialQuery = subscription.query.query
     let finalQuery = cloneDeep(initialQuery)
-    subscription.callbacks = baseSubscriberQuery.callbacks
+    subscription.callbacks = [...baseSubscriberQuery.callbacks]
 
-    for (const subscriberQuery of subscriberQueries.slice(1)) {
+    // Iterate over the remaining subscribers
+    for (const subscriberQuery of subscribersIter) {
       // NB: We can remove this check if we so want, as the library used to
       // combine queries supports merging variables too. Only issue would be
       // the possibility of merging subscriptions for different workflows by
@@ -508,30 +474,9 @@ export class WorkflowService {
         throw new Error('Error recomputing subscription: Query variables do not match.')
       }
       finalQuery = mergeQueries(finalQuery, subscriberQuery.query)
-      // Combine the arrays of callbacks, creating an array of unique
-      // callbacks.  The callbacks are compared by their class/constructor
-      // name.
-
+      // Combine the arrays of callbacks (no longer used?)
       for (const callback of subscriberQuery.callbacks) {
-        // comparing by constructor name does not work as the minifier
-        // normalizer these names and because we have two subscriptions and the
-        // normalized callback names are assigned to these independently, from
-        // what looks like a predefined set of possible options [t,n] So this
-        // block wont work as it compares and decides it already exists when it
-        // doesn't
-        if (!subscription.callbacks.find(element => {
-          const elementObjectKeys = Object.keys(element)
-          const callbackObjectKeys = Object.keys(callback)
-          // this fall through approach is a bit easier to read and should conserve some memory as object keys dont need to be recalculated each time
-          if (element.constructor.name === callback.constructor.name) {
-            if (elementObjectKeys.length === callbackObjectKeys.length) {
-              if (elementObjectKeys.sort().join() === callbackObjectKeys.sort().join()) {
-                return true
-              }
-            }
-          }
-          return false
-        })) {
+        if (!subscription.callbacks.includes(callback)) {
           subscription.callbacks.push(callback)
         }
       }
@@ -549,4 +494,9 @@ export class WorkflowService {
       subscription.query.query = gql(print(finalQuery))
     }
   }
+}
+
+// For testing
+export {
+  GlobalTreeCallback as __GlobalTreeCallback,
 }

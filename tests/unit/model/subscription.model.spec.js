@@ -17,7 +17,7 @@
 
 import sinon from 'sinon'
 import gql from 'graphql-tag'
-import Subscription from '@/model/Subscription.model'
+import { Subscription } from '@/model/Subscription.model'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 describe('SubscriptionQuery model', () => {
@@ -49,7 +49,7 @@ describe('SubscriptionQuery model', () => {
       const subscription = new Subscription(subscriptionQuery, debug)
       expect(subscription.query).to.equal(subscriptionQuery)
       expect(subscription.observable).to.equal(null)
-      expect(Object.keys(subscription.subscribers).length).to.equal(0)
+      expect(subscription.subscribers.size).to.equal(0)
       expect(subscription.callbacks.length).to.equal(0)
       expect(subscription.reload).to.equal(false)
       expect(subscription.debug).to.equal(debug)

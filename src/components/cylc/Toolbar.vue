@@ -346,8 +346,7 @@ export default {
       QUERY,
       variables.value,
       'workflow',
-      [],
-      { isDelta: true, isGlobalCallback: true }
+      { runGlobalCallback: true },
     ))
 
     /** Show workflow name as title if we are navigated to one, otherwise the generic route title. */

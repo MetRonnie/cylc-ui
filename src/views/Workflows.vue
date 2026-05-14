@@ -85,7 +85,7 @@ const { isLoading } = useComponentSubscription('Workflows', new SubscriptionQuer
   QUERY,
   {},
   'root',
-  []
+  { runGlobalCallback: true },
 ))
 
 const cylcTree = computed(() => store.state.workflows.cylcTree)

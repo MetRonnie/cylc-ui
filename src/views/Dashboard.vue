@@ -252,8 +252,7 @@ export default {
       QUERY,
       {},
       'root',
-      [],
-      { isDelta: true, isGlobalCallback: true },
+      { runGlobalCallback: true },
     ))
 
     return {
