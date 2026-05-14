@@ -276,8 +276,8 @@ import { useGraphQL } from '@/mixins/graphql'
 import {
   mutationStatus,
 } from '@/utils/aotf'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import { eventBus } from '@/services/eventBus'
 import { upperFirst } from 'lodash-es'
@@ -343,6 +343,14 @@ export default {
       () => workflowName.value || route.meta?.title || route.name
     )
 
+    useComponentSubscription('Toolbar', () => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+      [],
+      { isDelta: true, isGlobalCallback: true }
+    ))
+
     const { drawer, drawerEnabled, toggleDrawer } = useDrawer()
 
     return {
@@ -352,7 +360,6 @@ export default {
       drawerEnabled,
       toggleDrawer,
       toolbarHeight,
-      variables,
       title,
       workflowName,
       workflowID,
@@ -379,10 +386,6 @@ export default {
     WarningIcon,
   },
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   data: () => ({
     expecting: {
       // store state from mutations in order to compute the "enabled" attrs
@@ -395,17 +398,6 @@ export default {
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
-    query () {
-      if (!this.workflowName) return null
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
-    },
     currentWorkflow () {
       if (!this.workflowName) return null
       return this.cylcTree.$index[this.workflowID]

@@ -70,8 +70,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { mapState, mapGetters } from 'vuex'
 import { i18n } from '@/i18n'
 import { mdiTable } from '@mdi/js'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import WorkflowIcon from '@/components/cylc/gscan/WorkflowIcon.vue'
 import gql from 'graphql-tag'
 import { formatDatetime, humanDuration } from '@/utils/datetime'
@@ -110,15 +110,19 @@ fragment WorkflowData on Workflow {
 export default {
   name: 'WorkflowsTable',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     WorkflowIcon,
   },
 
   setup () {
+    useComponentSubscription('WorkflowsTable', new SubscriptionQuery(
+      QUERY,
+      {},
+      'root',
+      [],
+      { isDelta: true, isGlobalCallback: true },
+    ))
+
     return {
       formatDatetime,
       icons: {
@@ -128,14 +132,6 @@ export default {
   },
 
   data: () => ({
-    query: new SubscriptionQuery(
-      QUERY,
-      {},
-      'root',
-      [],
-      true,
-      true
-    ),
     now: null,
   }),
 

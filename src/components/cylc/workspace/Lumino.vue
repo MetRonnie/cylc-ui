@@ -93,10 +93,6 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits([
-  'emptied',
-])
-
 const mainDiv = useTemplateRef('mainDiv')
 
 /**
@@ -157,7 +153,6 @@ onMounted(async () => {
     () => !views.value.size,
     (isEmpty) => {
       empty.value = isEmpty
-      if (isEmpty) emit('emptied')
     },
     { immediate: true }
   )
