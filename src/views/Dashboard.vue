@@ -195,9 +195,9 @@ import {
   mdiGraphql,
 } from '@mdi/js'
 import { jupyterLogo } from '@/utils/icons'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import { WorkflowState, WorkflowStateOrder } from '@/model/WorkflowState.model'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import EventChip from '@/components/cylc/EventChip.vue'
 import { useUserService } from '@/services/user.service'
@@ -241,10 +241,6 @@ fragment WorkflowData on Workflow {
 export default {
   name: 'Dashboard',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     EventChip,
   },
@@ -252,22 +248,18 @@ export default {
   setup () {
     const { user, hubURL } = useUserService()
 
+    const { isLoading } = useComponentSubscription('Dashboard', new SubscriptionQuery(
+      QUERY,
+      {},
+      'root',
+      [],
+      { isDelta: true, isGlobalCallback: true },
+    ))
+
     return {
       user,
       hubURL,
-    }
-  },
-
-  data () {
-    return {
-      query: new SubscriptionQuery(
-        QUERY,
-        {},
-        'root',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      ),
+      isLoading,
     }
   },
 

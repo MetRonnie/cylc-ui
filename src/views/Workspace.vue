@@ -22,35 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   >
     <Lumino
       :key="$route.params.workflowName"
-      @emptied="onEmptied"
       :workflow-name="$route.params.workflowName"
     />
   </div>
 </template>
 
-<script>
-import subscriptionMixin from '@/mixins/subscription'
-import ViewState from '@/model/ViewState.model'
+<script setup>
 import Lumino from '@/components/cylc/workspace/Lumino.vue'
-
-export default {
-  name: 'Workspace',
-
-  mixins: [
-    subscriptionMixin,
-  ],
-
-  components: {
-    Lumino,
-  },
-
-  methods: {
-    onEmptied () {
-      // If we have no more widgets in the view, then we are not loading, not complete, not error,
-      // but back to beginning. When a widget is added, if it uses a query, then the mixins will
-      // take care to set the state to LOADING and then COMPLETE (and hopefully not ERROR).
-      this.viewState = ViewState.NO_STATE
-    },
-  },
-}
 </script>

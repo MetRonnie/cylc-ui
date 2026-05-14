@@ -36,9 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   updateInitialOptionsEvent,
@@ -47,7 +47,7 @@ import {
 import { matchNode, groupStateFilters, globToRegex, useTasksFilterState } from '@/components/cylc/common/filter'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
 import TableComponent from '@/components/cylc/table/Table.vue'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 
 const QUERY = gql`
@@ -141,10 +141,6 @@ export default {
   // eslint-disable-next-line vue/no-reserved-component-names
   name: 'Table',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     TableComponent,
     ViewToolbar,
@@ -157,7 +153,17 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
+
+    useComponentSubscription('Table', () => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      // we really should consider giving these unique names, as technically they are just use as the subscription names
+      // By using a unique name, we can avoid callback merging errors like the one documented in workflow.service.js
+      'workflow',
+      [],
+      { isDelta: true, isGlobalCallback: true },
+    ))
 
     /**
      * The job id input and selected task filter state.
@@ -176,17 +182,14 @@ export default {
       dataTableOptions,
       tasksFilter,
       filterState,
-      workflowIDs,
-      variables,
+      workflows,
     }
   },
 
+  data: () => ({}), // Currently allows us to mock computed properties in unit tests
+
   computed: {
     ...mapState('workflows', ['cylcTree']),
-    ...mapGetters('workflows', ['getNodes']),
-    workflows () {
-      return this.getNodes('workflow', this.workflowIDs)
-    },
     tasks () {
       const ret = []
       for (const workflow of this.workflows) {
@@ -201,19 +204,6 @@ export default {
         }
       }
       return ret
-    },
-
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        // we really should consider giving these unique names, as technically they are just use as the subscription names
-        // By using a unique name, we can avoid callback merging errors like the one documented line 350 in the workflow.service.js file
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
     },
 
     filteredTasks () {

@@ -19,11 +19,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   <GScan :workflowTree="cylcTree" :isLoading="isLoading" />
 </template>
 
-<script>
-import { mapState } from 'vuex'
+<script setup>
+import { computed } from 'vue'
+import { useStore } from 'vuex'
 import GScan from '@/components/cylc/gscan/GScan.vue'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 
 const QUERY = gql`
@@ -77,30 +78,15 @@ fragment WorkflowData on Workflow {
 }
 `
 
-export default {
-  name: 'Workflows',
+const store = useStore()
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
+// TODO: isLoading doesn't actually change
+const { isLoading } = useComponentSubscription('Workflows', new SubscriptionQuery(
+  QUERY,
+  {},
+  'root',
+  []
+))
 
-  components: {
-    GScan,
-  },
-
-  data () {
-    return {
-      query: new SubscriptionQuery(
-        QUERY,
-        {},
-        'root',
-        []
-      ),
-    }
-  },
-
-  computed: {
-    ...mapState('workflows', ['cylcTree']),
-  },
-}
+const cylcTree = computed(() => store.state.workflows.cylcTree)
 </script>

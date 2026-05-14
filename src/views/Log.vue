@@ -206,7 +206,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, readonly } from 'vue'
 import { refWithControl, usePrevious, whenever } from '@vueuse/core'
 import { useStore } from 'vuex'
 import {
@@ -221,14 +221,14 @@ import {
 } from '@mdi/js'
 import { btnProps } from '@/utils/viewToolbar'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   updateInitialOptionsEvent,
   useInitialOptions,
 } from '@/utils/initialOptions'
 import LogComponent from '@/components/cylc/log/Log.vue'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import { Tokens } from '@/utils/uid'
 import gql from 'graphql-tag'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
@@ -343,10 +343,6 @@ class LogsCallback extends DeltasCallback {
 export default {
   name: 'Log',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     CopyBtn,
     LogComponent,
@@ -370,7 +366,7 @@ export default {
   setup (props, { emit }) {
     const store = useStore()
 
-    const { workflowID, variables } = useGraphQL()
+    const { workflowID } = useGraphQL()
 
     /**
      * The task/job ID.
@@ -379,6 +375,12 @@ export default {
     const relativeID = useInitialOptions('relativeID', { props, emit })
 
     const previousRelativeID = usePrevious(relativeID)
+
+    /**
+     * Toggle between viewing workflow logs (0) and job logs (1).
+     * Default to displaying workflow logs unless initial task/job ID is provided.
+     */
+    const jobLog = ref(relativeID.value == null ? 0 : 1)
 
     /**
      * The user input for task/job ID.
@@ -390,8 +392,8 @@ export default {
       }, 500),
     })
 
-    function validateInputID (id) {
-      return !id || (Tokens.validate(id, true) ?? true)
+    function validateInputID (input) {
+      return !input || (Tokens.validate(input, true) ?? true)
     }
 
     /** @type {import('vue').Ref<Tokens>} */
@@ -405,6 +407,17 @@ export default {
         } catch {}
       }
       return null
+    })
+
+    /** Tokens for the workflow this view was opened for */
+    const workflowTokens = computed(() => new Tokens(workflowID.value))
+
+    /** The ID of the workflow/task/job we are subscribed to or null if not subscribed */
+    const id = computed(() => {
+      if (jobLog.value) {
+        return relativeTokens.value?.clone(workflowTokens.value)?.id
+      }
+      return workflowID.value
     })
 
     /**
@@ -440,6 +453,31 @@ export default {
       () => { results.value.connected = false }
     )
 
+    /** the log subscription query */
+    const query = ref(null)
+    const { uid } = useComponentSubscription('Log', query)
+
+    function updateQuery () {
+      // update the subscription query
+      // wipe the log lines from any previous subscription
+      reset()
+      // check that there is something to subscribe to
+      if (!file.value || !id.value) {
+        query.value = null
+        return
+      }
+      // update the subscription
+      query.value = new SubscriptionQuery(
+        LOGS_SUBSCRIPTION,
+        readonly({ id, file }),
+        `${uid}-query`,
+        [
+          new LogsCallback(results.value),
+        ],
+        { isDelta: false, isGlobalCallback: false },
+      )
+    }
+
     /** AutoScroll? */
     const autoScroll = useInitialOptions('autoScroll', { props, emit }, true)
 
@@ -447,26 +485,26 @@ export default {
     const toolbarBtnSize = '40'
 
     return {
-      // the log subscription query
-      query: ref(null),
+      query, // to allow access in unit tests
+      updateQuery,
       // list of log files for the selected workflow/task/job
       logFiles: ref([]),
       results,
       parentPath,
+      id,
       relativeID,
       previousRelativeID,
       inputID,
       validateInputID,
       relativeTokens,
+      workflowTokens,
       Tokens,
       file,
       // the label for the file input
       fileLabel: ref('Select File'),
       // turns the file input off (e.g. when the file list is being loaded)
       fileDisabled: ref(false),
-      // toggle between viewing workflow logs (0) and job logs (1).
-      // default to displaying workflow logs unless initial task/job ID is provided.
-      jobLog: ref(relativeID.value == null ? 0 : 1),
+      jobLog,
       timestamps,
       wordWrap,
       autoScroll,
@@ -475,7 +513,6 @@ export default {
       toolbarBtnProps: btnProps(toolbarBtnSize),
       jobNode: ref(null),
       workflowID,
-      variables,
     }
   },
 
@@ -510,18 +547,6 @@ export default {
   },
 
   computed: {
-    workflowTokens () {
-      // tokens for the workflow this view was opened for
-      return new Tokens(this.workflowID)
-    },
-    id () {
-      // the ID of the workflow/task/job we are subscribed to
-      // OR null if not subscribed
-      if (this.jobLog) {
-        return this.relativeTokens?.clone(this.workflowTokens)?.id
-      }
-      return this.workflowID
-    },
     controlGroups () {
       return [
         {
@@ -559,27 +584,7 @@ export default {
       // used by the ViewToolbar to update settings
       this[option] = value
     },
-    updateQuery () {
-      // update the subscription query
-      // wipe the log lines from any previous subscription
-      this.reset()
-      // check that there is something to subscribe to
-      if (!this.file || !this.id) {
-        this.query = null
-        return
-      }
-      // update the subscription
-      this.query = new SubscriptionQuery(
-        LOGS_SUBSCRIPTION,
-        { id: this.id, file: this.file },
-        `log-query-${this._uid}`,
-        [
-          new LogsCallback(this.results),
-        ],
-        /* isDelta */ false,
-        /* isGlobalCallback */ false
-      )
-    },
+
     /**
      * Query job data.
      *

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { ref, toValue, watch } from 'vue'
+import { isRef, ref, toValue, watch } from 'vue'
 
 /**
  * Watch source until it is truthy, then call the callback (and stop watching).
@@ -111,4 +111,13 @@ export function watchWithControl (source, callback, options = {}) {
       }
     },
   }
+}
+
+/**
+ * Check if the value is a ref or a getter function.
+ * @param {any} val
+ * @returns {boolean}
+ */
+export function isRefOrGetter (val) {
+  return isRef(val) || typeof val === 'function'
 }

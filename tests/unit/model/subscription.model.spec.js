@@ -18,8 +18,7 @@
 import sinon from 'sinon'
 import gql from 'graphql-tag'
 import Subscription from '@/model/Subscription.model'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
-import ViewState from '@/model/ViewState.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 describe('SubscriptionQuery model', () => {
   const query = gql`query { workflow { id } }`
@@ -54,52 +53,6 @@ describe('SubscriptionQuery model', () => {
       expect(subscription.callbacks.length).to.equal(0)
       expect(subscription.reload).to.equal(false)
       expect(subscription.debug).to.equal(debug)
-    })
-  })
-  describe('handleView', () => {
-    it('should set the subscribers viewStates', () => {
-      const tests = [
-        {
-          viewState: ViewState.ERROR,
-          debug: true,
-          context: {
-            message: 'test',
-          },
-        },
-        {
-          viewState: ViewState.NO_STATE,
-          debug: true,
-          context: {
-            message: 'test',
-          },
-        },
-        {
-          viewState: ViewState.LOADING,
-          debug: true,
-          context: {
-            message: 'test',
-          },
-        },
-        {
-          viewState: ViewState.COMPLETE,
-          debug: true,
-          context: {
-            message: 'test',
-          },
-        },
-      ]
-      for (const test of tests) {
-        const subscription = new Subscription(subscriptionQuery, test.debug)
-        subscription.subscribers[1] = {
-          viewState: null,
-          setAlert: () => {
-          },
-        }
-        subscription.handleViewState(test.viewState, test.context)
-        Object.values(subscription.subscribers).forEach(subscriber => {
-          expect(subscriber.viewState).to.equal(test.viewState)
-        })
-      }
     })
   })
 })

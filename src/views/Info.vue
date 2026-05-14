@@ -25,18 +25,19 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
+import { ref } from 'vue'
 import gql from 'graphql-tag'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import DeltasCallback from '@/services/callbacks'
 import {
   initialOptions,
   useInitialOptions,
 } from '@/utils/initialOptions'
 import { Tokens } from '@/utils/uid'
-
 import InfoComponent from '@/components/cylc/Info.vue'
+import { uniqueId } from 'lodash-es'
 
 // NOTE: This query is run outside of the central data store
 const QUERY = gql`
@@ -195,10 +196,6 @@ class InfoCallback extends DeltasCallback {
 export default {
   name: 'InfoView',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     InfoComponent,
   },
@@ -213,43 +210,29 @@ export default {
     const requestedTokens = useInitialOptions('requestedTokens', { props, emit })
     const panelExpansion = useInitialOptions('panelExpansion', { props, emit }, ['metadata'])
 
-    return {
-      requestedTokens,
-      panelExpansion,
-      variables,
-    }
-  },
+    // The task formatted as a data-store node
+    const task = ref({})
+    const taskNode = ref({})
 
-  data () {
-    return {
-      // This is the task we will request metadata for.
-      // when you change these values, the old query will be automatically canceled
-      // and re-issued with the new values
-      requestedCycle: undefined,
-      requestedTask: undefined,
-
-      // The task formatted as a data-store node
-      task: {},
-      taskNode: {},
-    }
-  },
-
-  computed: {
+    const queryName = uniqueId('info-query')
     // This registers the query with the WorkflowService, once registered, the
     // WorkflowService promises to make the data defined by the query available
     // in the store and to keep it up to date.
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        { ...this.variables, taskID: this.requestedTokens?.relativeID },
-        `info-query-${this._uid}`,
-        [
-          new InfoCallback(this.task, this.taskNode),
-        ],
-        /* isDelta */ true,
-        /* isGlobalCallback */ false
-      )
-    },
+    useComponentSubscription('InfoView', () => new SubscriptionQuery(
+      QUERY,
+      { ...variables.value, taskID: requestedTokens.value?.relativeID },
+      queryName,
+      [
+        new InfoCallback(task.value, taskNode.value),
+      ],
+      { isDelta: true, isGlobalCallback: false },
+    ))
+
+    return {
+      requestedTokens,
+      panelExpansion,
+      taskNode,
+    }
   },
 
   methods: {

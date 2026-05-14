@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) Earth Sciences New Zealand & British Crown (Met Office) & Contributors.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,6 +18,10 @@
 import { toRaw } from 'vue'
 import ViewState from '@/model/ViewState.model'
 import { Alert } from '@/model/Alert.model'
+import { eventBus } from '@/services/eventBus'
+import { store } from '@/store/index'
+
+/** @typedef {import('@/model/SubscriptionQuery.model').SubscriptionQuery} SubscriptionQuery */
 
 /**
  * @typedef {Vue} View
@@ -51,7 +55,7 @@ class Subscription {
      */
     this.observable = null
     /**
-     * @type {{ [componentOrViewUID: string]: View }}
+     * @type {{ [componentOrViewUID: string]: SubscriptionQuery }}
      */
     this.subscribers = {}
     /**
@@ -64,22 +68,18 @@ class Subscription {
 
   /**
    * @param {ViewState} viewState
-   * @param {*} context
+   * @param {{ message?: Error | string }} context
    */
-  handleViewState (viewState, context) {
-    if (toRaw(viewState) !== ViewState.ERROR) {
-      Object.values(this.subscribers).forEach((subscriber) => {
-        subscriber.viewState = viewState
-      })
-    } else {
-      Object.values(this.subscribers).forEach((subscriber) => {
-        subscriber.viewState = viewState
-        subscriber.setAlert(new Alert(context.message, 'error'))
-        if (this.debug) {
-          // eslint-disable-next-line no-console
-          console.debug(`Subscription error: ${context.message}`, toRaw(viewState), context)
-        }
-      })
+  handleViewState (viewState, context = {}) {
+    for (const uid of Object.keys(this.subscribers)) {
+      eventBus.emit(`set-view-state:${uid}`, viewState)
+    }
+    if (toRaw(viewState) === ViewState.ERROR) {
+      store.dispatch('setAlert', new Alert(context.message, 'error'))
+      if (this.debug) {
+        // eslint-disable-next-line no-console
+        console.debug(`Subscription error: ${context.message}`, toRaw(viewState), context)
+      }
     }
   }
 }

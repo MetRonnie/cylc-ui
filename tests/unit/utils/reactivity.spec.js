@@ -17,7 +17,7 @@
 
 import { nextTick, ref, computed } from 'vue'
 import { vi } from 'vitest'
-import { once, when, until, watchWithControl } from '@/utils/reactivity'
+import { once, when, until, watchWithControl, isRefOrGetter } from '@/utils/reactivity'
 
 const truthySources = () => [
   ref(true),
@@ -148,5 +148,17 @@ describe('watchWithControl()', () => {
     expect(source.value).toEqual(4)
     await nextTick()
     expect(callback).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('isRefOrGetter()', () => {
+  it.each([
+    [ref(1), true],
+    [computed(() => 1), true],
+    [() => 1, true],
+    [1, false],
+    [{ a: 1 }, false],
+  ])('%o -> %o', (value, expected) => {
+    expect(isRefOrGetter(value)).toEqual(expected)
   })
 })

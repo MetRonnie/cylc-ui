@@ -18,7 +18,7 @@
 
 
           "task": {
-            "meanElapsedTime": "10",
+            "meanElapsedTime": 10,
             "meta": {
               "title": "Failed Task",
               "description": "A task that always fails!",
