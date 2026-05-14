@@ -22,25 +22,29 @@
  * The name of the query is an important part of the data, as it is used as key in a dictionary
  * that holds the queries. It can be used to merge two queries when they have the same name.
  *
- * Callbacks are Vuex **actions** (i.e. we call store.dispatch(), not store.commit()), and resolve
- * asynchronously.
+ * You can provide an array of callbacks to run when the subscription receives data, and/or
+ * just tell the global Cylc tree callback to run. Alternatively to either of these, you can
+ * specify a custom `next` function to run when the subscription receives data.
  *
  * @see Subscription
  */
 export class SubscriptionQuery {
   /**
    * @param {import('graphql').DocumentNode} query
-   * @param {Record<string, string>} variables
+   * @param {Record<string, any>} variables
    * @param {string} name
-   * @param {DeltasCallback[]} callbacks
-   * @param {{ isDelta: boolean, isGlobalCallback: boolean }} opts
+   * @param {{
+   *  callbacks: import('@/services/callbacks').DeltasCallback[],
+   *  runGlobalCallback: boolean,
+   *  next: (data: any) => void,
+   * }} opts
    */
-  constructor (query, variables, name, callbacks, opts = {}) {
+  constructor (query, variables, name, { callbacks = [], runGlobalCallback = false, next = undefined }) {
     this.query = query
-    this.variables = variables
+    this.variables = variables ?? {}
     this.name = name
     this.callbacks = callbacks
-    this.isDelta = opts.isDelta
-    this.isGlobalCallback = opts.isGlobalCallback
+    this.runGlobalCallback = runGlobalCallback
+    this.next = next
   }
 }

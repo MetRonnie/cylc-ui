@@ -16,17 +16,20 @@
  */
 
 import { createStore } from 'vuex'
-import storeOptions from '@/store/options'
-import CylcTreeCallback from '@/services/treeCallback'
-import { vi } from 'vitest'
+import { vi, expect } from 'vitest'
 import sinon from 'sinon'
 import { print } from 'graphql/language'
 import gql from 'graphql-tag'
 // need the polyfill as otherwise ApolloClient fails to be imported as it checks for a global fetch object on import...
 import 'cross-fetch/polyfill'
-import Subscription from '@/model/Subscription.model'
+import { store } from '@/store/index'
+import storeOptions from '@/store/options'
+import { Subscription } from '@/model/Subscription.model'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
-import { WorkflowService } from '@/services/workflow.service'
+import {
+  WorkflowService,
+  __GlobalTreeCallback as GlobalTreeCallback,
+} from '@/services/workflow.service'
 import ViewState from '@/model/ViewState.model'
 import { TreeCallback, WorkflowCallback } from './testCallback'
 import { defineComponent } from 'vue'
@@ -94,9 +97,7 @@ describe('WorkflowService', () => {
         workflowID: '~cylc/test',
       },
       'root',
-      [],
-      true,
-      true
+      { runGlobalCallback: true }
     )
     // Subscription
     subscription = new Subscription(subscriptionQuery, true)
@@ -142,14 +143,9 @@ describe('WorkflowService', () => {
       expect(spy.calledOnce).to.equal(true)
     })
     it('should call the subscription callback', () => {
-      const workflowName = 'test'
-      const mystartCylcSubscription = (query, variables, subscriptionOptions) => {
-        subscriptionOptions.next({ data: workflowName })
-      }
-      const startCylcSubscriptionStub = sandbox.stub(
-        service,
-        'startCylcSubscription')
-      startCylcSubscriptionStub.callsFake(mystartCylcSubscription)
+      vi.spyOn(service, 'startCylcSubscription').mockImplementation(() => ({
+        subscribe () {},
+      }))
       // we need to add a callback to be called...
       subscriptionQuery.callbacks.push()
       subscription.reload = true
@@ -192,23 +188,24 @@ describe('WorkflowService', () => {
       })
       it('should set the view state to COMPLETE when it successfully starts a subscription', () => {
         expect(wrapper.vm.viewState).to.equal(ViewState.NO_STATE)
-        const mystartCylcSubscription = (query, variables, subscriptionOptions) => {
-          subscriptionOptions.error('test')
-        }
-        const startCylcSubscriptionStub = sandbox.stub(
-          service,
-          'startCylcSubscription')
-        startCylcSubscriptionStub.callsFake(mystartCylcSubscription)
-        const spy = sandbox.spy(subscription, 'handleViewState')
+        vi.spyOn(service, 'startCylcSubscription').mockImplementation(() => ({
+          subscribe ({ error }) {
+            error('test')
+          },
+        }))
+        const spy = vi.spyOn(subscription, 'handleViewState')
         sandbox.stub(console, 'error')
         service.startSubscription(subscription)
         // The error happens, but immediately, so the view state is set to COMPLETE. In
         // real-life, there will be a few milliseconds delay between the JS creation of
         // the object, and the first WebSockets message with an error, so we will use
         // a spy here instead.
-        // expect(subscription.subscribers[uid].viewState).to.equal(ViewState.ERROR)
         // Called first time to set as LOADING. Then as ERROR. Finally COMPLETE.
-        expect(spy.calledThrice).to.equal(true)
+        expect(spy.mock.calls.map(x => x[0].enumKey)).toEqual([
+          'LOADING',
+          'ERROR',
+          'COMPLETE',
+        ])
       })
     })
   })
@@ -230,9 +227,8 @@ describe('WorkflowService', () => {
         }`,
         subscriptionQuery.variables,
         'root',
-        [],
-        true,
-        true)
+        { runGlobalCallback: true }
+      )
       service.subscribe('view1', query1)
       // at this point we have only 1 query, so the computed query must have the exact value we provided
       const expectedQuery1 = print(query1.query)
@@ -248,9 +244,8 @@ describe('WorkflowService', () => {
         }`,
         subscriptionQuery.variables,
         'root',
-        [],
-        true,
-        true)
+        { runGlobalCallback: true }
+      )
       service.subscribe('view2', query2)
       // now the queries must have been merged
       const finalQuery = print(service.subscriptions.root.query.query)
@@ -258,6 +253,11 @@ describe('WorkflowService', () => {
     })
   })
   describe('recompute', () => {
+    let store
+    beforeEach(() => {
+      store = createStore(storeOptions)
+    })
+
     it('should not change query if no views were added', () => {
       // at this point we have only 1 query, so the computed query must have the exact value we provided
       const expectedQuery1 = print(subscriptionQuery.query)
@@ -270,40 +270,36 @@ describe('WorkflowService', () => {
     })
     it('should not add duplicate callbacks', () => {
       const newCallbacks = [
-        new WorkflowCallback(),
-        new TreeCallback(),
+        new WorkflowCallback(store),
+        new TreeCallback(store),
       ]
       subscriptionQuery.callbacks.push(...newCallbacks)
       const newSubscriptionQuery = new SubscriptionQuery(
         query,
         subscriptionQuery.variables,
         subscriptionQuery.name,
-        newCallbacks,
-        true,
-        true
+        { callbacks: newCallbacks, runGlobalCallback: true }
       )
       service.subscribe('anotherView', newSubscriptionQuery)
       // Same callbacks, Lodash's union should add to list like a set
       expect(subscriptionQuery.callbacks).to.deep.equal(newCallbacks)
     })
     it('should add new callbacks', () => {
-      const baseCallbacks = [new WorkflowCallback()]
+      const baseCallbacks = [new WorkflowCallback(store)]
       subscriptionQuery.callbacks.push(...baseCallbacks)
-      const newCallbacks = [new TreeCallback()]
+      const newCallbacks = [new TreeCallback(store)]
       const newSubscriptionQuery = new SubscriptionQuery(
         query,
         subscriptionQuery.variables,
         subscriptionQuery.name,
-        newCallbacks,
-        true,
-        true
+        { callbacks: newCallbacks, runGlobalCallback: true }
       )
       service.subscribe('anotherView', newSubscriptionQuery)
       // Same callbacks, Lodash's union should add to list like a set
-      expect(subscription.callbacks).to.deep.equal([...baseCallbacks, new TreeCallback()])
+      expect(subscription.callbacks).to.deep.equal([...baseCallbacks, new TreeCallback(store)])
     })
     it('should throw an error if there are no subscribers', () => {
-      delete subscription.subscribers[uid]
+      delete subscription.subscribers.delete(uid)
       expect(() => { service.recompute(subscription) }).to.throw()
     })
     it('should throw an error if the subscribers have different variables', () => {
@@ -313,9 +309,9 @@ describe('WorkflowService', () => {
           invalidVariable: true,
         },
         'test',
-        [],
-        true)
-      subscription.subscribers[anotherQuery.name] = anotherQuery
+        { runGlobalCallback: true }
+      )
+      subscription.subscribers.set(anotherQuery.name, anotherQuery)
       expect(() => { service.recompute(subscription) }).to.throw()
     })
   })
@@ -350,14 +346,15 @@ describe('WorkflowService', () => {
 })
 
 describe('Global Callback', () => {
+  beforeEach(() => {
+    store.replaceState(createStore(storeOptions).state)
+  })
   it('should wipe workflow children on reloaded deltas', () => {
     // the callback should wipe workflow children when a "reloaded" delta is
     // received - see https://github.com/cylc/cylc-ui/pull/1479
 
     // initiate the store
-    const errors = {}
-    const store = createStore(storeOptions)
-    const callback = new CylcTreeCallback(store, errors)
+    const callback = new GlobalTreeCallback()
     const cylcTree = store.state.workflows.cylcTree
 
     // send an added delta which adds a workflow with one task
@@ -369,8 +366,8 @@ describe('Global Callback', () => {
         taskProxies: { id: '~user/foo//1/a' },
       },
     }
-    callback.before(delta1, store, errors)
-    callback.onAdded(delta1.added, store, errors)
+    callback.before(delta1)
+    callback.onAdded(delta1.added)
 
     // the user/workflow//cycle/task should now be in the store
     expect(Object.keys(cylcTree.$index)).to.deep.equal([
@@ -389,8 +386,8 @@ describe('Global Callback', () => {
         taskProxies: { id: '~user/foo//2/b' },
       },
     }
-    callback.before(delta2, store, errors)
-    callback.onUpdated(delta2.added, store, errors)
+    callback.before(delta2)
+    callback.onUpdated(delta2.added)
 
     // the cycle "1" and task "1/a" should be gone from the store
     // without the need for an explicit "pruned" delta

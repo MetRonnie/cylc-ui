@@ -30,7 +30,7 @@ import gql from 'graphql-tag'
 import { useGraphQL } from '@/mixins/graphql'
 import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
-import DeltasCallback from '@/services/callbacks'
+import { DeltasCallback } from '@/services/callbacks'
 import {
   initialOptions,
   useInitialOptions,
@@ -171,7 +171,7 @@ class InfoCallback extends DeltasCallback {
     this.taskNode = taskNode
   }
 
-  onAdded (added, store, errors) {
+  onAdded (added) {
     // store the task info
     Object.assign(this.task, added.taskProxies[0])
 
@@ -181,15 +181,12 @@ class InfoCallback extends DeltasCallback {
     rebuildTaskChildren(this.taskNode, this.task)
   }
 
-  onUpdated (updated, store, errors) {
+  onUpdated (updated) {
     if (updated?.taskProxies) {
       Object.assign(this.task, updated.taskProxies[0])
     }
 
     rebuildTaskChildren(this.taskNode, this.task)
-  }
-
-  onPruned (pruned) {
   }
 }
 
@@ -222,10 +219,11 @@ export default {
       QUERY,
       { ...variables.value, taskID: requestedTokens.value?.relativeID },
       queryName,
-      [
-        new InfoCallback(task.value, taskNode.value),
-      ],
-      { isDelta: true, isGlobalCallback: false },
+      {
+        callbacks: [
+          new InfoCallback(task.value, taskNode.value),
+        ],
+      },
     ))
 
     return {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) Earth Sciences New Zealand & British Crown (Met Office) & Contributors.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,59 +15,39 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class DeltasCallback {
+export class DeltasCallback {
   /**
-   * @param {Vuex} store
-   * @param {Array<Object>} errors
-   */
-  init (store, errors) {}
-
-  /**
+   * Run before all other methods, upon receiving deltas.
    * @param {Deltas} deltas
-   * @param {Vuex} store
-   * @param {Array<Object>} errors
    */
-  before (deltas, store, errors) {}
+  before (deltas) {}
 
   /**
+   * Run after all other methods, upon receiving deltas.
    * @param {Deltas} deltas
-   * @param {Vuex} store
-   * @param {Array<Object>} errors
    */
-  after (deltas, store, errors) {}
+  after (deltas) {}
 
   /**
-   * @param {Vuex} store - Vuex store
-   * @param {Array<Object>} errors
+   * Run when stopping the subscription.
    */
-  tearDown (store, errors) {}
+  tearDown () {}
 
   /**
+   * Run on `added` deltas only.
    * @param {DeltasAdded|Object} added
-   * @param {Vuex} store
-   * @param {Array<Object>} errors
    */
-  onAdded (added, store, errors) {}
+  onAdded (added) {}
 
   /**
+   * Run on `updated` deltas only.
    * @param {DeltasUpdated|Object} updated
-   * @param {Vuex} store
-   * @param {Array<Object>} errors
    */
-  onUpdated (updated, store, errors) {}
+  onUpdated (updated) {}
 
   /**
+   * Run on `pruned` deltas only.
    * @param {DeltasPruned|Object} pruned -
-   * @param {Vuex} store - Vuex store
-   * @param {Array<Object>} errors
    */
-  onPruned (pruned, store, errors) {}
-
-  /**
-   * @param {Vuex} store - Vuex store
-   * @param {Array<Object>} errors
-   */
-  commit (store, errors) {}
+  onPruned (pruned) {}
 }
-
-export default DeltasCallback

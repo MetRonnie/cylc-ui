@@ -198,7 +198,10 @@ export default {
     // if the variables change (like a computed ref).
     // It also returns the unique ID for this component's subscription.
     const { uid } = useComponentSubscription('SimpleTree', () => new SubscriptionQuery(
-      QUERY, variables.value, 'workflow', []
+      QUERY,
+      variables.value,
+      'workflow',
+      { callbacks: [], runGlobalCallback: true }
     ))
 
     return {

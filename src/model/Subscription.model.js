@@ -34,7 +34,7 @@ import { store } from '@/store/index'
  * that will be used to create a Subscription.
  *
  * A Subscription may contain one or more SubscriptionQuery's. It accumulates the subscribers (views
- * or components), as well as callbacks (Vuex actions).
+ * or components), as well as callbacks (an object containing methods to run upon receiving deltas, usually Vuex actions).
  *
  * The WorkflowService service will use this Subscription to create a GraphQL Subscription using
  * WebSockets. So any Subscription object created from this class will have a .observable property
@@ -43,7 +43,7 @@ import { store } from '@/store/index'
  * @see SubscriptionQuery
  * @see WorkflowService
  */
-class Subscription {
+export class Subscription {
   /**
    * @param {SubscriptionQuery} query
    * @param {boolean} debug
@@ -51,15 +51,15 @@ class Subscription {
   constructor (query, debug = false) {
     this.query = query
     /**
-     * @type {ZenObservable}
+     * @type {import('zen-observable-ts').Subscription}
      */
     this.observable = null
     /**
-     * @type {{ [componentOrViewUID: string]: SubscriptionQuery }}
+     * @type {Map<[componentOrViewUID: string], SubscriptionQuery>}
      */
-    this.subscribers = {}
+    this.subscribers = new Map()
     /**
-     * @type {DeltasCallback[]}
+     * @type {import('@/services/callbacks').DeltasCallback[]}
      */
     this.callbacks = []
     this.reload = false
@@ -71,7 +71,7 @@ class Subscription {
    * @param {{ message?: Error | string }} context
    */
   handleViewState (viewState, context = {}) {
-    for (const uid of Object.keys(this.subscribers)) {
+    for (const uid of this.subscribers.keys()) {
       eventBus.emit(`set-view-state:${uid}`, viewState)
     }
     if (toRaw(viewState) === ViewState.ERROR) {
@@ -83,5 +83,3 @@ class Subscription {
     }
   }
 }
-
-export default Subscription

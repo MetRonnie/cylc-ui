@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import DeltasCallback from '@/services/callbacks'
+import { DeltasCallback } from '@/services/callbacks'
 
 // This module provides a couple of DeltasCallback classes for use in
 // testing.
@@ -37,63 +37,43 @@ import DeltasCallback from '@/services/callbacks'
 // * https://github.com/cylc/cylc-ui/blob/a3005b07f20f456bb2b855f19fab2a082affdece/src/components/cylc/common/callbacks.js
 
 export class TreeCallback extends DeltasCallback {
-  constructor () {
+  constructor (store) {
     super()
+    this.store = store
     this.workflow = null
     this.lookup = null
   }
 
-  before (deltas, store, errors) {
-    const lookup = store.state.workflows.lookup
-    const workflow = store.state.workflows.workflow
+  before () {
+    const lookup = this.store.state.workflows.lookup
+    const workflow = this.store.state.workflows.workflow
     this.workflow = Object.assign({}, workflow)
     this.lookup = Object.assign({}, lookup)
   }
 
-  after (deltas, store, errors) {
-  }
-
-  tearDown (store, errors) {
+  tearDown () {
     this.workflow = null
     this.lookup = null
   }
-
-  onAdded (added, store, errors) {}
-
-  onUpdated (updated, store, errors) {}
-
-  onPruned (pruned, store, errors) {}
-
-  commit (store, errors) {}
 }
 
 export class WorkflowCallback extends DeltasCallback {
-  constructor () {
+  constructor (store) {
     super()
+    this.store = store
     this.workflow = null
     this.lookup = null
   }
 
-  before (deltas, store, errors) {
-    const lookup = store.state.workflows.lookup
-    const workflow = store.state.workflows.workflow
+  before () {
+    const lookup = this.store.state.workflows.lookup
+    const workflow = this.store.state.workflows.workflow
     this.workflow = Object.assign({}, workflow)
     this.lookup = Object.assign({}, lookup)
   }
 
-  after (deltas, store, errors) {
-  }
-
-  tearDown (store, errors) {
+  tearDown () {
     this.workflow = null
     this.lookup = null
   }
-
-  onAdded (added, store, errors) {}
-
-  onUpdated (updated, store, errors) {}
-
-  onPruned (pruned, store, errors) {}
-
-  commit (store, errors) {}
 }

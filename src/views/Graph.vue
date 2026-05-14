@@ -110,7 +110,6 @@ import {
   useInitialOptions,
 } from '@/utils/initialOptions'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
-// import CylcTreeCallback from '@/services/treeCallback'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import GraphSubgraph from '@/components/cylc/GraphSubgraph.vue'
 import ViewToolbar from '@/components/cylc/ViewToolbar.vue'
@@ -245,8 +244,7 @@ export default {
       QUERY,
       variables.value,
       'workflow',
-      [],
-      { isDelta: true, isGlobalCallback: true },
+      { runGlobalCallback: true },
     ))
 
     /**
