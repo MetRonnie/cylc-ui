@@ -18,6 +18,7 @@ jobs:
       matrix:
         browser: [electron]
         os: [ubuntu-latest]
+        vpi: ['8.0.0', '9.0.1']
     env:
       COVERAGE: true
     steps:
@@ -30,13 +31,16 @@ jobs:
           node-version: 'lts/*'
           cache: yarn
 
+      - name: Install dependencies
+        run: yarn add --dev -E 'vite-plugin-istanbul@${{ matrix.vpi }}'
+
       - name: Test (E2E)
         uses: cypress-io/github-action@v7
         env:
           BASE_URL: http://localhost:4173/
         with:
           spec: tests/e2e/specs/alert.cy.js
-          build: yarn run build --mode offline
+          build: yarn run build --mode offline --minify false
           start: yarn run preview
           config: baseUrl=${{ env.BASE_URL }}
           wait-on: ${{ env.BASE_URL }}
@@ -46,3 +50,10 @@ jobs:
         run: |
           yarn run -B nyc report
           cat coverage/lcov.info
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: 'vpi_${{ matrix.vpi }}'
+          path: dist/assets/index-*.js
+          retention-days: 4
