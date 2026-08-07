@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const { isArray } = require('lodash')
+const { isArray } = require('lodash-es')
 const graphql = require('./graphql.cjs')
 
 /**

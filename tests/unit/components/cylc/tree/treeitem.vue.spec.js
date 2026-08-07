@@ -16,8 +16,8 @@
  */
 
 // we mount the tree to include the TreeItem component and other vuetify children components
+import { expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import { Assertion } from 'chai'
 import { createVuetify } from 'vuetify'
 import sinon from 'sinon'
 import TreeItem from '@/components/cylc/tree/TreeItem.vue'
@@ -39,24 +39,27 @@ const vuetify = createVuetify(vuetifyOptions)
 /**
  * Helper function for expecting TreeItem to be expanded.
  * Usage:
- *   expect(wrapper).to.be.expanded()
+ *   expect(wrapper).toBeExpanded(true)
  *   // or expect it to be collapsed:
- *   expect(wrapper).to.not.be.expanded()
+ *   expect(wrapper).toBeExpanded(false)
  */
-Assertion.addMethod('expanded', function () {
-  // this._obj is the TreeItem Wrapper
-  const wrapper = this._obj
-  this.assert(
-    wrapper.vm.isExpanded === true,
-    'expected the isExpanded data property to be true',
-    'expected the isExpanded data property to be false'
-  )
-  const nodeDiv = wrapper.find('.node')
-  this.assert(
-    nodeDiv.classes('expanded') === true,
-    'expected the .node DOM element to have the "expanded" class',
-    'expected the .node DOM element not to have the "expanded" class'
-  )
+expect.extend({
+  toBeExpanded (wrapper, expected) {
+    const dataCheck = wrapper.vm.isExpanded === expected
+    const nodeDiv = wrapper.find('.node')
+    const domCheck = nodeDiv.classes('expanded') === expected
+    return {
+      pass: dataCheck && domCheck,
+      message: () => {
+        if (!dataCheck) {
+          return `expected the isExpanded data property to be ${expected}`
+        }
+        if (!domCheck) {
+          return `expected the .node DOM element ${expected ? '' : 'not '}to have the "expanded" class`
+        }
+      }
+    }
+  }
 })
 
 const $workflowService = sinon.createStubInstance(WorkflowService)
@@ -93,8 +96,8 @@ describe('TreeItem component', () => {
         }
       })
       expected
-        ? expect(wrapper).to.be.expanded()
-        : expect(wrapper).to.not.be.expanded()
+        ? expect(wrapper).toBeExpanded(true)
+        : expect(wrapper).toBeExpanded(false)
     })
   })
 
@@ -105,15 +108,15 @@ describe('TreeItem component', () => {
         filteredOutNodesCache: new WeakMap(),
       }
     })
-    expect(wrapper).to.not.be.expanded()
+    expect(wrapper).toBeExpanded(false)
     const expandCollapseBtn = wrapper.find('.node-expand-collapse-button')
     it('should expand if currently collapsed', async () => {
       await expandCollapseBtn.trigger('click')
-      expect(wrapper).to.be.expanded()
+      expect(wrapper).toBeExpanded(true)
     })
     it('should collapse if currently expanded', async () => {
       await expandCollapseBtn.trigger('click')
-      expect(wrapper).to.not.be.expanded()
+      expect(wrapper).toBeExpanded(false)
     })
   })
 

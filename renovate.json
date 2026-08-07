@@ -40,7 +40,8 @@
         "express",
         "express-ws",
         "json-server",
-        "nodemon"
+        "nodemon",
+        "morgan"
       ],
       "automerge": true,
       "schedule": [
@@ -111,7 +112,8 @@
       "groupName": "eslint packages",
       "matchPackageNames": [
         "standard",
-        "eslint*"
+        "eslint*",
+        "*-eslint-parser"
       ],
       "automerge": true,
       "schedule": [
