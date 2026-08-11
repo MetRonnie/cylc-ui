@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <template>
   <v-app :class="`job_theme--${jobTheme}`">
     <component :is="layout">
-      <router-view/>
+      <!-- Re-mount the workspace view if the workflow changes on nav, to ensure we recompute subscriptions from scratch -->
+      <RouterView :key="route.name === 'Workspace' ? route.params?.workflowName : undefined"/>
     </component>
   </v-app>
 </template>
