@@ -81,7 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { inject, nextTick, ref, computed } from 'vue'
+import { inject, nextTick, ref, computed, useTemplateRef } from 'vue'
 import { useDisplay } from 'vuetify'
 import Header from '@/components/cylc/Header.vue'
 import Workflows from '@/views/Workflows.vue'
@@ -92,6 +92,7 @@ import { useDrawer } from '@/utils/toolbar'
 
 export const initialWidth = 260
 export const minWidth = 150
+const resizeBarWidth = 4
 
 export default {
   components: {
@@ -109,12 +110,11 @@ export default {
     drawer.value = !mobile.value
 
     function resize (e) {
-      // If less than min width, will collapse (to 4px because that's the resize-bar width)
-      drawerWidth.value = e.clientX > minWidth ? e.clientX : 4
+      // If less than min width, will collapse (to resize-bar width)
+      drawerWidth.value = e.clientX > minWidth ? e.clientX : resizeBarWidth
     }
 
-    /** @type {import('vue').Ref<HTMLElement>} template ref */
-    const resizeBar = ref(null)
+    const resizeBar = useTemplateRef('resizeBar')
 
     when(resizeBar, () => {
       resizeBar.value.addEventListener(
@@ -161,6 +161,7 @@ export default {
       drawer,
       drawerWidth,
       resizeBar,
+      resizeBarWidth,
       UIVersion: pkg.version,
       cylcVersionInfo,
       mdiInformationOutline,
@@ -170,3 +171,41 @@ export default {
   },
 }
 </script>
+
+<style lang="scss">
+@use "sass:map";
+@use '@/styles/settings';
+@use '@/styles/util';
+
+body.resizing-drawer {
+  cursor: ew-resize !important;
+  #c-sidebar, .v-main {
+    // Prevent Vuetify-provided transitions during resize to ensure responsiveness
+    transition: none !important;
+  }
+}
+
+#c-sidebar {
+  @include util.theme-dependent(background-color, settings.$grey, 4);
+
+  .resize-bar {
+    display: block;
+    width: v-bind("`${resizeBarWidth}px`");
+    height: 100%;
+    position: absolute;
+    top: 0;
+    right: 0;
+    cursor: ew-resize;
+    transition: background-color 0.2s;
+
+    &:hover, body.resizing-drawer & {
+      background: map.get(settings.$blue, "base");
+      transition-delay: 0.5s;
+    }
+  }
+
+  .v-navigation-drawer__append {
+    overflow: hidden;
+  }
+}
+</style>
