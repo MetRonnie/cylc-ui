@@ -27,7 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <v-list
         class="pa-0 d-flex flex-column"
       >
-        <c-header />
+        <Header />
 
         <v-list-item
           to="/"
@@ -72,7 +72,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             >
               {{ key }} {{ value }}
             </span>
-            <span>cylc-ui {{ UIVersion }}</span>
+            <span>cylc-ui {{ pkg.version }}</span>
           </div>
         </v-tooltip>
       </div>
@@ -81,6 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
+// Can't export from <script setup>, so need normal <script> tag for that.
 import { inject, nextTick, ref, computed, useTemplateRef } from 'vue'
 import { useDisplay } from 'vuetify'
 import Header from '@/components/cylc/Header.vue'
@@ -94,82 +95,64 @@ export const initialWidth = 260
 export const minWidth = 150
 const resizeBarWidth = 4
 
-export default {
-  components: {
-    Workflows,
-    'c-header': Header
-  },
+</script>
+<script setup>
 
-  setup () {
-    const { mobile } = useDisplay()
+const { mobile } = useDisplay()
 
-    const drawerWidth = ref(initialWidth)
+const drawerWidth = ref(initialWidth)
 
-    const { drawer } = useDrawer()
-    // Show drawer initially if viewport is large enough:
-    drawer.value = !mobile.value
+const { drawer } = useDrawer()
+// Show drawer initially if viewport is large enough:
+drawer.value = !mobile.value
 
-    function resize (e) {
-      // If less than min width, will collapse (to resize-bar width)
-      drawerWidth.value = e.clientX > minWidth ? e.clientX : resizeBarWidth
-    }
-
-    const resizeBar = useTemplateRef('resizeBar')
-
-    when(resizeBar, () => {
-      resizeBar.value.addEventListener(
-        'mousedown',
-        (mdEvent) => {
-          document.body.classList.add('resizing-drawer')
-          document.addEventListener('mousemove', resize, { passive: true })
-          mdEvent.stopPropagation?.()
-          mdEvent.preventDefault?.()
-
-          document.addEventListener(
-            'mouseup',
-            (muEvent) => {
-              if (muEvent.clientX < minWidth) {
-                drawer.value = false
-                // Reset to width at time of mousedown
-                nextTick(() => {
-                  drawerWidth.value = mdEvent.clientX
-                })
-              }
-              document.body.classList.remove('resizing-drawer')
-              document.removeEventListener('mousemove', resize)
-            },
-            { once: true }
-          )
-        }
-      )
-    })
-
-    const cylcVersionInfo = inject('versionInfo')
-    const versionChipProps = computed(() => import.meta.env.MODE === 'production'
-      ? {
-          text: `Cylc ${cylcVersionInfo.value?.['cylc-flow'] ?? ''}`,
-          variant: 'text'
-        }
-      : {
-          text: import.meta.env.MODE.toUpperCase(),
-          variant: 'flat',
-          color: 'indigo-darken-4',
-        }
-    )
-
-    return {
-      drawer,
-      drawerWidth,
-      resizeBar,
-      resizeBarWidth,
-      UIVersion: pkg.version,
-      cylcVersionInfo,
-      mdiInformationOutline,
-      mdiHome,
-      versionChipProps,
-    }
-  },
+function resize (e) {
+  // If less than min width, will collapse (to resize-bar width)
+  drawerWidth.value = e.clientX > minWidth ? e.clientX : resizeBarWidth
 }
+
+const resizeBar = useTemplateRef('resizeBar')
+
+when(resizeBar, () => {
+  resizeBar.value.addEventListener(
+    'mousedown',
+    (mdEvent) => {
+      document.body.classList.add('resizing-drawer')
+      document.addEventListener('mousemove', resize, { passive: true })
+      mdEvent.stopPropagation?.()
+      mdEvent.preventDefault?.()
+
+      document.addEventListener(
+        'mouseup',
+        (muEvent) => {
+          if (muEvent.clientX < minWidth) {
+            drawer.value = false
+            // Reset to width at time of mousedown
+            nextTick(() => {
+              drawerWidth.value = mdEvent.clientX
+            })
+          }
+          document.body.classList.remove('resizing-drawer')
+          document.removeEventListener('mousemove', resize)
+        },
+        { once: true }
+      )
+    }
+  )
+})
+
+const cylcVersionInfo = inject('versionInfo')
+const versionChipProps = computed(() => import.meta.env.MODE === 'production'
+  ? {
+      text: `Cylc ${cylcVersionInfo.value?.['cylc-flow'] ?? ''}`,
+      variant: 'text'
+    }
+  : {
+      text: import.meta.env.MODE.toUpperCase(),
+      variant: 'flat',
+      color: 'indigo-darken-4',
+    }
+)
 </script>
 
 <style lang="scss">
