@@ -49,16 +49,10 @@ export function useComponentSubscription (name, query) {
   const isLoading = computed(() => viewState.value === ViewState.LOADING)
 
   onBeforeMount(() => {
-    const queryValue = toValue(query)
-    if (queryValue) {
-      workflowService.subscribe(uid, queryValue)
-    }
     eventBus.on(`set-view-state:${uid}`, (newState) => { viewState.value = newState })
   })
   onMounted(() => {
-    if (toValue(query)) {
-      workflowService.startSubscriptions()
-    }
+    updateQuery(toValue(query))
   })
   onBeforeUnmount(() => {
     updateQuery(null, toValue(query))
