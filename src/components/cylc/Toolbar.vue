@@ -239,6 +239,13 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 }"
               >
                 <v-btn
+                  v-if="hubURL"
+                  :href="hubURL"
+                  :prepend-icon="icons.mdiPower"
+                >
+                  Cylc Hub
+                </v-btn>
+                <v-btn
                   to="/user-profile"
                   :prepend-icon="icons.mdiCog"
                 >
@@ -271,6 +278,7 @@ import {
   mdiInformationOutline,
   mdiMenuOpen,
   mdiMenuClose,
+  mdiPower,
 } from '@mdi/js'
 import { startCase } from 'lodash'
 import { until } from '@/utils/reactivity'
@@ -338,7 +346,7 @@ export default {
   setup (props) {
     const route = useRoute()
 
-    const { user, versionInfo } = useUserService()
+    const { user, hubURL, versionInfo } = useUserService()
 
     const { variables, workflowName, workflowID } = useGraphQL()
 
@@ -352,6 +360,7 @@ export default {
 
     return {
       user,
+      hubURL,
       mdAndDown,
       eventBus,
       drawer,
@@ -377,6 +386,7 @@ export default {
         mdiAccount,
         mdiChevronDown,
         mdiArrowULeftTop,
+        mdiPower,
       },
     }
   },
