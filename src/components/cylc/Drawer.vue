@@ -107,8 +107,14 @@ const { drawer } = useDrawer()
 drawer.value = !mobile.value
 
 function resize (e) {
-  // If less than min width, will collapse (to resize-bar width)
-  drawerWidth.value = e.clientX > minWidth ? e.clientX : resizeBarWidth
+  if (e.clientX > minWidth) {
+    drawerWidth.value = e.clientX
+    document.body.classList.remove('collapsing-drawer')
+  } else {
+    // If less than min width, will collapse (to resize-bar width)
+    drawerWidth.value = resizeBarWidth
+    document.body.classList.add('collapsing-drawer')
+  }
 }
 
 const resizeBar = useTemplateRef('resizeBar')
@@ -127,12 +133,12 @@ when(resizeBar, () => {
         (muEvent) => {
           if (muEvent.clientX < minWidth) {
             drawer.value = false
-            // Reset to width at time of mousedown
+            // Reset to original width, for when drawer is opened again:
             nextTick(() => {
               drawerWidth.value = mdEvent.clientX
             })
           }
-          document.body.classList.remove('resizing-drawer')
+          document.body.classList.remove('resizing-drawer', 'collapsing-drawer')
           document.removeEventListener('mousemove', resize)
         },
         { once: true }
@@ -162,9 +168,11 @@ const versionChipProps = computed(() => import.meta.env.MODE === 'production'
 
 body.resizing-drawer {
   cursor: ew-resize !important;
-  #c-sidebar, .v-main {
+  &:not(.collapsing-drawer) {
+    #c-sidebar, .v-main {
     // Prevent Vuetify-provided transitions during resize to ensure responsiveness
-    transition: none !important;
+      transition: none !important;
+    }
   }
 }
 
