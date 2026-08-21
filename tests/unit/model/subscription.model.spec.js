@@ -26,9 +26,6 @@ describe('SubscriptionQuery model', () => {
     workflowID: '~cylc/cylc',
   }
   const name = 'root'
-  const callbacks = []
-  const isDelta = true
-  const isGlobalCallback = true
   let subscriptionQuery
   beforeEach(() => {
     sinon.stub(console, 'debug')
@@ -36,9 +33,8 @@ describe('SubscriptionQuery model', () => {
       query,
       variables,
       name,
-      callbacks,
-      isDelta,
-      isGlobalCallback)
+      { runGlobalCallback: true },
+    )
   })
   afterEach(() => {
     sinon.restore()

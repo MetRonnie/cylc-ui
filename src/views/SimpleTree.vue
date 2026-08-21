@@ -201,7 +201,13 @@ export default {
       QUERY,
       variables.value,
       'workflow',
-      { callbacks: [], runGlobalCallback: true }
+      {
+        // We can define hooks here to run when the subscription receives data
+        // (empty as no need in this case, but showing for demo purposes):
+        onAdded (added) { },
+        onUpdated (updated) { },
+        onPruned (pruned) { },
+      }
     ))
 
     return {

@@ -16,7 +16,7 @@
  */
 
 import gql from 'graphql-tag'
-import { DeltasCallback } from '@/services/callbacks'
+import { DeltasHooks } from '@/services/callbacks'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 describe('SubscriptionQuery model', () => {
@@ -28,7 +28,7 @@ describe('SubscriptionQuery model', () => {
       }
       const name = 'root'
       const callbacks = [
-        new DeltasCallback(),
+        new DeltasHooks(),
       ]
       const runGlobalCallback = true
       const subscriptionQuery = new SubscriptionQuery(

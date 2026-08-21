@@ -252,7 +252,6 @@ export default {
       QUERY,
       {},
       'root',
-      { runGlobalCallback: true },
     ))
 
     return {

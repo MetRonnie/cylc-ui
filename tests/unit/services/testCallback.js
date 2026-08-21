@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { DeltasCallback } from '@/services/callbacks'
+import { DeltasHooks } from '@/services/callbacks'
 
 // This module provides a couple of DeltasCallback classes for use in
 // testing.
@@ -36,7 +36,7 @@ import { DeltasCallback } from '@/services/callbacks'
 // * https://github.com/cylc/cylc-ui/blob/a0d27ea3d8ec7d303126e57fe20a0de28f8770ef/src/components/cylc/tree/callbacks.js
 // * https://github.com/cylc/cylc-ui/blob/a3005b07f20f456bb2b855f19fab2a082affdece/src/components/cylc/common/callbacks.js
 
-export class TreeCallback extends DeltasCallback {
+export class TreeCallback extends DeltasHooks {
   constructor (store) {
     super()
     this.store = store
@@ -57,7 +57,7 @@ export class TreeCallback extends DeltasCallback {
   }
 }
 
-export class WorkflowCallback extends DeltasCallback {
+export class WorkflowCallback extends DeltasHooks {
   constructor (store) {
     super()
     this.store = store
