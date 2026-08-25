@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import { ref } from 'vue'
-import { mapState, mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 import {
   mdiFormatAlignJustify,
   mdiFormatAlignRight,
@@ -189,7 +189,7 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
 
     useComponentSubscription('Tree', () => new SubscriptionQuery(
       QUERY,
@@ -211,17 +211,12 @@ export default {
       tasksFilter,
       filterState,
       flat,
-      workflowIDs,
+      workflows,
     }
   },
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
-    ...mapGetters('workflows', ['getNodes']),
-
-    workflows () {
-      return this.getNodes('workflow', this.workflowIDs)
-    },
 
     controlGroups () {
       return [

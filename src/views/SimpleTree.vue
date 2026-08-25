@@ -188,7 +188,7 @@ export default {
 
   setup (props) {
     // This is a helper function that provides us with some computed properties.
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
 
     // This is another helper function that enables automatic subscription management.
     // This registers the query with the WorkflowService, once registered, the
@@ -212,7 +212,7 @@ export default {
 
     return {
       uid,
-      workflowIDs,
+      workflows,
     }
   },
 
@@ -223,13 +223,6 @@ export default {
     // This gives us a convenient way to filter for the nodes we want from the
     // store:
     ...mapGetters('workflows', ['getNodes']),
-
-    // Get workflow nodes from the store.
-    workflows () {
-      // This returns all nodes of type "workflow" with ids which are in
-      // this.workflowIDs
-      return this.getNodes('workflow', this.workflowIDs)
-    },
   },
 
 }

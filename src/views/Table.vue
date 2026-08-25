@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 import { useGraphQL } from '@/mixins/graphql'
 import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
@@ -153,7 +153,7 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
 
     useComponentSubscription('Table', () => new SubscriptionQuery(
       QUERY,
@@ -180,7 +180,7 @@ export default {
       dataTableOptions,
       tasksFilter,
       filterState,
-      workflowIDs,
+      workflows,
     }
   },
 
@@ -188,10 +188,6 @@ export default {
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
-    ...mapGetters('workflows', ['getNodes']),
-    workflows () {
-      return this.getNodes('workflow', this.workflowIDs)
-    },
     tasks () {
       const ret = []
       for (const workflow of this.workflows) {

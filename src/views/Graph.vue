@@ -101,7 +101,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import gql from 'graphql-tag'
-import { mapGetters } from 'vuex'
 import { useJobTheme } from '@/composables/localStorage'
 import { useGraphQL } from '@/mixins/graphql'
 import { useComponentSubscription } from '@/mixins/subscriptionComponent'
@@ -238,7 +237,7 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
 
     const { uid } = useComponentSubscription('Graph', () => new SubscriptionQuery(
       QUERY,
@@ -279,7 +278,7 @@ export default {
       autoRefresh,
       spacing,
       groupCycle,
-      workflowIDs,
+      workflows,
       uid,
     }
   },
@@ -327,10 +326,6 @@ export default {
   },
 
   computed: {
-    ...mapGetters('workflows', ['getNodes']),
-    workflows () {
-      return this.getNodes('workflow', this.workflowIDs)
-    },
     controlGroups () {
       return [
         {
