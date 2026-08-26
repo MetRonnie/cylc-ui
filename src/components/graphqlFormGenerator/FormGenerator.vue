@@ -47,7 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <FormInput
           v-model="model[input.label]"
           :gqlType="input.gqlType"
-          :types="types"
         />
       </v-list-item>
     </v-list>
@@ -58,7 +57,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import { computed, inject } from 'vue'
 import { lowerCase, upperFirst } from 'lodash-es'
 import { mdiHelpCircleOutline } from '@mdi/js'
-
 import Markdown from '@/components/Markdown.vue'
 import FormInput from '@/components/graphqlFormGenerator/FormInput.vue'
 import { getNullValue, mutate, getMutationArgsFromTokens } from '@/utils/aotf'
@@ -78,12 +76,6 @@ const props = defineProps({
     required: true,
   },
 
-  // list of GraphQL types extracted from the introspection query
-  types: {
-    type: Array,
-    default: () => [],
-  },
-
   // the data store node we are operating on
   cylcObject: {
     type: Object,
@@ -101,6 +93,8 @@ if (!model.value || !Object.keys(model.value).length) {
   // begin with the initial data
   reset()
 }
+
+const { types } = workflowService.loadedGraphQLSchema
 
 /* Provide a list of all form inputs for this mutation. */
 const inputs = computed(() => {
@@ -134,14 +128,14 @@ function reset () {
         arg.defaultValue
       )
       if (!defaultValue) {
-        defaultValue = getNullValue(arg.type, props.types)
+        defaultValue = getNullValue(arg.type, types)
       }
     } else {
       // if no default value is provided choose a sensible null value
       // NOTE: IF we set null as the default type for a list
       //       THEN tried to change it to [] later this would break
       //       THIS would break Vue model
-      defaultValue = getNullValue(arg.type, props.types)
+      defaultValue = getNullValue(arg.type, types)
     }
     newModel[arg.name] = defaultValue
   }
