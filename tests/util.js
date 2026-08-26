@@ -16,6 +16,7 @@
  */
 
 import { config } from '@vue/test-utils'
+import { omit, pick } from 'lodash-es'
 import { routeLocationKey } from 'vue-router'
 
 /**
@@ -54,8 +55,23 @@ export function getIDMap (filteredOutNodesCache) {
  * NOTE: this applies for the rest of the test suite/file, but can be overriden by subsequent calls.
  */
 export function mockRoute (route = { params: { workflowName: 'test' } }) {
-  config.global.provide = {
-    [routeLocationKey]: route,
+  config.global.provide[routeLocationKey] = route
+}
+
+/**
+ * Provide a mock workflow service to use in tests, with default empty schema.
+ */
+export function mockWorkflowService (overrides = {}) {
+  const mockSchema = {
+    mutations: [],
+    types: [],
+    queries: [],
+    ...pick(overrides, ['mutations', 'types', 'queries']),
+  }
+  config.global.provide.workflowService = {
+    getGraphQLSchema: async () => mockSchema,
+    loadedGraphQLSchema: mockSchema,
+    ...omit(overrides, ['mutations', 'types', 'queries']),
   }
 }
 
