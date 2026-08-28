@@ -34,21 +34,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <template v-else>
           <v-btn
             text="Enact"
-            v-command-menu="selection"
+            v-command-menu="selectedNodes"
             :prepend-icon="mdiPencilBoxMultiple"
-            :disabled="!selection.length"
+            :disabled="!selectedIDs.length"
+            color="primary"
           >
             <template #append>
               <v-badge
-                v-if="selection.length"
-                :content="selection.length"
+                v-if="selectedIDs.length"
+                :content="selectedIDs.length"
                 inline
+                color="primary"
               />
             </template>
           </v-btn>
           <v-btn
             text="Cancel"
-            @click="() => { enableSelect = false; selection = [] }"
+            @click="() => enableSelect = false"
             :prepend-icon="mdiSelectOff"
           />
         </template>
@@ -57,7 +59,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <div class="overflow-hidden">
       <TableComponent
         :tasks="filteredItems"
-        v-model:selection="selection"
+        v-model:selection="selectedIDs"
         v-model:sort-by="sortBy"
         v-model:page="page"
         v-model:items-per-page="itemsPerPage"
@@ -69,26 +71,26 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   </v-container>
 </template>
 
-<script>
-import { computed } from 'vue'
+<script setup>
+import { computed, ref } from 'vue'
 import { useStore } from 'vuex'
-import { computedWithControl } from '@vueuse/core'
+import { whenever } from '@vueuse/core'
 import { mdiPencilBoxMultiple, mdiSelect, mdiSelectOff } from '@mdi/js'
 import { useGraphQL } from '@/mixins/graphql'
 import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
-  initialOptions,
+  initialOptions as initialOptionsProp,
   updateInitialOptionsEvent,
   useInitialOptions,
 } from '@/utils/initialOptions'
 import { matchNode, groupStateFilters, globToRegex, useTasksFilterState } from '@/components/cylc/common/filter'
 import ViewToolbar from '@/components/cylc/viewToolbar/ViewToolbar.vue'
-import ViewToolbarBtn from '@/components/cylc/viewToolbar/ViewToolbarBtn.vue'
 import TableComponent from '@/components/cylc/table/Table.vue'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import TaskFilter from '@/components/cylc/viewToolbar/TaskFilter.vue'
 import { useCyclePointsOrderDesc } from '@/composables/localStorage'
+import { cloneDeep } from 'lodash-es'
 
 const QUERY = gql`
 subscription Workflow ($workflowID: ID) {
@@ -177,111 +179,113 @@ fragment JobData on Job {
 }
 `
 
-export default {
-  // eslint-disable-next-line vue/no-reserved-component-names
-  name: 'Table',
+const emit = defineEmits([updateInitialOptionsEvent])
 
-  components: {
-    TableComponent,
-    TaskFilter,
-    ViewToolbar,
-    ViewToolbarBtn,
-  },
+const props = defineProps({
+  initialOptions: initialOptionsProp,
+})
 
-  emits: [updateInitialOptionsEvent],
+const store = useStore()
 
-  props: {
-    initialOptions,
-  },
+const { workflows, variables } = useGraphQL()
 
-  setup (props, { emit }) {
-    const store = useStore()
+const getIndex = store.getters['workflows/getIndex']
 
-    const { workflows, variables } = useGraphQL()
+/**
+ * When in selection mode, keep references to nodes pruned from data store, to stop them disappearing from the table.
+ * @type {import('vue').Ref<Map<string, Object>>}
+ */
+const prunedTasks = ref(new Map())
 
-    useComponentSubscription('Table', () => new SubscriptionQuery(
-      QUERY,
-      variables.value,
-      // we really should consider giving these unique names, as technically they are just use as the subscription names
-      // By using a unique name, we can avoid callback merging errors like the one documented in workflow.service.js
-      'workflow',
-    ))
+useComponentSubscription('Table', () => new SubscriptionQuery(
+  QUERY,
+  variables.value,
+  // we really should consider giving these unique names, as technically they are just use as the subscription names
+  // By using a unique name, we can avoid callback merging errors like the one documented in workflow.service.js
+  'workflow',
+  {
+    onBeforeDelta ({ pruned }) {
+      // Grab task nodes just before they are removed from the store
+      if (enableSelect.value && pruned?.taskProxies?.length) {
+        for (const id of pruned.taskProxies) {
+          prunedTasks.value.set(id, cloneDeep(getIndex(id)))
+        }
+      }
+    },
+  }
+))
 
-    /**
+/**
      * The job id input and selected task filter state.
      * @type {import('vue').Ref<object>}
      */
-    const tasksFilter = useInitialOptions('tasksFilter', { props, emit }, {})
-    const filterState = useTasksFilterState(tasksFilter)
+const tasksFilter = useInitialOptions('tasksFilter', { props, emit }, {})
+const filterState = useTasksFilterState(tasksFilter)
 
-    const cyclePointsOrderDesc = useCyclePointsOrderDesc()
+const cyclePointsOrderDesc = useCyclePointsOrderDesc()
 
-    const sortBy = useInitialOptions(
-      'sortBy',
-      { props, emit },
-      [
-        {
-          key: 'task.tokens.cycle',
-          order: cyclePointsOrderDesc.value ? 'desc' : 'asc',
-        },
-      ]
+const sortBy = useInitialOptions(
+  'sortBy',
+  { props, emit },
+  [
+    {
+      key: 'task.tokens.cycle',
+      order: cyclePointsOrderDesc.value ? 'desc' : 'asc',
+    },
+  ]
+)
+
+const page = useInitialOptions('page', { props, emit }, 1)
+
+const itemsPerPage = useInitialOptions('itemsPerPage', { props, emit }, 50)
+
+const enableSelect = ref(false)
+/** Track selected tasks by ID. */
+const selectedIDs = ref([])
+/**
+ * Track selected nodes based on selected IDs.
+ * This is because the source for the node changes when a task is pruned, but the ID remains the same.
+*/
+const selectedNodes = computed(() => selectedIDs.value.map(
+  (id) => getIndex(id) ?? prunedTasks.value.get(id)
+))
+
+whenever(() => !enableSelect.value, () => {
+  prunedTasks.value.clear()
+  selectedIDs.value = []
+})
+
+const tasks = computed((previous) => {
+  if (enableSelect.value) {
+    // Freeze the list of tasks when selection is enabled, to stop selected tasks disappearing
+    return previous
+  }
+  return workflows.value.flatMap(
+    (workflow) => workflow.children.flatMap(
+      (cycle) => cycle.children
     )
+  )
+})
 
-    const page = useInitialOptions('page', { props, emit }, 1)
+const items = computed(
+  () => tasks.value.map((task) => ({
+    task: prunedTasks.value.get(task.id) ?? task,
+    latestJob: task.children[0],
+    previousJob: task.children[1],
+  }))
+)
 
-    const itemsPerPage = useInitialOptions('itemsPerPage', { props, emit }, 50)
+const filteredItems = computed(() => {
+  const [states, waitingStateModifiers, genericModifiers] = groupStateFilters(
+    tasksFilter.value.states ?? []
+  )
+  return items.value.filter(({ task }) => matchNode(
+    task,
+    globToRegex(tasksFilter.value.id),
+    states,
+    waitingStateModifiers,
+    genericModifiers
+  ))
+})
 
-    const enableSelect = useInitialOptions('enableSelect', { props, emit }, false)
-    const selection = useInitialOptions('selection', { props, emit }, [])
-
-    const tasks = computedWithControl(
-      // Freeze the list of tasks when selection is enabled, to stop selected tasks disappearing
-      () => !enableSelect.value && workflows.value,
-      () => workflows.value.flatMap(
-        (workflow) => workflow.children.flatMap(
-          (cycle) => cycle.children
-        )
-      ),
-      { deep: true }
-    )
-
-    const items = computed(
-      () => tasks.value.map((task) => ({
-        task,
-        latestJob: task.children[0],
-        previousJob: task.children[1],
-      }))
-    )
-
-    const filteredItems = computed(() => {
-      const [states, waitingStateModifiers, genericModifiers] = groupStateFilters(
-        tasksFilter.value.states?.length ? tasksFilter.value.states : []
-      )
-      return items.value.filter(({ task }) => matchNode(
-        task,
-        globToRegex(tasksFilter.value.id),
-        states,
-        waitingStateModifiers,
-        genericModifiers
-      ))
-    })
-
-    return {
-      filteredItems,
-      sortBy,
-      page,
-      itemsPerPage,
-      tasksFilter,
-      filterState,
-      workflows,
-      enableSelect,
-      selection,
-      mdiSelect,
-      mdiSelectOff,
-      mdiPencilBoxMultiple,
-    }
-  },
-
-  data: () => ({}), // Currently allows us to mock computed properties in unit tests
-}
 </script>
