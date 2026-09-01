@@ -41,18 +41,24 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <v-col md="8" lg="9">
         <p class="text-h4 mb-2">Events</p>
         <v-data-table
-          :headers="$options.eventsHeader"
+          :headers="eventsHeaders"
           :items="events"
-          v-model:items-per-page="eventsItemsPerPage"
-          :items-per-page-options="eventsItemsPerPageOptions"
+          :items-per-page="5"
+          hide-default-header
           density="compact"
           data-cy="events-table"
         >
-          <!-- Hide header: -->
-          <template #headers></template>
-
-          <!-- Hide footer if no events: -->
-          <template v-if="!events.length" #bottom></template>
+          <template #bottom>
+            <div class="d-flex justify-center mb-2">
+              <v-btn
+                text="Go to events view"
+                to="/Events"
+                :append-icon="icons.mdiArrowRight"
+                variant="text"
+                data-cy="events-table-view-all"
+              />
+            </div>
+          </template>
 
           <!-- Special template if there are no events to display -->
           <template #no-data>
@@ -76,7 +82,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <v-list lines="three" class="pa-0">
           <v-list-item to="/workflow-table" data-cy="workflow-table-link">
             <template v-slot:prepend>
-              <v-icon size="1.6em">{{ $options.icons.table }}</v-icon>
+              <v-icon size="1.6em">{{ icons.table }}</v-icon>
             </template>
             <v-list-item-title class="text-h6 font-weight-light">
               Workflows Table
@@ -87,7 +93,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </v-list-item>
           <v-list-item to="/user-profile" data-cy="user-settings-link">
             <template v-slot:prepend>
-              <v-icon size="1.6em">{{ $options.icons.settings }}</v-icon>
+              <v-icon size="1.6em">{{ icons.settings }}</v-icon>
             </template>
             <v-list-item-title class="text-h6 font-weight-light">
               Settings
@@ -99,7 +105,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           <div>
             <v-list-item id="cylc-hub-button" :disabled=!hubURL :href="hubURL">
               <template v-slot:prepend>
-                <v-icon size="1.6em">{{ $options.icons.hub }}</v-icon>
+                <v-icon size="1.6em">{{ icons.hub }}</v-icon>
               </template>
               <v-list-item-title class="text-h6 font-weight-light">
                 Cylc Hub
@@ -120,7 +126,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               target="_blank"
             >
               <template v-slot:prepend>
-                <v-icon size="1.6em">{{ $options.icons.jupyterLogo }}</v-icon>
+                <v-icon size="1.6em">{{ icons.jupyterLogo }}</v-icon>
               </template>
               <v-list-item-title class="text-h6 font-weight-light">
                 Jupyter Lab
@@ -139,7 +145,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <v-list lines="three" class="pa-0">
           <v-list-item to="/guide" data-cy="quickstart-link">
             <template v-slot:prepend>
-              <v-icon size="1.6em">{{ $options.icons.quickstart }}</v-icon>
+              <v-icon size="1.6em">{{ icons.quickstart }}</v-icon>
             </template>
             <v-list-item-title class="text-h6 font-weight-light">
               Cylc UI Quickstart
@@ -150,7 +156,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </v-list-item>
           <v-list-item href="https://cylc.github.io/cylc-doc/stable/html/workflow-design-guide/index.html" target="_blank">
             <template v-slot:prepend>
-              <v-icon size="1.6em">{{ $options.icons.workflow }}</v-icon>
+              <v-icon size="1.6em">{{ icons.workflow }}</v-icon>
             </template>
             <v-list-item-title class="text-h6 font-weight-light">
               Workflow Design Guide
@@ -161,7 +167,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </v-list-item>
           <v-list-item href="https://cylc.github.io/cylc-doc/stable/html/index.html" target="_blank">
             <template v-slot:prepend>
-              <v-icon size="1.6em">{{ $options.icons.documentation }}</v-icon>
+              <v-icon size="1.6em">{{ icons.documentation }}</v-icon>
             </template>
             <v-list-item-title class="text-h6 font-weight-light">
               Documentation
@@ -174,7 +180,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             to="/graphiql"
           >
             <template v-slot:prepend>
-              <v-icon size="1.6em">{{ $options.icons.mdiGraphql }}</v-icon>
+              <v-icon size="1.6em">{{ icons.mdiGraphql }}</v-icon>
             </template>
             <v-list-item-title class="text-h6 font-weight-light">
               GraphiQL
@@ -191,7 +197,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import { mapGetters } from 'vuex'
-import { useLocalStorage } from '@vueuse/core'
 import {
   mdiBook,
   mdiBookMultiple,
@@ -200,6 +205,7 @@ import {
   mdiHubspot,
   mdiTable,
   mdiGraphql,
+  mdiArrowRight,
 } from '@mdi/js'
 import { jupyterLogo } from '@/utils/icons'
 import { useComponentSubscription } from '@/mixins/subscriptionComponent'
@@ -208,6 +214,7 @@ import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import EventChip from '@/components/cylc/EventChip.vue'
 import { useUserService } from '@/services/user.service'
+import { headers as eventsHeaders, useWorkflowEvents } from '@/mixins/workflowEvents.js'
 
 const QUERY = gql`
 subscription App {
@@ -261,21 +268,25 @@ export default {
       'root',
     ))
 
-    const eventsItemsPerPage = useLocalStorage('dashboardEventsItemsPerPage', 8)
-    const eventsItemsPerPageOptions = [
-      { value: 5, title: '5' },
-      { value: 8, title: '8' },
-      { value: 10, title: '10' },
-      { value: 20, title: '20' },
-      { value: -1, title: 'All' },
-    ]
+    const { events } = useWorkflowEvents()
 
     return {
       user,
       hubURL,
       isLoading,
-      eventsItemsPerPage,
-      eventsItemsPerPageOptions,
+      events,
+      eventsHeaders,
+      icons: {
+        table: mdiTable,
+        settings: mdiCog,
+        hub: mdiHubspot,
+        quickstart: mdiBook,
+        workflow: mdiBookOpenVariant,
+        documentation: mdiBookMultiple,
+        jupyterLogo,
+        mdiGraphql,
+        mdiArrowRight,
+      },
     }
   },
 
@@ -300,39 +311,12 @@ export default {
           }
         })
     },
-    events () {
-      const events = []
-      for (const workflow of this.workflows) {
-        const logRecords = workflow.node?.logRecords || []
-        for (const record of logRecords) {
-          events.push({ workflow: workflow.tokens.workflow, ...record })
-        }
-      }
-      return events.reverse()
-    },
   },
 
   workflowsHeader: [
     { value: 'count' },
     { value: 'text' },
   ],
-
-  eventsHeader: [
-    { value: 'level' },
-    { value: 'workflow' },
-    { value: 'message' },
-  ],
-
-  icons: {
-    table: mdiTable,
-    settings: mdiCog,
-    hub: mdiHubspot,
-    quickstart: mdiBook,
-    workflow: mdiBookOpenVariant,
-    documentation: mdiBookMultiple,
-    jupyterLogo,
-    mdiGraphql,
-  },
 }
 </script>
 
