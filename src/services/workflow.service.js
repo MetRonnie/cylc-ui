@@ -338,7 +338,6 @@ export class WorkflowService {
           }
         ),
         error: (err) => {
-          // Note: Apollo docs claim this is never called, but it can be
           // e.g. if the subscription query requests a non-existent field
           subscription.handleViewState(ViewState.ERROR, err)
         },
