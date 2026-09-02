@@ -15,30 +15,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import { describe, it, expect } from 'vitest'
 import gql from 'graphql-tag'
-import { DeltasCallback } from '@/services/callbacks'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 describe('SubscriptionQuery model', () => {
-  describe('constructor', () => {
-    it('should be created', () => {
-      const query = gql`query { workflow { id } }`
-      const variables = {
-        workflowID: '~cylc/cylc',
-      }
-      const name = 'root'
-      const callbacks = [
-        new DeltasCallback(),
-      ]
-      const runGlobalCallback = true
-      const subscriptionQuery = new SubscriptionQuery(
-        query, variables, name, { callbacks, runGlobalCallback }
-      )
-      expect(subscriptionQuery.query).to.equal(query)
-      expect(subscriptionQuery.variables).to.deep.equal(variables)
-      expect(subscriptionQuery.name).to.equal(name)
-      expect(subscriptionQuery.callbacks).to.deep.equal(callbacks)
-      expect(subscriptionQuery.runGlobalCallback).to.deep.equal(runGlobalCallback)
-    })
+  const query = gql`query { workflow { id } }`
+  const variables = {
+    workflowID: '~cylc/cylc',
+  }
+  const name = 'root'
+  it('should be created', () => {
+    const subscriptionQuery = new SubscriptionQuery(
+      query, variables, name
+    )
+    expect(subscriptionQuery.query).toBe(query)
+    expect(subscriptionQuery.variables).toEqual(variables)
+    expect(subscriptionQuery.name).toBe(name)
+    expect(subscriptionQuery.hooks).toBeUndefined()
+    expect(subscriptionQuery.next).toBeUndefined()
+  })
+
+  it('accepts hooks', () => {
+    const hooks = {
+      onBeforeDelta () {},
+      onDelta () {},
+      tearDown () {},
+    }
+    const subscriptionQuery = new SubscriptionQuery(
+      query, variables, name, hooks
+    )
+    expect(subscriptionQuery.hooks).toBe(hooks)
+    expect(subscriptionQuery.next).toBeUndefined()
+  })
+
+  it('accepts a custom next function instead of hooks', () => {
+    const next = () => {}
+    const subscriptionQuery = new SubscriptionQuery(
+      query, variables, name, next
+    )
+    expect(subscriptionQuery.hooks).toBeUndefined()
+    expect(subscriptionQuery.next).toBe(next)
   })
 })

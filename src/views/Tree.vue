@@ -195,7 +195,6 @@ export default {
       QUERY,
       variables.value,
       'workflow',
-      { runGlobalCallback: true },
     ))
 
     /**

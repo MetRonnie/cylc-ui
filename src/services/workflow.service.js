@@ -36,7 +36,6 @@ import { store } from '@/store/index'
 import { createApolloClient } from '@/graphql/index'
 import { print } from 'graphql'
 import mergeQueries from '@/graphql/merge'
-import { DeltasCallback } from '@/services/callbacks'
 
 /** @typedef {import('graphql').DocumentNode} DocumentNode */
 /** @typedef {import('graphql').IntrospectionInputType} IntrospectionInputType */
@@ -52,45 +51,6 @@ import { DeltasCallback } from '@/services/callbacks'
  * @property {Mutation[]} queries
  * @property {IntrospectionInputType[]} types
  */
-
-class GlobalTreeCallback extends DeltasCallback {
-  constructor () {
-    super()
-    store.commit('workflows/CREATE')
-  }
-
-  before (deltas) {
-    // Wipe all child nodes from a workflow in the data store if a reloaded
-    // delta is received. Reloaded deltas are sent whenever a workflow is
-    // restarted or reloaded (note, restarting a workflow implicitly reloads
-    // it).
-    //
-    // When a workflow reloads it is hard to generate the relevant pruned
-    // and updated deltas to remove any objects which have been wiped out by
-    // the configuration change, so the easiest solution is to wipe the
-    // entire tree under the workflow and rebuild from scratch. If we don't
-    // do this, we can end up with nodes in the store which aren't meant to be
-    // there and won't get pruned.
-    if (deltas.updated?.workflow?.reloaded) {
-      store.commit('workflows/REMOVE_CHILDREN', (deltas.updated.workflow.id))
-    }
-    if (deltas.added?.workflow?.reloaded) {
-      store.commit('workflows/REMOVE_CHILDREN', (deltas.added.workflow.id))
-    }
-  }
-
-  onAdded (added) {
-    store.commit('workflows/UPDATE_DELTAS', added)
-  }
-
-  onUpdated (updated) {
-    store.commit('workflows/UPDATE_DELTAS', updated)
-  }
-
-  onPruned (pruned) {
-    store.commit('workflows/REMOVE_DELTAS', pruned)
-  }
-}
 
 export class WorkflowService {
   /**
@@ -123,8 +83,7 @@ export class WorkflowService {
 
     this.introspection = this.loadTypes()
 
-    // create & start the global callback
-    this.globalCallback = new GlobalTreeCallback()
+    store.commit('workflows/CREATE')
   }
 
   // --- Mutations
@@ -313,27 +272,39 @@ export class WorkflowService {
         next: subscription.query.next ?? (
           (response) => {
             const deltas = response.data.deltas || {}
-            const added = deltas.added || {}
-            const updated = deltas.updated || {}
-            const pruned = deltas.pruned || {}
+            const { added, updated, pruned } = deltas
 
-            // run the global callback first
-            if (subscription.query.runGlobalCallback) {
-              this.globalCallback.before(deltas)
-              this.globalCallback.onAdded(added)
-              this.globalCallback.onUpdated(updated)
-              this.globalCallback.onPruned(pruned)
+            // Wipe all child nodes from a workflow in the data store if a reloaded
+            // delta is received. Reloaded deltas are sent whenever a workflow is
+            // restarted or reloaded (note, restarting a workflow implicitly reloads
+            // it).
+            //
+            // When a workflow reloads it is hard to generate the relevant pruned
+            // and updated deltas to remove any objects which have been wiped out by
+            // the configuration change, so the easiest solution is to wipe the
+            // entire tree under the workflow and rebuild from scratch. If we don't
+            // do this, we can end up with nodes in the store which aren't meant to be
+            // there and won't get pruned.
+            if (updated?.workflow?.reloaded) {
+              store.commit('workflows/REMOVE_CHILDREN', (updated.workflow.id))
+            }
+            if (added?.workflow?.reloaded) {
+              store.commit('workflows/REMOVE_CHILDREN', (added.workflow.id))
             }
 
-            // then run the local callbacks if there are any
+            // then the local before hooks if there are any
             for (const callback of subscription.callbacks) {
-              callback.before(deltas)
-              callback.onAdded(added)
-              callback.onUpdated(updated)
+              callback.onBeforeDelta?.(deltas)
             }
-            for (const callback of [...subscription.callbacks].reverse()) {
-              callback.onPruned(pruned)
-              callback.after(deltas)
+
+            // then the global store updates
+            if (added) store.commit('workflows/UPDATE_DELTAS', added)
+            if (updated) store.commit('workflows/UPDATE_DELTAS', updated)
+            if (pruned) store.commit('workflows/REMOVE_DELTAS', pruned)
+
+            // then the main local hooks if there are any
+            for (const callback of subscription.callbacks) {
+              callback.onDelta?.(deltas)
             }
           }
         ),
@@ -422,7 +393,7 @@ export class WorkflowService {
     }
     subscription.observable.unsubscribe()
     for (const callback of subscription.callbacks) {
-      callback.tearDown()
+      callback.tearDown?.()
     }
     if (!reload && subscription.query.name === 'workflow') {
       // Remove all children in the store for each workflow in the subscription.
@@ -461,7 +432,7 @@ export class WorkflowService {
     // Reset.
     const initialQuery = subscription.query.query
     let finalQuery = cloneDeep(initialQuery)
-    subscription.callbacks = [...baseSubscriberQuery.callbacks]
+    subscription.callbacks = baseSubscriberQuery.hooks ? [baseSubscriberQuery.hooks] : []
 
     // Iterate over the remaining subscribers
     for (const subscriberQuery of subscribersIter) {
@@ -474,10 +445,8 @@ export class WorkflowService {
       }
       finalQuery = mergeQueries(finalQuery, subscriberQuery.query)
       // Combine the arrays of callbacks (no longer used?)
-      for (const callback of subscriberQuery.callbacks) {
-        if (!subscription.callbacks.includes(callback)) {
-          subscription.callbacks.push(callback)
-        }
+      if (subscriberQuery.hooks) {
+        subscription.callbacks.push(subscriberQuery.hooks)
       }
     }
     // TODO: consider using a better approach than print(a) === print(b)
@@ -493,9 +462,4 @@ export class WorkflowService {
       subscription.query.query = gql(print(finalQuery))
     }
   }
-}
-
-// For testing
-export {
-  GlobalTreeCallback as __GlobalTreeCallback,
 }

@@ -342,12 +342,7 @@ export default {
 
     const { variables, workflowName, workflowID } = useGraphQL()
 
-    useComponentSubscription('Toolbar', () => new SubscriptionQuery(
-      QUERY,
-      variables.value,
-      'workflow',
-      { runGlobalCallback: true },
-    ))
+    useComponentSubscription('Toolbar', () => new SubscriptionQuery(QUERY, variables.value, 'workflow'))
 
     /** Show workflow name as title if we are navigated to one, otherwise the generic route title. */
     const title = computed(

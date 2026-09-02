@@ -30,7 +30,6 @@ import gql from 'graphql-tag'
 import { useGraphQL } from '@/mixins/graphql'
 import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
-import { DeltasCallback } from '@/services/callbacks'
 import {
   initialOptions,
   useInitialOptions,
@@ -160,36 +159,6 @@ function rebuildTaskChildren (taskNode, taskData) {
   }
 }
 
-/** Callback for assembling the log file from the subscription */
-class InfoCallback extends DeltasCallback {
-  /**
-   * @param {Results} results
-   */
-  constructor (task, taskNode) {
-    super()
-    this.task = task
-    this.taskNode = taskNode
-  }
-
-  onAdded (added) {
-    // store the task info
-    Object.assign(this.task, added.taskProxies[0])
-
-    // construct a dummy "node" like to make it look like a node in the
-    // central data store
-    Object.assign(this.taskNode, taskObjToNode(this.task))
-    rebuildTaskChildren(this.taskNode, this.task)
-  }
-
-  onUpdated (updated) {
-    if (updated?.taskProxies) {
-      Object.assign(this.task, updated.taskProxies[0])
-    }
-
-    rebuildTaskChildren(this.taskNode, this.task)
-  }
-}
-
 export default {
   name: 'InfoView',
 
@@ -220,9 +189,22 @@ export default {
       { ...variables.value, taskID: requestedTokens.value?.relativeID },
       queryName,
       {
-        callbacks: [
-          new InfoCallback(task.value, taskNode.value),
-        ],
+        onDelta ({ added, updated }) {
+          if (added) {
+            // store the task info
+            Object.assign(task.value, added.taskProxies[0])
+
+            // construct a dummy "node" like to make it look like a node in the central data store
+            Object.assign(taskNode.value, taskObjToNode(task.value))
+            rebuildTaskChildren(taskNode.value, task.value)
+          }
+          if (updated) {
+            if (updated?.taskProxies) {
+              Object.assign(task.value, updated.taskProxies[0])
+            }
+            rebuildTaskChildren(taskNode.value, task.value)
+          }
+        },
       },
     ))
 

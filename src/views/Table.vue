@@ -161,7 +161,6 @@ export default {
       // we really should consider giving these unique names, as technically they are just use as the subscription names
       // By using a unique name, we can avoid callback merging errors like the one documented in workflow.service.js
       'workflow',
-      { runGlobalCallback: true },
     ))
 
     /**

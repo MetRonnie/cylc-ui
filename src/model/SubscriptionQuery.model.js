@@ -16,6 +16,14 @@
  */
 
 /**
+ * Hooks for handling deltas received from a subscription.
+ * @typedef {Object} DeltasHooks
+ * @property {({ added: any, updated: any, pruned: any }) => void} [onBeforeDelta] - Run before a delta is processed in the data store.
+ * @property {({ added: any, updated: any, pruned: any }) => void} [onDelta] - Run after a delta is processed in the data store.
+ * @property {() => void} [tearDown] - Run when stopping the subscription.
+ */
+
+/**
  * A subscription query. It is part of a Subscription, and contains query and auxiliary data
  * such as query name, variables, and callbacks.
  *
@@ -33,18 +41,16 @@ export class SubscriptionQuery {
    * @param {import('graphql').DocumentNode} query
    * @param {Record<string, any>} variables
    * @param {string} name
-   * @param {{
-   *  callbacks: import('@/services/callbacks').DeltasCallback[],
-   *  runGlobalCallback: boolean,
-   *  next: (data: any) => void,
-   * }} opts
+   * @param {?DeltasHooks | (data: any) => void} opts - Either an object containing hooks, or a custom next() function, to run when the subscription receives data.
    */
-  constructor (query, variables, name, { callbacks = [], runGlobalCallback = false, next = undefined }) {
+  constructor (query, variables, name, opts) {
     this.query = query
     this.variables = variables ?? {}
     this.name = name
-    this.callbacks = callbacks
-    this.runGlobalCallback = runGlobalCallback
-    this.next = next
+    if (typeof opts === 'function') {
+      this.next = opts
+    } else {
+      this.hooks = opts
+    }
   }
 }

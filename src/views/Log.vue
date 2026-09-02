@@ -454,15 +454,13 @@ export default {
       query.value = new SubscriptionQuery(
         LOGS_SUBSCRIPTION,
         readonly({ id, file }),
-        `${uid}-query`,
-        {
-          next (response) {
-            if (!response.data?.logs) {
-              console.error(response.errors ?? 'No data received from log subscription')
-              return
-            }
-            onAdded(response.data.logs)
-          },
+        `${uid}-query`, // Each log view has a unique subscription (log subscriptions cannot be merged)
+        (response) => {
+          if (!response.data?.logs) {
+            console.error(response.errors ?? 'No data received from log subscription')
+            return
+          }
+          onAdded(response.data.logs)
         },
       )
     }

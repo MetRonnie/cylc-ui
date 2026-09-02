@@ -59,7 +59,7 @@ export class Subscription {
      */
     this.subscribers = new Map()
     /**
-     * @type {import('@/services/callbacks').DeltasCallback[]}
+     * @type {import('@/model/SubscriptionQuery.model').DeltasHooks[]}
      */
     this.callbacks = []
     this.reload = false
