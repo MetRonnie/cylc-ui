@@ -15,16 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { mount } from '@vue/test-utils'
+import { config, mount } from '@vue/test-utils'
 import { createVuetify } from 'vuetify'
 import { createStore } from 'vuex'
 import storeOptions from '@/store/options'
 import Toolbar from '@/components/cylc/Toolbar.vue'
 import WorkflowState from '@/model/WorkflowState.model'
-
 import CommandMenuPlugin from '@/components/cylc/commandMenu/plugin'
 import sinon from 'sinon'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import { __drawer as drawerState } from '@/utils/toolbar'
 import { vuetifyOptions } from '@/plugins/vuetify'
 import { mdiMenuClose, mdiMenuOpen } from '@mdi/js'
@@ -33,19 +32,10 @@ import { mockRoute } from '$tests/util'
 const vuetify = createVuetify(vuetifyOptions)
 
 describe('Toolbar component', () => {
-  let store, $workflowService
-
   beforeEach(() => {
     mockRoute()
-    store = createStore(storeOptions)
-    store.commit('user/SET_USER', {
-      owner: 'rincewind',
-      permissions: ['play', 'pause', 'resume', 'stop', 'setGraphWindowExtent'],
-      initials: 'RW',
-      username: 'rincewind',
-    })
+    const store = createStore(storeOptions)
     drawerState.value = false
-    $workflowService = sinon.createStubInstance(WorkflowService)
     store.state.workflows.workflows = [
       {
         id: 'user/id',
@@ -53,16 +43,12 @@ describe('Toolbar component', () => {
         status: WorkflowState.RUNNING.name,
       },
     ]
+    config.global.plugins = [store, vuetify, CommandMenuPlugin]
+    config.global.provide.workflowService = sinon.createStubInstance(WorkflowService)
   })
 
   it('shows backburger icon when drawer is open and list icon when closed', async () => {
-    const wrapper = mount(Toolbar, {
-      global: {
-        plugins: [store, vuetify, CommandMenuPlugin],
-        mocks: { $workflowService },
-        provide: { versionInfo: null },
-      },
-    })
+    const wrapper = mount(Toolbar)
     // Drawer closed: '≡>' icon
     drawerState.value = false
     await wrapper.vm.$nextTick()
@@ -75,13 +61,7 @@ describe('Toolbar component', () => {
   })
 
   it('toggles drawer on button click', async () => {
-    const wrapper = mount(Toolbar, {
-      global: {
-        plugins: [store, vuetify, CommandMenuPlugin],
-        mocks: { $workflowService },
-        provide: { versionInfo: null },
-      },
-    })
+    const wrapper = mount(Toolbar)
     expect(drawerState.value).to.equal(false)
     await wrapper.find('#toggle-drawer').trigger('click')
     expect(drawerState.value).to.equal(true)
@@ -105,13 +85,7 @@ describe('Toolbar component', () => {
     },
   ])('displays title $expected from the route', async ({ route, expected }) => {
     mockRoute(route)
-    const wrapper = mount(Toolbar, {
-      global: {
-        plugins: [store, vuetify, CommandMenuPlugin],
-        mocks: { $workflowService },
-        provide: { versionInfo: null },
-      },
-    })
+    const wrapper = mount(Toolbar)
     await wrapper.vm.$nextTick()
     expect(wrapper.find('.c-toolbar-title').text()).to.include(expected)
   })

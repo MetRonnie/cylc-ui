@@ -69,7 +69,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     >
       <defs>
         <marker
-          :id="`${_uid}-arrow-end`"
+          :id="`${uid}-arrow-end`"
           viewbox="0 0 8 8"
           refX="1" refY="5"
           markerUnits="strokeWidth"
@@ -120,7 +120,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               stroke="rgb(90,90,90)"
               stroke-width="5"
               fill="none"
-              :marker-end="`url(#${_uid}-arrow-end)`"
+              :marker-end="`url(#${uid}-arrow-end)`"
             />
           </g>
         </g>
@@ -138,16 +138,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import gql from 'graphql-tag'
-import { mapGetters } from 'vuex'
 import { useJobTheme } from '@/composables/localStorage'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   useInitialOptions,
 } from '@/utils/initialOptions'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
-// import CylcTreeCallback from '@/services/treeCallback'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import GraphSubgraph from '@/components/cylc/GraphSubgraph.vue'
 import ViewToolbar from '@/components/cylc/viewToolbar/ViewToolbar.vue'
@@ -266,10 +264,6 @@ fragment PrunedDelta on Pruned {
 export default {
   name: 'Graph',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     GraphNode,
     GraphSubgraph,
@@ -282,6 +276,14 @@ export default {
   },
 
   setup (props, { emit }) {
+    const { workflows, variables } = useGraphQL()
+
+    const { uid } = useComponentSubscription('Graph', () => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+    ))
+
     /**
      * The transpose toggle state.
      * If true layout is left-right, else top-bottom
@@ -309,16 +311,14 @@ export default {
      */
     const groupCycle = useInitialOptions('groupCycle', { props, emit }, false)
 
-    const { workflowIDs, variables } = useGraphQL()
-
     return {
       jobTheme: useJobTheme(),
       transpose,
       autoRefresh,
       spacing,
       groupCycle,
-      workflowIDs,
-      variables,
+      workflows,
+      uid,
       icons: {
         mdiTimer,
         mdiImageFilterCenterFocus,
@@ -371,23 +371,6 @@ export default {
 
   beforeUnmount () {
     clearInterval(this.refreshTimer)
-  },
-
-  computed: {
-    ...mapGetters('workflows', ['getNodes']),
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
-    },
-    workflows () {
-      return this.getNodes('workflow', this.workflowIDs)
-    },
   },
 
   methods: {

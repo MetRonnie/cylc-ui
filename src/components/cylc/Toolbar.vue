@@ -159,7 +159,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       <!-- workflow status message -->
       <span class="status-msg text-body-medium">
         {{ statusMessage }}
-        <span v-if="currentWorkflow.node.cylcVersion !== uisFlowVersion">
+        <span v-if="currentWorkflow.node.cylcVersion !== versionInfo['cylc-flow']">
           {{ versionPopup }}
         </span>
       </span>
@@ -254,7 +254,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { inject, computed } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { mapState } from 'vuex'
 import { useDisplay } from 'vuetify'
@@ -280,12 +280,13 @@ import { useGraphQL } from '@/mixins/graphql'
 import {
   mutationStatus,
 } from '@/utils/aotf'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import { eventBus } from '@/services/eventBus'
 import { upperFirst } from 'lodash-es'
 import WarningIcon from '@/components/cylc/WarningIcon.vue'
+import { useUserService } from '@/services/user.service'
 import { workflowViews } from '@/views/views'
 
 const QUERY = gql(`
@@ -337,7 +338,11 @@ export default {
   setup (props) {
     const route = useRoute()
 
+    const { user, versionInfo } = useUserService()
+
     const { variables, workflowName, workflowID } = useGraphQL()
+
+    useComponentSubscription('Toolbar', () => new SubscriptionQuery(QUERY, variables.value, 'workflow'))
 
     /** Show workflow name as title if we are navigated to one, otherwise the generic route title. */
     const title = computed(
@@ -347,21 +352,18 @@ export default {
     const { mdAndDown } = useDisplay()
     const { drawer, drawerEnabled, toggleDrawer } = useDrawer()
 
-    const uisVersionInfo = inject('versionInfo')
-    const uisFlowVersion = uisVersionInfo?.value?.['cylc-flow'] ?? ''
-
     return {
+      user,
       mdAndDown,
       eventBus,
       drawer,
       drawerEnabled,
       toggleDrawer,
       toolbarHeight,
-      variables,
       title,
       workflowName,
       workflowID,
-      uisFlowVersion,
+      versionInfo,
       workflowViews,
       icons: {
         add: mdiPlusBoxMultiple,
@@ -384,10 +386,6 @@ export default {
     WarningIcon,
   },
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   data: () => ({
     expecting: {
       // store state from mutations in order to compute the "enabled" attrs
@@ -399,19 +397,7 @@ export default {
   }),
 
   computed: {
-    ...mapState('user', ['user']),
     ...mapState('workflows', ['cylcTree']),
-    query () {
-      if (!this.workflowName) return null
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
-    },
     currentWorkflow () {
       if (!this.workflowName) return null
       return this.cylcTree.$index[this.workflowID]

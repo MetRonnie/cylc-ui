@@ -91,7 +91,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             </v-list-item-subtitle>
           </v-list-item>
           <div>
-            <v-list-item id="cylc-hub-button" :disabled=!multiUserMode :href="$options.hubUrl">
+            <v-list-item id="cylc-hub-button" :disabled=!hubURL :href="hubURL">
               <template v-slot:prepend>
                 <v-icon size="1.6em">{{ $options.icons.hub }}</v-icon>
               </template>
@@ -102,7 +102,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 Visit the Hub to manage your running UI Servers
               </v-list-item-subtitle>
             </v-list-item>
-            <v-tooltip :disabled="multiUserMode">
+            <v-tooltip v-if="!hubURL">
               You are not running Cylc UI via Cylc Hub.
             </v-tooltip>
           </div>
@@ -184,7 +184,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { mapState, mapGetters } from 'vuex'
+import { mapGetters } from 'vuex'
 import {
   mdiBook,
   mdiBookMultiple,
@@ -195,12 +195,12 @@ import {
   mdiGraphql,
 } from '@mdi/js'
 import { jupyterLogo } from '@/utils/icons'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import { createUrl } from '@/utils/urls'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import { WorkflowState, WorkflowStateOrder } from '@/model/WorkflowState.model'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import gql from 'graphql-tag'
 import EventChip from '@/components/cylc/EventChip.vue'
+import { useUserService } from '@/services/user.service'
 
 const QUERY = gql`
 subscription App {
@@ -241,29 +241,27 @@ fragment WorkflowData on Workflow {
 export default {
   name: 'Dashboard',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     EventChip,
   },
 
-  data () {
+  setup () {
+    const { user, hubURL } = useUserService()
+
+    const { isLoading } = useComponentSubscription('Dashboard', new SubscriptionQuery(
+      QUERY,
+      {},
+      'root',
+    ))
+
     return {
-      query: new SubscriptionQuery(
-        QUERY,
-        {},
-        'root',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      ),
+      user,
+      hubURL,
+      isLoading,
     }
   },
 
   computed: {
-    ...mapState('user', ['user']),
     ...mapGetters('workflows', ['getNodes']),
     workflows () {
       return this.getNodes('workflow')
@@ -283,9 +281,6 @@ export default {
             count: count[state.name] || 0,
           }
         })
-    },
-    multiUserMode () {
-      return this.user.mode !== 'single user'
     },
     events () {
       const events = []
@@ -309,8 +304,6 @@ export default {
     { value: 'workflow' },
     { value: 'message' },
   ],
-
-  hubUrl: createUrl('/hub/home', false, true),
 
   icons: {
     table: mdiTable,

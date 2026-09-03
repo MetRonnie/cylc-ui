@@ -107,8 +107,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import gql from 'graphql-tag'
 import { mapState, mapGetters } from 'vuex'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 
 // Any fields that our view will use (e.g. TaskProxy.status) must be requested
 // in the query.
@@ -186,18 +186,31 @@ fragment JobData on Job {
 export default {
   name: 'SimpleTree',
 
-  // These mixins enable various functionalities.
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   setup (props) {
     // This is a helper function that provides us with some computed properties.
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
+
+    // This is another helper function that enables automatic subscription management.
+    // This registers the query with the WorkflowService, once registered, the
+    // WorkflowService promises to make the data defined by the query available
+    // in the store and to keep it up to date.
+    // By using a getter function as the 2nd argument, the subscription will automatically update
+    // if the variables change (like a computed ref).
+    // It also returns the unique ID for this component's subscription.
+    const { uid } = useComponentSubscription('SimpleTree', () => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+      {
+        // We can define hooks here to run when the subscription receives data
+        // (empty as no need in this case, but showing for demo purposes):
+        onDelta ({ added, updated, pruned }) { },
+      }
+    ))
 
     return {
-      workflowIDs,
-      variables,
+      uid,
+      workflows,
     }
   },
 
@@ -208,20 +221,6 @@ export default {
     // This gives us a convenient way to filter for the nodes we want from the
     // store:
     ...mapGetters('workflows', ['getNodes']),
-
-    // Get workflow nodes from the store.
-    workflows () {
-      // This returns all nodes of type "workflow" with ids which are in
-      // this.workflowIDs
-      return this.getNodes('workflow', this.workflowIDs)
-    },
-
-    // This registers the query with the WorkflowService, once registered, the
-    // WorkflowService promises to make the data defined by the query available
-    // in the store and to keep it up to date.
-    query () {
-      return new SubscriptionQuery(QUERY, this.variables, 'workflow', [])
-    },
   },
 
 }

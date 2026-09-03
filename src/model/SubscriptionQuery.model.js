@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) Earth Sciences New Zealand & British Crown (Met Office) & Contributors.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -15,7 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/** @typedef {import('graphql').DocumentNode} DocumentNode */
+/**
+ * Hooks for handling deltas received from a subscription.
+ * @typedef {Object} DeltasHooks
+ * @property {({ added: any, updated: any, pruned: any }) => void} [onBeforeDelta] - Run before a delta is processed in the data store.
+ * @property {({ added: any, updated: any, pruned: any }) => void} [onDelta] - Run after a delta is processed in the data store.
+ * @property {() => void} [tearDown] - Run when stopping the subscription.
+ */
 
 /**
  * A subscription query. It is part of a Subscription, and contains query and auxiliary data
@@ -24,28 +30,27 @@
  * The name of the query is an important part of the data, as it is used as key in a dictionary
  * that holds the queries. It can be used to merge two queries when they have the same name.
  *
- * Callbacks are Vuex **actions** (i.e. we call store.dispatch(), not store.commit()), and resolve
- * asynchronously.
+ * You can provide an array of callbacks to run when the subscription receives data, and/or
+ * just tell the global Cylc tree callback to run. Alternatively to either of these, you can
+ * specify a custom `next` function to run when the subscription receives data.
  *
  * @see Subscription
  */
-class SubscriptionQuery {
+export class SubscriptionQuery {
   /**
-   * @param {DocumentNode} query
-   * @param {Object.<String, String>} variables
-   * @param {String} name
-   * @param {Array<DeltasCallback>} callbacks
-   * @param {boolean} isDelta
-   * @param {boolean} isGlobalCallback
+   * @param {import('graphql').DocumentNode} query
+   * @param {Record<string, any>} variables
+   * @param {string} name
+   * @param {?DeltasHooks | (data: any) => void} opts - Either an object containing hooks, or a custom next() function, to run when the subscription receives data.
    */
-  constructor (query, variables, name, callbacks, isDelta, isGlobalCallback) {
+  constructor (query, variables, name, opts) {
     this.query = query
-    this.variables = variables
+    this.variables = variables ?? {}
     this.name = name
-    this.callbacks = callbacks
-    this.isDelta = isDelta
-    this.isGlobalCallback = isGlobalCallback
+    if (typeof opts === 'function') {
+      this.next = opts
+    } else {
+      this.hooks = opts
+    }
   }
 }
-
-export default SubscriptionQuery

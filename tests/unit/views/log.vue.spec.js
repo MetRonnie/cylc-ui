@@ -21,24 +21,25 @@ import { createStore } from 'vuex'
 import storeOptions from '@/store/options'
 import sinon from 'sinon'
 import Log from '@/views/Log.vue'
-import WorkflowService from '@/services/workflow.service'
-import User from '@/model/User.model'
+import { WorkflowService } from '@/services/workflow.service'
+import { User } from '@/model/User.model'
 import { getJobLogFileFromState } from '@/model/JobState.model'
 import { mockRoute } from '$tests/util'
 
 describe('Log view', () => {
-  const owner = 'svimes'
+  const user = new User({ username: 'cylc', permissions: [], owner: 'svimes' })
   const workflowName = 'thud'
-  const workflowID = `~${owner}/${workflowName}`
+  const workflowID = `~${user.owner}/${workflowName}`
   const initialFile = 'koom-valley.log'
 
   mockRoute({ params: { workflowName } })
-  let $workflowService, store
+  let workflowService, store
 
   const mountFunction = (options) => mount(Log, {
     global: {
       plugins: [store],
-      mocks: { $workflowService },
+      mocks: { $workflowService: workflowService },
+      provide: { user, workflowService },
     },
     props: {
       initialOptions: {
@@ -51,12 +52,8 @@ describe('Log view', () => {
 
   beforeEach(() => {
     store = createStore(storeOptions)
-    store.commit(
-      'user/SET_USER',
-      new User({ username: 'cylc', permissions: [], owner })
-    )
-    $workflowService = sinon.createStubInstance(WorkflowService)
-    $workflowService.apolloClient = {
+    workflowService = sinon.createStubInstance(WorkflowService)
+    workflowService.apolloClient = {
       query: () => ({
         data: {
           logFiles: {
@@ -77,7 +74,7 @@ describe('Log view', () => {
         ['succeeded', 'job.out'],
         [undefined, undefined],
       ])('%s -> %s', async (state, expected) => {
-        $workflowService.query2 = () => ({
+        workflowService.query2 = () => ({
           data: {
             jobs: [
               // Query response only includes latest job
@@ -141,7 +138,7 @@ describe('Log view', () => {
     expect(wrapper.vm.results.lines).toEqual([])
     expect(wrapper.vm.id).toBe(undefined)
     // should have unsubscribed
-    expect(wrapper.vm.$workflowService.unsubscribe.calledOnce).toBe(true)
+    expect(workflowService.unsubscribe.calledOnce).toBe(true)
   })
 
   it('does not issue subscription for incomplete task ID', async () => {

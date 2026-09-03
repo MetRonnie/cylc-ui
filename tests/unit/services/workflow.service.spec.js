@@ -16,19 +16,21 @@
  */
 
 import { createStore } from 'vuex'
-import storeOptions from '@/store/options'
-import CylcTreeCallback from '@/services/treeCallback'
-import { vi } from 'vitest'
+import { vi, expect } from 'vitest'
 import sinon from 'sinon'
 import { print } from 'graphql/language'
 import gql from 'graphql-tag'
 // need the polyfill as otherwise ApolloClient fails to be imported as it checks for a global fetch object on import...
 import 'cross-fetch/polyfill'
-import Subscription from '@/model/Subscription.model'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
-import WorkflowService from '@/services/workflow.service'
+import { store } from '@/store/index'
+import storeOptions from '@/store/options'
+import { Subscription } from '@/model/Subscription.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
+import { WorkflowService } from '@/services/workflow.service'
 import ViewState from '@/model/ViewState.model'
-import { TreeCallback, WorkflowCallback } from './testCallback'
+import { defineComponent } from 'vue'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
+import { mount } from '@vue/test-utils'
 
 vi.mock('@/graphql/index', () => ({
   createApolloClient: () => ({
@@ -47,13 +49,9 @@ describe('WorkflowService', () => {
    */
   const url = '/graphql'
   /**
-   * @type {SubscriptionClient|null}
-   */
-  let subscriptionClient
-  /**
    * @type {WorkflowService}
    */
-  let service
+  let workflowService
   /**
    * @type {DocumentNode}
    */
@@ -62,17 +60,14 @@ describe('WorkflowService', () => {
    * @type {SubscriptionQuery}
    */
   let subscriptionQuery
-  /**
-   * @type {View}
-   */
-  let view
+  let uid
   /**
    * @type {Subscription}
    */
   let subscription
+
   beforeEach(() => {
     sandbox.stub(console, 'debug')
-    subscriptionClient = null
     // TODO: really load some mutations
     sandbox.stub(WorkflowService.prototype, 'loadTypes').returns(
       Promise.resolve({
@@ -80,7 +75,7 @@ describe('WorkflowService', () => {
         types: [],
       })
     )
-    service = new WorkflowService(url, subscriptionClient)
+    workflowService = new WorkflowService(url)
     // subscription query
     query = gql`
         query {
@@ -94,118 +89,135 @@ describe('WorkflowService', () => {
         workflowID: '~cylc/test',
       },
       'root',
-      [],
-      true,
-      true
     )
     // Subscription
     subscription = new Subscription(subscriptionQuery, true)
-    service.subscriptions[subscriptionQuery.name] = subscription
+    workflowService.subscriptions[subscriptionQuery.name] = subscription
     // Add one View as subscriber to Subscription
-    /**
-     * @type {View}
-     */
-    view = {
-      _uid: 'view',
-      query: subscriptionQuery,
-      viewState: ViewState.NO_STATE,
-      setAlert: () => {},
-    }
-    service.subscribe(view)
+    uid = 'view'
+    workflowService.subscribe(uid, subscriptionQuery)
   })
+
   afterEach(() => {
     sandbox.restore()
   })
+
   describe('constructor', () => {
     it('should create an object correctly', () => {
-      expect(service.apolloClient).to.not.equal(null)
+      expect(workflowService.apolloClient).not.toBeNullable()
     })
   })
+
   describe('getOrCreateSubscription', () => {
     it('should return existing subscriptions', () => {
-      const existingSubscription = service.getOrCreateSubscription(view.query)
+      const existingSubscription = workflowService.getOrCreateSubscription(subscriptionQuery)
       expect(existingSubscription).to.deep.equal(subscription)
     })
+
     it('should create new subscriptions and add to local cache', () => {
-      delete service.subscriptions[view.query.name]
-      expect(Object.keys(service.subscriptions).length).to.equal(0)
-      const newSubscription = service.getOrCreateSubscription(view.query)
-      expect(Object.keys(service.subscriptions).length).to.equal(1)
-      expect(service.subscriptions[view.query.name]).to.deep.equal(newSubscription)
+      delete workflowService.subscriptions[subscriptionQuery.name]
+      expect(Object.keys(workflowService.subscriptions).length).to.equal(0)
+      const newSubscription = workflowService.getOrCreateSubscription(subscriptionQuery)
+      expect(Object.keys(workflowService.subscriptions).length).to.equal(1)
+      expect(workflowService.subscriptions[subscriptionQuery.name]).to.deep.equal(newSubscription)
     })
   })
+
   describe('startSubscriptions', () => {
     it('should start pending subscriptions', () => {
-      const spy = sandbox.spy(service, 'startSubscription')
-      service.startSubscriptions()
+      const spy = sandbox.spy(workflowService, 'startSubscription')
+      workflowService.startSubscriptions()
       expect(spy.calledOnce).to.equal(true)
     })
   })
+
   describe('startSubscription', () => {
     it('should stop the subscription if already started, before starting again', () => {
       const observable = { unsubscribe: () => {} }
       const spy = sandbox.spy(observable, 'unsubscribe')
       subscription.observable = observable
-      service.startSubscription(subscription)
+      workflowService.startSubscription(subscription)
       expect(spy.calledOnce).to.equal(true)
     })
+
     it('should call the subscription callback', () => {
-      const workflowName = 'test'
-      const mystartCylcSubscription = (query, variables, subscriptionOptions) => {
-        subscriptionOptions.next({ data: workflowName })
-      }
-      const startCylcSubscriptionStub = sandbox.stub(
-        service,
-        'startCylcSubscription')
-      startCylcSubscriptionStub.callsFake(mystartCylcSubscription)
-      // we need to add a callback to be called...
-      subscriptionQuery.callbacks.push()
+      vi.spyOn(workflowService, 'startCylcSubscription').mockImplementation(() => ({
+        subscribe () {},
+      }))
       subscription.reload = true
-      service.startSubscription(subscription)
+      workflowService.startSubscription(subscription)
       // after a subscription has been started, the reload flag must be set to false
       expect(subscription.reload).to.equal(false)
     })
+
     describe('ViewState', () => {
-      it('should set the view state to COMPLETE when it successfully starts a subscription', () => {
-        expect(subscription.subscribers[view._uid].viewState).to.equal(ViewState.NO_STATE)
-        service.startSubscription(subscription)
-        expect(subscription.subscribers[view._uid].viewState).to.equal(ViewState.COMPLETE)
+      const store = createStore(storeOptions)
+      let wrapper
+
+      beforeEach(() => {
+        const Component = defineComponent({
+          setup: () => ({
+            ...useComponentSubscription('MyView', null),
+          }),
+          render: () => null,
+        })
+        wrapper = mount(Component, {
+          global: {
+            plugins: [store],
+            provide: { workflowService },
+          },
+        })
+
+        workflowService.subscribe(wrapper.vm.uid, subscriptionQuery)
       })
+
+      it('should set the view state to COMPLETE when it successfully starts a subscription', () => {
+        expect(wrapper.vm.viewState).to.equal(ViewState.NO_STATE)
+        workflowService.startSubscription(subscription)
+        expect(wrapper.vm.viewState).to.equal(ViewState.COMPLETE)
+      })
+
       it('should set the view state to ERROR if it fails to start the deltas subscription', () => {
-        expect(subscription.subscribers[view._uid].viewState).to.equal(ViewState.NO_STATE)
-        const stub = sandbox.stub(service, 'startCylcSubscription')
+        expect(wrapper.vm.viewState).to.equal(ViewState.NO_STATE)
+        const stub = sandbox.stub(workflowService, 'startCylcSubscription')
         stub.throws()
-        service.startSubscription(subscription)
-        expect(subscription.subscribers[view._uid].viewState).to.equal(ViewState.ERROR)
+        sandbox.stub(console, 'error')
+        workflowService.startSubscription(subscription)
+        expect(wrapper.vm.viewState).to.equal(ViewState.ERROR)
       })
+
       it('should set the view state to COMPLETE when it successfully starts a subscription', () => {
-        expect(subscription.subscribers[view._uid].viewState).to.equal(ViewState.NO_STATE)
-        const mystartCylcSubscription = (query, variables, subscriptionOptions) => {
-          subscriptionOptions.error('test')
-        }
-        const startCylcSubscriptionStub = sandbox.stub(
-          service,
-          'startCylcSubscription')
-        startCylcSubscriptionStub.callsFake(mystartCylcSubscription)
-        const spy = sandbox.spy(subscription, 'handleViewState')
-        service.startSubscription(subscription)
+        expect(wrapper.vm.viewState).to.equal(ViewState.NO_STATE)
+        vi.spyOn(workflowService, 'startCylcSubscription').mockImplementation(() => ({
+          subscribe ({ error }) {
+            error('test')
+          },
+        }))
+        const spy = vi.spyOn(subscription, 'handleViewState')
+        sandbox.stub(console, 'error')
+        workflowService.startSubscription(subscription)
         // The error happens, but immediately, so the view state is set to COMPLETE. In
         // real-life, there will be a few milliseconds delay between the JS creation of
         // the object, and the first WebSockets message with an error, so we will use
         // a spy here instead.
-        // expect(subscription.subscribers[view._uid].viewState).to.equal(ViewState.ERROR)
         // Called first time to set as LOADING. Then as ERROR. Finally COMPLETE.
-        expect(spy.calledThrice).to.equal(true)
+        expect(spy.mock.calls.map(x => x[0].enumKey)).toEqual([
+          'LOADING',
+          'ERROR',
+          'COMPLETE',
+        ])
       })
     })
   })
+
   describe('startCylcSubscription', () => {
     // the bulk of tests for startCylcSubscription are e2e tests, here we only test
     // a few simple scenarios
     it('should throw an error if no query provided', () => {
-      expect(() => { service.startCylcSubscription(null, null, null) }).to.throw()
+      expect(() => { workflowService.startCylcSubscription(null, null, null) }).to.throw()
     })
   })
+
   describe('merge', () => {
     it('should merge two queries correctly', () => {
       const query1 = new SubscriptionQuery(
@@ -217,104 +229,68 @@ describe('WorkflowService', () => {
         }`,
         subscriptionQuery.variables,
         'root',
-        [],
-        true,
-        true)
-      /**
-       * @type {View}
-       */
-      const view1 = {
-        _uid: 'view1',
-        query: query1,
-      }
-      service.subscribe(view1)
+      )
+      workflowService.subscribe('view1', query1)
       // at this point we have only 1 query, so the computed query must have the exact value we provided
       const expectedQuery1 = print(query1.query)
-      const initialQuery = print(service.subscriptions.root.query.query)
+      const initialQuery = print(workflowService.subscriptions.root.query.query)
       expect(expectedQuery1).to.equal(initialQuery)
 
       const query2 = new SubscriptionQuery(
         gql`
         query {
-        workflows {
-          name
-        }
-      }`,
+          workflows {
+            name
+          }
+        }`,
         subscriptionQuery.variables,
         'root',
-        [],
-        true,
-        true)
-      /**
-       * @type {View}
-       */
-      const view2 = {
-        _uid: 'view2',
-        query: query2,
-      }
-      service.subscribe(view2)
+      )
+      workflowService.subscribe('view2', query2)
       // now the queries must have been merged
-      const finalQuery = print(service.subscriptions.root.query.query)
+      const finalQuery = print(workflowService.subscriptions.root.query.query)
       expect(finalQuery).to.contain('name')
     })
   })
+
   describe('recompute', () => {
     it('should not change query if no views were added', () => {
       // at this point we have only 1 query, so the computed query must have the exact value we provided
       const expectedQuery1 = print(subscriptionQuery.query)
-      const initialQuery = print(service.subscriptions.root.query.query)
+      const initialQuery = print(workflowService.subscriptions.root.query.query)
       expect(expectedQuery1).to.equal(initialQuery)
       // calling recompute with the same query shouldn't change the original query
-      service.recompute(service.subscriptions.root)
-      const finalQuery = print(service.subscriptions.root.query.query)
+      workflowService.recompute(workflowService.subscriptions.root)
+      const finalQuery = print(workflowService.subscriptions.root.query.query)
       expect(expectedQuery1).to.equal(finalQuery)
     })
-    it('should not add duplicate callbacks', () => {
-      const newCallbacks = [
-        new WorkflowCallback(),
-        new TreeCallback(),
-      ]
-      subscriptionQuery.callbacks.push(...newCallbacks)
-      const newSubscriptionQuery = new SubscriptionQuery(
+
+    it('should add all deltas hooks as callbacks', () => {
+      const onDelta = () => {}
+      workflowService.subscribe('view1', new SubscriptionQuery(
         query,
         subscriptionQuery.variables,
         subscriptionQuery.name,
-        newCallbacks,
-        true,
-        true
-      )
-      const anotherView = {
-        _uid: 'anotherView',
-        query: newSubscriptionQuery,
-      }
-      service.subscribe(anotherView)
-      // Same callbacks, Lodash's union should add to list like a set
-      expect(subscriptionQuery.callbacks).to.deep.equal(newCallbacks)
-    })
-    it('should add new callbacks', () => {
-      const baseCallbacks = [new WorkflowCallback()]
-      subscriptionQuery.callbacks.push(...baseCallbacks)
-      const newCallbacks = [new TreeCallback()]
-      const newSubscriptionQuery = new SubscriptionQuery(
+        { onDelta }
+      ))
+      const onBeforeDelta = () => {}
+      workflowService.subscribe('view2', new SubscriptionQuery(
         query,
         subscriptionQuery.variables,
         subscriptionQuery.name,
-        newCallbacks,
-        true,
-        true
-      )
-      const anotherView = {
-        _uid: 'anotherView',
-        query: newSubscriptionQuery,
-      }
-      service.subscribe(anotherView)
-      // Same callbacks, Lodash's union should add to list like a set
-      expect(subscription.callbacks).to.deep.equal([...baseCallbacks, new TreeCallback()])
+        { onDelta, onBeforeDelta }
+      ))
+      expect(subscription.callbacks).to.deep.equal([
+        { onDelta },
+        { onDelta, onBeforeDelta },
+      ])
     })
+
     it('should throw an error if there are no subscribers', () => {
-      delete subscription.subscribers[view._uid]
-      expect(() => { service.recompute(subscription) }).to.throw()
+      delete subscription.subscribers.delete(uid)
+      expect(() => { workflowService.recompute(subscription) }).to.throw()
     })
+
     it('should throw an error if the subscribers have different variables', () => {
       const anotherQuery = new SubscriptionQuery(
         gql`query { workflow { id } }`,
@@ -322,101 +298,109 @@ describe('WorkflowService', () => {
           invalidVariable: true,
         },
         'test',
-        [],
-        true)
-      subscription.subscribers[anotherQuery.name] = {
-        _uid: 'view',
-        query: anotherQuery,
-        viewState: ViewState.NO_STATE,
-        setAlert: () => {},
-      }
-      expect(() => { service.recompute(subscription) }).to.throw()
+      )
+      subscription.subscribers.set(anotherQuery.name, anotherQuery)
+      expect(() => { workflowService.recompute(subscription) }).to.throw()
     })
   })
+
   describe('unsubscribe', () => {
     it('should warn about queries that do not exist', () => {
       const stub = sandbox.stub(console, 'warn')
-      service.unsubscribe({ name: 'missing' }, 'irrelevant_uid')
+      workflowService.unsubscribe('irrelevant_uid', { name: 'missing' })
       expect(stub.calledOnce).to.equal(true)
     })
+
     it('should call unsubscribe if last subscriber is unsubscribed', () => {
-      const stub = sandbox.stub(service, 'stopSubscription')
-      service.unsubscribe(view.query, view._uid)
+      const stub = sandbox.stub(workflowService, 'stopSubscription')
+      workflowService.unsubscribe(uid, subscriptionQuery)
       expect(stub.calledOnce).to.equal(true)
     })
+
     it('should NOT call unsubscribe if there are still subscribers left', () => {
-      const anotherView = {
-        _uid: 'test',
-        query: subscriptionQuery,
-      }
-      service.subscribe(anotherView)
-      const stub = sandbox.stub(service, 'stopSubscription')
-      service.unsubscribe(view.query, view._uid)
+      workflowService.subscribe('test', subscriptionQuery)
+      const stub = sandbox.stub(workflowService, 'stopSubscription')
+      workflowService.unsubscribe('test', subscriptionQuery)
       expect(stub.calledOnce).to.equal(false)
     })
   })
+
   describe('stopSubscription', () => {
     it('should remove the subscription', () => {
       subscription.observable = {
         unsubscribe: () => {},
       }
-      expect(service.subscriptions[subscription.query.name]).to.not.equal(null)
-      service.stopSubscription(subscription)
-      expect(service.subscriptions[subscription.query.name]).to.equal(undefined)
+      expect(workflowService.subscriptions[subscription.query.name]).toBeDefined()
+      workflowService.stopSubscription(subscription)
+      expect(workflowService.subscriptions[subscription.query.name]).toBeUndefined()
     })
   })
-})
 
-describe('Global Callback', () => {
-  it('should wipe workflow children on reloaded deltas', () => {
-    // the callback should wipe workflow children when a "reloaded" delta is
-    // received - see https://github.com/cylc/cylc-ui/pull/1479
+  describe('Global Callback', () => {
+    beforeEach(() => {
+      store.replaceState(createStore(storeOptions).state)
+    })
 
-    // initiate the store
-    const errors = {}
-    const store = createStore(storeOptions)
-    const callback = new CylcTreeCallback(store, errors)
-    const cylcTree = store.state.workflows.cylcTree
+    it('should wipe workflow children on reloaded deltas', () => {
+      // the callback should wipe workflow children when a "reloaded" delta is
+      // received - see https://github.com/cylc/cylc-ui/pull/1479
+      // Mock the client
+      let next
+      workflowService.apolloClient.subscribe = () => ({
+        subscribe (observable) {
+          next = observable.next
+        },
+      })
 
-    // send an added delta which adds a workflow with one task
-    const delta1 = {
-      id: 123,
-      added: {
-        id: 123,
-        workflow: { id: '~user/foo' },
-        taskProxies: { id: '~user/foo//1/a' },
-      },
-    }
-    callback.before(delta1, store, errors)
-    callback.onAdded(delta1.added, store, errors)
+      const subscription = workflowService.getOrCreateSubscription(subscriptionQuery)
+      workflowService.startSubscription(subscription)
 
-    // the user/workflow//cycle/task should now be in the store
-    expect(Object.keys(cylcTree.$index)).to.deep.equal([
-      '~user',
-      '~user/foo',
-      '~user/foo//1',
-      '~user/foo//1/a',
-    ])
+      const { $index } = store.state.workflows.cylcTree
 
-    // send a reloaded delta which adds a new task
-    const delta2 = {
-      id: 234,
-      added: {
-        id: 234,
-        workflow: { id: '~user/foo', reloaded: true },
-        taskProxies: { id: '~user/foo//2/b' },
-      },
-    }
-    callback.before(delta2, store, errors)
-    callback.onUpdated(delta2.added, store, errors)
+      // send an added delta which adds a workflow with one task
+      next({
+        data: {
+          deltas: {
+            id: 123,
+            added: {
+              id: 123,
+              workflow: { id: '~user/foo' },
+              taskProxies: { id: '~user/foo//1/a' },
+            },
+          },
+        },
+      })
 
-    // the cycle "1" and task "1/a" should be gone from the store
-    // without the need for an explicit "pruned" delta
-    expect(Object.keys(cylcTree.$index)).to.deep.equal([
-      '~user',
-      '~user/foo',
-      '~user/foo//2',
-      '~user/foo//2/b',
-    ])
+      // the user/workflow//cycle/task should now be in the store
+      expect(Object.keys($index)).toEqual([
+        '~user',
+        '~user/foo',
+        '~user/foo//1',
+        '~user/foo//1/a',
+      ])
+
+      // send a reloaded delta which adds a new task
+      next({
+        data: {
+          deltas: {
+            id: 234,
+            added: {
+              id: 234,
+              workflow: { id: '~user/foo', reloaded: true },
+              taskProxies: { id: '~user/foo//2/b' },
+            },
+          },
+        },
+      })
+
+      // the cycle "1" and task "1/a" should be gone from the store
+      // without the need for an explicit "pruned" delta
+      expect(Object.keys($index)).toEqual([
+        '~user',
+        '~user/foo',
+        '~user/foo//2',
+        '~user/foo//2/b',
+      ])
+    })
   })
 })

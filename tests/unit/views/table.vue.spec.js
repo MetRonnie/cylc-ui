@@ -20,8 +20,7 @@ import { createStore } from 'vuex'
 import sinon from 'sinon'
 import storeOptions from '@/store/options'
 import Table from '@/views/Table.vue'
-import WorkflowService from '@/services/workflow.service'
-import User from '@/model/User.model'
+import { WorkflowService } from '@/services/workflow.service'
 import { nextTick } from 'vue'
 import { simpleTableTasks } from '@/../tests/unit/components/cylc/table/table.data'
 import TaskState from '@/model/TaskState.model'
@@ -70,12 +69,10 @@ const workflows = [
 
 describe('Table view', () => {
   mockRoute({ params: { workflowName: 'one' } })
-  let store, $workflowService
+  let store, workflowService
   beforeEach(() => {
     store = createStore(storeOptions)
-    const user = new User({ username: 'cylc', permissions: [], owner: 'owner' })
-    store.commit('user/SET_USER', user)
-    $workflowService = sinon.createStubInstance(WorkflowService)
+    workflowService = sinon.createStubInstance(WorkflowService)
   })
 
   it('computes tasks', async () => {
@@ -83,10 +80,11 @@ describe('Table view', () => {
       shallow: true,
       global: {
         plugins: [store],
-        mocks: { $workflowService },
+        provide: { workflowService },
       },
     })
 
+    // TODO: mocking computed `workflows` with setData relies on undocumented VTU behaviour, will likely break
     await wrapper.setData({ workflows })
 
     expect(wrapper.vm.tasks).toMatchObject([
@@ -104,15 +102,15 @@ describe('Table view', () => {
 
   describe('Filter', () => {
     let wrapper
-    beforeEach(async () => {
+    beforeEach(() => {
       wrapper = mount(Table, {
         shallow: true,
         global: {
           plugins: [store],
-          mocks: { $workflowService },
+          provide: { workflowService },
         },
       })
-      await wrapper.setData({ tasks: simpleTableTasks })
+      wrapper.setData({ tasks: simpleTableTasks })
     })
 
     it('should not filter by ID or task state by default', () => {

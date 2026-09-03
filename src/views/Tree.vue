@@ -61,7 +61,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 <script>
 import { ref } from 'vue'
-import { mapState, mapGetters } from 'vuex'
+import { mapState } from 'vuex'
 import {
   mdiFormatAlignJustify,
   mdiFormatAlignRight,
@@ -70,12 +70,12 @@ import {
 } from '@mdi/js'
 import gql from 'graphql-tag'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   useInitialOptions,
 } from '@/utils/initialOptions'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import TreeComponent from '@/components/cylc/tree/Tree.vue'
 import ViewToolbar from '@/components/cylc/viewToolbar/ViewToolbar.vue'
 import ViewToolbarBtn from '@/components/cylc/viewToolbar/ViewToolbarBtn.vue'
@@ -205,10 +205,6 @@ fragment JobData on Job {
 export default {
   name: 'Tree',
 
-  mixins: [
-    subscriptionComponentMixin,
-  ],
-
   components: {
     TreeComponent,
     TaskFilter,
@@ -221,7 +217,13 @@ export default {
   },
 
   setup (props, { emit }) {
-    const { workflowIDs, variables } = useGraphQL()
+    const { workflows, variables } = useGraphQL()
+
+    useComponentSubscription('Tree', () => new SubscriptionQuery(
+      QUERY,
+      variables.value,
+      'workflow',
+    ))
 
     /**
      * The job id input and selected task filter state.
@@ -237,8 +239,7 @@ export default {
       tasksFilter,
       filterState,
       flat,
-      workflowIDs,
-      variables,
+      workflows,
       icons: {
         mdiFormatAlignJustify,
         mdiFormatAlignRight,
@@ -250,22 +251,6 @@ export default {
 
   computed: {
     ...mapState('workflows', ['cylcTree']),
-    ...mapGetters('workflows', ['getNodes']),
-
-    workflows () {
-      return this.getNodes('workflow', this.workflowIDs)
-    },
-
-    query () {
-      return new SubscriptionQuery(
-        QUERY,
-        this.variables,
-        'workflow',
-        [],
-        /* isDelta */ true,
-        /* isGlobalCallback */ true
-      )
-    },
   },
 
   methods: {

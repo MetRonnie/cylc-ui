@@ -15,30 +15,36 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useRoute } from 'vue-router'
+import { createSharedComposable } from '@vueuse/core'
 import { useStore } from 'vuex'
 
-/*
- * A mixin that contains data used for a GraphQL subscription, such as the
+/**
+ * A composable that contains data used for a GraphQL subscription, such as the
  * query variables.
  *
  * To be used in Views that are bound to Vue-Router routes that contain the
  * :workflowName param.
+ *
+ * NOTE: The state of this composable is shared across all components that use it.
+ * This is because the route and user are already shared state, and we want to avoid creating multiple
+ * computed properties (one for each view) that are the same for all views anyway.
+ * DO NOT add any state to this composable that is not shared across all views.
  */
-
-export function useGraphQL () {
-  const route = useRoute()
+export const useGraphQL = createSharedComposable(() => {
   const store = useStore()
+  const route = useRoute()
+  const user = inject('user')
 
   const workflowName = computed(() => route.params?.workflowName)
 
   /**
    * Compute the workflow ID using the Vue route parameter
-   * `workflowName` and the user from the store.
+   * `workflowName` and the user.
    */
   const workflowID = computed(
-    () => `~${store.state.user.user.owner}/${workflowName.value}`
+    () => `~${user.owner}/${workflowName.value}`
   )
 
   /**
@@ -49,6 +55,9 @@ export function useGraphQL () {
    */
   const workflowIDs = computed(() => [workflowID.value])
 
+  /** Data store nodes for the workflows this view is viewing. */
+  const workflows = computed(() => store.getters['workflows/getNodes']('workflow', workflowIDs.value))
+
   /** GraphQL query variables. */
   const variables = computed(() => ({
     workflowID: workflowID.value,
@@ -58,6 +67,7 @@ export function useGraphQL () {
     workflowName,
     workflowID,
     workflowIDs,
+    workflows,
     variables,
   }
-}
+})

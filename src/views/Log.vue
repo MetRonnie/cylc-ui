@@ -195,7 +195,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, readonly } from 'vue'
 import { refWithControl, usePrevious, whenever } from '@vueuse/core'
 import { useStore } from 'vuex'
 import {
@@ -209,19 +209,18 @@ import {
   mdiInformationOutline,
 } from '@mdi/js'
 import { useGraphQL } from '@/mixins/graphql'
-import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
+import { useComponentSubscription } from '@/mixins/subscriptionComponent'
 import {
   initialOptions,
   updateInitialOptionsEvent,
   useInitialOptions,
 } from '@/utils/initialOptions'
 import LogComponent from '@/components/cylc/log/Log.vue'
-import SubscriptionQuery from '@/model/SubscriptionQuery.model'
+import { SubscriptionQuery } from '@/model/SubscriptionQuery.model'
 import { Tokens } from '@/utils/uid'
 import gql from 'graphql-tag'
 import ViewToolbar from '@/components/cylc/viewToolbar/ViewToolbar.vue'
 import ViewToolbarBtn from '@/components/cylc/viewToolbar/ViewToolbarBtn.vue'
-import DeltasCallback from '@/services/callbacks'
 import { debounce } from 'lodash-es'
 import CopyBtn from '@/components/core/CopyBtn.vue'
 import { Alert } from '@/model/Alert.model'
@@ -279,11 +278,6 @@ query Jobs($id: ID!, $workflowID: ID!) {
 }
 `
 
-/**
- * The preferred file to start with as a list of patterns.
- * The first pattern with a matching file name will be chosen.
- */
-
 class Results {
   constructor () {
     /** @type {string[]} */
@@ -299,42 +293,8 @@ class Results {
   }
 }
 
-/** Callback for assembling the log file from the subscription */
-class LogsCallback extends DeltasCallback {
-  /**
-   * @param {Results} results
-   */
-  constructor (results) {
-    super()
-    this.results = results
-  }
-
-  onAdded (added, store, errors) {
-    if (this.results.connected === false) {
-      // We have reconnected; clear the current lines otherwise they will be duplicated
-      this.results.lines = []
-    }
-    if (added.lines) {
-      this.results.lines.push(...added.lines)
-    }
-    if (added.connected != null) {
-      this.results.connected = added.connected
-    }
-    if (added.error != null) {
-      this.results.error = added.error
-    }
-    if (added.path != null) {
-      [this.results.host, this.results.path] = added.path.split(':', 2)
-    }
-  }
-}
-
 export default {
   name: 'Log',
-
-  mixins: [
-    subscriptionComponentMixin,
-  ],
 
   components: {
     CopyBtn,
@@ -360,7 +320,7 @@ export default {
   setup (props, { emit }) {
     const store = useStore()
 
-    const { workflowID, variables } = useGraphQL()
+    const { workflowID } = useGraphQL()
 
     /**
      * The task/job ID.
@@ -369,6 +329,12 @@ export default {
     const relativeID = useInitialOptions('relativeID', { props, emit })
 
     const previousRelativeID = usePrevious(relativeID)
+
+    /**
+     * Toggle between viewing workflow logs (0) and job logs (1).
+     * Default to displaying workflow logs unless initial task/job ID is provided.
+     */
+    const jobLog = ref(relativeID.value == null ? 0 : 1)
 
     /**
      * The user input for task/job ID.
@@ -380,8 +346,8 @@ export default {
       }, 500),
     })
 
-    function validateInputID (id) {
-      return !id || (Tokens.validate(id, true) ?? true)
+    function validateInputID (input) {
+      return !input || (Tokens.validate(input, true) ?? true)
     }
 
     /** @type {import('vue').Ref<Tokens>} */
@@ -395,6 +361,17 @@ export default {
         } catch {}
       }
       return null
+    })
+
+    /** Tokens for the workflow this view was opened for */
+    const workflowTokens = computed(() => new Tokens(workflowID.value))
+
+    /** The ID of the workflow/task/job we are subscribed to or null if not subscribed */
+    const id = computed(() => {
+      if (jobLog.value) {
+        return relativeTokens.value?.clone(workflowTokens.value)?.id
+      }
+      return workflowID.value
     })
 
     /**
@@ -420,6 +397,26 @@ export default {
       results.value = new Results()
     }
 
+    /** Callback for assembling the log file from the subscription */
+    function onAdded (added) {
+      if (results.value.connected === false) {
+      // We have reconnected; clear the current lines otherwise they will be duplicated
+        results.value.lines = []
+      }
+      if (added.lines) {
+        results.value.lines.push(...added.lines)
+      }
+      if (added.connected != null) {
+        results.value.connected = added.connected
+      }
+      if (added.error != null) {
+        results.value.error = added.error
+      }
+      if (added.path != null) {
+        [results.value.host, results.value.path] = added.path.split(':', 2)
+      }
+    }
+
     /** The path of the log file parent dir minus the trailing slash. */
     const parentPath = computed(
       () => results.value.path?.substring(0, results.value.path.length - file.value.length - 1)
@@ -430,37 +427,63 @@ export default {
       () => { results.value.connected = false }
     )
 
+    /** the log subscription query */
+    const query = ref(null)
+    const { uid } = useComponentSubscription('Log', query)
+
+    function updateQuery () {
+      // update the subscription query
+      // wipe the log lines from any previous subscription
+      reset()
+      // check that there is something to subscribe to
+      if (!file.value || !id.value) {
+        query.value = null
+        return
+      }
+      // update the subscription
+      query.value = new SubscriptionQuery(
+        LOGS_SUBSCRIPTION,
+        readonly({ id, file }),
+        `${uid}-query`, // Each log view has a unique subscription (log subscriptions cannot be merged)
+        (response) => {
+          if (!response.data?.logs) {
+            console.error(response.errors ?? 'No data received from log subscription')
+            return
+          }
+          onAdded(response.data.logs)
+        },
+      )
+    }
+
     /** AutoScroll? */
     const autoScroll = useInitialOptions('autoScroll', { props, emit }, true)
 
     return {
-      // the log subscription query
-      query: ref(null),
+      query, // to allow access in unit tests
+      updateQuery,
       // list of log files for the selected workflow/task/job
       logFiles: ref([]),
       results,
       parentPath,
+      id,
       relativeID,
       previousRelativeID,
       inputID,
       validateInputID,
       relativeTokens,
+      workflowTokens,
       Tokens,
       file,
       // the label for the file input
       fileLabel: ref('Select File'),
       // turns the file input off (e.g. when the file list is being loaded)
       fileDisabled: ref(false),
-      // toggle between viewing workflow logs (0) and job logs (1).
-      // default to displaying workflow logs unless initial task/job ID is provided.
-      jobLog: ref(relativeID.value == null ? 0 : 1),
+      jobLog,
       timestamps,
       wordWrap,
       autoScroll,
-      reset,
       jobNode: ref(null),
       workflowID,
-      variables,
       icons: {
         mdiClockOutline,
         mdiFileAlertOutline,
@@ -504,43 +527,8 @@ export default {
     )
   },
 
-  computed: {
-    workflowTokens () {
-      // tokens for the workflow this view was opened for
-      return new Tokens(this.workflowID)
-    },
-    id () {
-      // the ID of the workflow/task/job we are subscribed to
-      // OR null if not subscribed
-      if (this.jobLog) {
-        return this.relativeTokens?.clone(this.workflowTokens)?.id
-      }
-      return this.workflowID
-    },
-  },
-
   methods: {
-    updateQuery () {
-      // update the subscription query
-      // wipe the log lines from any previous subscription
-      this.reset()
-      // check that there is something to subscribe to
-      if (!this.file || !this.id) {
-        this.query = null
-        return
-      }
-      // update the subscription
-      this.query = new SubscriptionQuery(
-        LOGS_SUBSCRIPTION,
-        { id: this.id, file: this.file },
-        `log-query-${this._uid}`,
-        [
-          new LogsCallback(this.results),
-        ],
-        /* isDelta */ false,
-        /* isGlobalCallback */ false
-      )
-    },
+
     /**
      * Query job data.
      *

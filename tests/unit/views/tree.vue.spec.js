@@ -19,12 +19,11 @@ import { createStore } from 'vuex'
 import sinon from 'sinon'
 import storeOptions from '@/store/options'
 import Tree from '@/views/Tree.vue'
-import User from '@/model/User.model'
-import WorkflowService from '@/services/workflow.service'
+import { WorkflowService } from '@/services/workflow.service'
 import { Tokens } from '@/utils/uid'
 import { getIDMap, mockRoute } from '$tests/util'
 
-const $workflowService = sinon.createStubInstance(WorkflowService)
+const workflowService = sinon.createStubInstance(WorkflowService)
 
 const expandID = (id) => ({
   id,
@@ -80,13 +79,11 @@ describe('Tree view', () => {
   let mountFunction
   beforeEach(() => {
     const store = createStore(storeOptions)
-    const user = new User({ username: 'cylc', permissions: [], owner: 'owner' })
-    store.commit('user/SET_USER', user)
     mountFunction = (options) => mount(Tree, {
       global: {
         plugins: [store],
-        mocks: {
-          $workflowService,
+        provide: {
+          workflowService,
         },
       },
       shallow: true,
@@ -99,13 +96,13 @@ describe('Tree view', () => {
       {},
       { id: null, states: null },
       { id: '  ', states: [] },
-    ])('has null filterState when filters are empty: %o', async (tasksFilter) => {
+    ])('has null filterState when filters are empty: %o', (tasksFilter) => {
       const wrapper = mountFunction()
       expect(wrapper.vm.tasksFilter).toEqual({
         id: null,
         states: null,
       })
-      await wrapper.setData({ tasksFilter })
+      wrapper.vm.tasksFilter = tasksFilter
       expect(wrapper.vm.filterState).toBeNull()
     })
 
