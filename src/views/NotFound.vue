@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script setup>
-import router from '@/router'
+import { router } from '@/router'
 
 const defaults = {
   VBtn: {

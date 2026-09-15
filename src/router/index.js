@@ -23,7 +23,8 @@
  * https://router.vuejs.org/en/
  */
 
-import { createRouter, createWebHashHistory } from 'vue-router'
+import { onUnmounted } from 'vue'
+import { createRouter, createWebHashHistory, useRouter } from 'vue-router'
 import NProgress from 'nprogress'
 import { i18n } from '@/i18n'
 
@@ -56,7 +57,7 @@ export function getPageTitle ({ meta, params }) {
 }
 
 // Create a new router
-const router = createRouter({
+export const router = createRouter({
   history: createWebHashHistory(),
   routes: paths.map(getRoute),
   scrollBehavior (to, from, savedPosition) {
@@ -101,4 +102,8 @@ router.onError((err, to, from) => {
   NProgress.done()
 })
 
-export default router
+export function onBeforeNavigation (callback) {
+  const router = useRouter()
+  const cleanup = router.beforeEach(callback)
+  onUnmounted(cleanup)
+}
