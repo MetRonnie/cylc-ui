@@ -24,7 +24,7 @@ describe('Font Size', () => {
   const initialFontSize = 16
 
   beforeEach(() => {
-    delete localStorage.fontSize
+    localStorage.removeItem('fontSize')
     document.documentElement.style.fontSize = `${initialFontSize}px`
   })
 

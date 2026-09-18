@@ -19,7 +19,7 @@ import { TREE, useDefaultView } from '@/views/views.js'
 
 describe('useDefaultView composable', () => {
   it(`returns the ${TREE} view if not set in localStorage`, () => {
-    delete localStorage.defaultView
+    localStorage.removeItem('defaultView')
     expect(useDefaultView().value).to.equal(TREE)
   })
 
