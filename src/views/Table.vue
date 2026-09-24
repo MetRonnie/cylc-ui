@@ -70,7 +70,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     </v-fade-transition>
     <div class="overflow-hidden">
       <TableComponent
-        :tasks="filteredItems"
+        :tasks="filteredTasks"
         v-model:selection="selectedIDs"
         v-model:sort-by="sortBy"
         v-model:page="page"
@@ -271,27 +271,21 @@ export default {
       }
       return workflows.value.flatMap(
         (workflow) => workflow.children.flatMap(
-          (cycle) => cycle.children
+          (cycle) => cycle.children.map(
+            (task) => prunedTasks.value.get(task.id) ?? task
+          )
         )
       )
     })
 
-    const items = computed(
-      () => tasks.value.map((task) => {
-        task = prunedTasks.value.get(task.id) ?? task
-        return {
-          task,
-          latestJob: task.children[0],
-          previousJob: task.children[1],
-        }
-      })
-    )
-
-    const filteredItems = computed(() => {
+    const filteredTasks = computed(() => {
+      if (!filterState.value) {
+        return tasks.value
+      }
       const [states, waitingStateModifiers, genericModifiers] = groupStateFilters(
         tasksFilter.value.states ?? []
       )
-      return items.value.filter(({ task }) => matchNode(
+      return tasks.value.filter((task) => matchNode(
         task,
         globToRegex(tasksFilter.value.id),
         states,
@@ -302,7 +296,7 @@ export default {
 
     return {
       getIndex,
-      filteredItems,
+      filteredTasks,
       sortBy,
       page,
       itemsPerPage,
