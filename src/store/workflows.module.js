@@ -151,38 +151,30 @@ function removeChild (state, node, parentNode = null) {
  * parent lookup).
  */
 function removeTree (state, node, inclusive = true) {
-  const stack = [
-    ...node.children || [],
-  ]
-  if (node.rootFamily) stack.push(node.rootFamily)
-  const removeIndices = [
-    ...node.$namespaces || [],
-    ...node.$edges || [],
-  ]
-  const removeNodes = []
+  // Use toRaw() to avoid access overhead of Vue proxies
+  const stack = [toRaw(node)]
   while (stack.length) {
-    // walk the tree under the provided node to list nodes and indices for
-    // deletion
+    // Remove items from the index...
     const pointer = stack.pop()
-    stack.push(
-      ...(pointer.children || []),
-    )
+    stack.push(...(pointer.children ?? []))
     if (pointer.rootFamily) stack.push(pointer.rootFamily)
-    removeIndices.push(
-      ...(pointer.$namespaces || []),
-      ...(pointer.$edges || []),
-    )
-    removeNodes.push(pointer)
+    for (const item of [...(pointer.$namespaces ?? []), ...(pointer.$edges ?? [])]) {
+      removeIndex(state, item.id)
+    }
+    if (pointer !== toRaw(node)) {
+      removeIndex(state, pointer.id)
+    }
   }
-  for (const pointer of [...removeIndices, ...removeNodes.reverse()]) {
-    // remove index-only items first, then remove tree nodes from the bottom up
-    removeIndex(state, pointer.id)
-    removeChild(state, pointer)
-  }
+
   if (inclusive) {
-    // remove the provided node if requested
     removeIndex(state, node.id)
     removeChild(state, node)
+  } else {
+    // Keep the node, drop everything under it
+    node.children = []
+    if (node.rootFamily) delete node.rootFamily
+    if (node.$edges) node.$edges = []
+    if (node.$namespaces) node.$namespaces = []
   }
 }
 
