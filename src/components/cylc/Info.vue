@@ -16,7 +16,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
 <template>
-  <div class="c-info">
+  <div class="c-info overflow-auto">
     <!-- The task summary
 
     * The "-40" comes from the GraphNode offset, see the GraphNode component.
@@ -47,13 +47,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
       v-model="panelExpansion"
       flat
       static
-      color="blue-grey-lighten-3"
+      color="blue-grey-lighten-4"
       bg-color="grey-lighten-4"
       rounded="lg"
     >
       <v-defaults-provider :defaults="{
         VExpansionPanelTitle: {
           class: 'text-title-small py-2',
+          VProgressLinear: {
+            class: 'mx-4',
+            color: 'light-blue-darken-2',
+            rounded: true,
+            bufferOpacity: 0.4,
+          },
+          VChip: {
+            class: 'text-body-small mx-1',
+            size: 'small',
+          },
         },
         VExpansionPanelText: {
           class: 'mt-2',
@@ -108,7 +118,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           class="run-mode-panel"
         >
           <v-expansion-panel-title>
-            Run Mode
+            <template #default="{ expanded }">
+              Run Mode
+              <v-chip
+                v-if="!expanded"
+                :text="runMode"
+                :prepend-icon="runModeIcon"
+                class="ml-4"
+              />
+            </template>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <div class="d-flex align-center gap-2">
@@ -152,6 +170,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         >
           <v-expansion-panel-title>
             Xtriggers
+            <v-progress-linear v-bind="xtriggerProgressProps"/>
+            <span class="text-body-small">
+              {{ numSatisfiedXtriggers }}/{{ xtriggers.length }}
+            </span>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <v-table>
@@ -180,10 +202,17 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         >
           <v-expansion-panel-title>
             Prerequisites
+            <v-progress-linear v-bind="prereqProgressProps"/>
+            <span class="text-body-small">
+              {{ satisfiedPrereqs.length }}/{{ prereqs.length }}
+            </span>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul>
-              <li v-for="prereq in prerequisites" :key="prereq.expression">
+              <li
+                v-for="prereq in prereqs"
+                :key="prereq.expression"
+              >
                 <span
                   class="prerequisite-alias condition"
                   :class="{satisfied: prereq.satisfied}"
@@ -216,7 +245,20 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           class="outputs-panel"
         >
           <v-expansion-panel-title>
-            Outputs
+            <template #default="{ expanded }">
+              Outputs
+              <div
+                v-if="!expanded"
+                class="mx-4"
+              >
+                <template v-for="output in outputs" :key="output.label">
+                  <v-chip
+                    v-if="output.satisfied"
+                    :text="output.label"
+                  />
+                </template>
+              </div>
+            </template>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul>
@@ -305,7 +347,34 @@ const taskMetadata = computed(() => props.task?.node?.task?.meta || {})
 const customMetadata = computed(() => props.task?.node?.task?.meta.userDefined || {})
 
 /** Task prerequisite information. */
-const prerequisites = computed(() => props.task?.node?.prerequisites || {})
+const prereqs = computed(() => props.task?.node?.prerequisites || [])
+
+const satisfiedPrereqs = computed(
+  () => prereqs.value.filter((prereq) => prereq.satisfied)
+)
+const unsatisfiedPrereqs = computed(
+  () => prereqs.value.filter((prereq) => !prereq.satisfied)
+)
+
+const prereqProgressProps = computed(() => {
+  const count = satisfiedPrereqs.value.length
+  const max = prereqs.value.length
+  const numConditions = prereqs.value.flatMap((prereq) => prereq.conditions).length
+
+  const bufferConditions = unsatisfiedPrereqs.value.flatMap((prereq) => prereq.conditions)
+  const bufferFraction = bufferConditions.length
+    ? bufferConditions.filter((condition) => condition.satisfied).length / bufferConditions.length
+    : 0
+
+  return {
+    modelValue: count,
+    max,
+    bufferValue: count + bufferFraction * (max - count),
+    style: {
+      maxWidth: `${numConditions * 40}px`,
+    },
+  }
+})
 
 /** Task output information. */
 const outputs = computed(() => props.task?.node?.outputs || {})
@@ -328,7 +397,7 @@ const runModeIcon = computed(() => {
 const runMode = computed(() => props.task?.node?.runtime.runMode)
 
 const xtriggers = computed(() => {
-  const xtriggers = props.task?.node?.xtriggers?.map((item) => {
+  return props.task?.node?.xtriggers?.map((item) => {
     const xtrigger = cloneDeep(item)
     xtrigger.satisfactionIcon = xtrigger.satisfied ? mdiCheckboxOutline : mdiCheckboxBlankOutline
     // Extract the trigger time from the ID
@@ -338,15 +407,29 @@ const xtriggers = computed(() => {
       (match, p1) => `trigger_time=${formatDatetime(new Date(p1 * 1000))}`
     )
     return xtrigger
-  })
-  // Sort the xtriggers by label, then by ID:
-  xtriggers.sort(function (a, b) {
+  }).sort((a, b) => {
+    // Sort the xtriggers by label, then by ID:
     if (a.label === b.label) {
       return a.id > b.id ? 1 : -1
     }
     return a.label > b.label ? 1 : -1
   })
-  return xtriggers
+})
+
+const numSatisfiedXtriggers = computed(
+  () => xtriggers.value.filter((xt) => xt.satisfied).length
+)
+
+const xtriggerProgressProps = computed(() => {
+  const max = xtriggers.value.length
+  return {
+    modelValue: numSatisfiedXtriggers.value,
+    max,
+    chunkCount: max,
+    style: {
+      maxWidth: `${max * 40}px`,
+    },
+  }
 })
 </script>
 
