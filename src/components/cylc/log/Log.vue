@@ -20,59 +20,47 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     ref="scrollWrapper"
     class="h-100 overflow-auto px-4 pb-2"
   >
-    <v-defaults-provider
-      :defaults="{
-        VAlert: {
-          type: 'warning',
-          variant: 'tonal',
-          density: 'compact',
-          class: 'my-2',
-        },
-      }"
-    >
-      <v-alert
-        v-if="truncatedStart"
-        data-cy="log-truncation-start"
+    <div id="alert-start">
+      <Teleport
+        v-if="truncatedStart || truncatedEnd"
+        :disabled="!headMode"
+        to="#alert-end"
+        defer
       >
-        <template #prepend>
-          <v-btn
-            size="small"
-            variant="outlined"
-            color="primary"
-            data-cy="log-load-start"
-            @click="$emit('update:headMode', true)"
-          >
-            Load start
-          </v-btn>
-        </template>
-        {{ $options.truncationMessages.start }}
-      </v-alert>
-      <pre
-        ref="logText"
-        :class="wordWrap ? 'text-pre-wrap text-break' : 'text-pre'"
-        data-cy="log-text"
-      ><span
+        <v-alert
+          type="warning"
+          variant="tonal"
+          density="compact"
+          class="my-2"
+          data-cy="log-truncation-start"
+        >
+          <template #prepend>
+            <v-btn
+              size="small"
+              variant="outlined"
+              color="primary"
+              data-cy="log-load-start"
+              @click="$emit('update:headMode', !headMode)"
+            >
+              Load {{ headMode ? 'end' : 'start' }}
+            </v-btn>
+          </template>
+          {{ truncationMessages[headMode ? 'end' : 'start'] }}
+        </v-alert>
+      </Teleport>
+    </div>
+
+    <pre
+      ref="logText"
+      :class="wordWrap ? 'text-pre-wrap text-break' : 'text-pre'"
+      data-cy="log-text"
+    ><span
         v-for="(log, index) in computedLogs"
         :key="index"
-      >{{ log }}</span></pre>
-      <v-alert
-        v-if="truncatedEnd"
-        data-cy="log-truncation-end"
-      >
-        <template #prepend>
-          <v-btn
-            size="small"
-            variant="outlined"
-            color="primary"
-            data-cy="log-load-end"
-            @click="$emit('update:headMode', false)"
-          >
-            Load end
-          </v-btn>
-        </template>
-        {{ $options.truncationMessages.end }}
-      </v-alert>
-    </v-defaults-provider>
+    >{{ log }}</span></pre>
+
+    <div id="alert-end"></div>
+
     <v-btn
       v-if="logs.length"
       position="fixed"
@@ -206,8 +194,15 @@ export default {
       ro.disconnect()
     })
 
+    /** Warning messages shown when the log file has been truncated */
+    const truncationMessages = {
+      start: 'The start of the file may have been truncated',
+      end: 'The end of the file has been truncated',
+    }
+
     return {
       scrollToTop,
+      truncationMessages,
     }
   },
 
@@ -241,12 +236,6 @@ export default {
   // Misc options
   icons: {
     mdiMouseMoveUp,
-  },
-
-  // Warning messages shown when the log file has been truncated
-  truncationMessages: {
-    start: 'The start of the file may have been truncated',
-    end: 'The end of the file has been truncated',
   },
 }
 
