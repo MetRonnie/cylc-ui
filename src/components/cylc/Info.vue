@@ -188,14 +188,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 :key="prereq.expression"
                 class="my-1"
               >
-                <v-chip v-bind="prereqChipProps(prereq.expression, prereq.satisfied)"/>
+                <PrereqChip
+                  v-bind="prereq"
+                  :task-id="task.id"
+                />
                 <ul>
                   <li
                     v-for="condition in prereq.conditions"
                     :key="condition.taskAlias"
                     class="my-1"
                   >
-                    <v-chip v-bind="prereqChipProps(condition.exprAlias, condition.satisfied)"/>
+                    <PrereqChip
+                      :expression="condition.exprAlias"
+                      :task-id="task.id"
+                      :condition-id="`${condition.taskId}:${condition.reqState}`"
+                      :satisfied="condition.satisfied"
+                    />
                     <span style="margin-left: 0.5em; font-size: 0.9em;">
                       {{ condition.taskId }}:{{ condition.reqState }}
                     </span>
@@ -218,16 +226,31 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <ul>
               <li v-for="output in outputs" :key="output.label">
                 <v-chip
-                  :text="output.label"
                   variant="text"
                   v-bind="output.satisfied ? {
-                    prependIcon: mdiCheckCircleOutline,
+                    prependIcon: mdiCheck,
                   } : {
                     prependIcon: mdiProgressHelper,
-                    class: 'text-grey',
+                    appendIcon: mdiChevronDown,
+                    class: 'text-grey-darken-1',
+                    link: true,
                   }"
                   data-cy="output-chip"
-                />
+                >
+                  {{ output.label }}
+                  <v-menu
+                    v-if="!output.satisfied"
+                    activator="parent"
+                  >
+                    <v-list density="compact">
+                      <v-list-item
+                        title="Set output"
+                        :prepend-icon="mdiCheck"
+                        @click="setOutput(output.label)"
+                      />
+                    </v-list>
+                  </v-menu>
+                </v-chip>
               </li>
             </ul>
           </v-expansion-panel-text>
@@ -267,13 +290,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
 import { useJobTheme } from '@/composables/localStorage'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import { formatCompletion } from '@/utils/outputs'
 import {
   mdiCheck,
-  mdiCheckCircleOutline,
   mdiProgressHelper,
   mdiSkipForward,
   mdiChatQuestion,
@@ -283,9 +305,13 @@ import {
   mdiCheckboxOutline,
   mdiCheckboxBlankOutline,
   mdiHelpCircleOutline,
+  mdiChevronDown,
 } from '@mdi/js'
 import { cloneDeep } from 'lodash-es'
 import { formatDatetime } from '@/utils/datetime'
+import PrereqChip from './PrereqChip.vue'
+
+const workflowService = inject('workflowService')
 
 const props = defineProps({
   task: {
@@ -313,16 +339,12 @@ const customMetadata = computed(() => props.task?.node?.task?.meta.userDefined |
 /** Task prerequisite information. */
 const prereqs = computed(() => props.task?.node?.prerequisites || {})
 
-const prereqChipProps = (expression, satisfied) => ({
-  text: expression.replace(/c/g, ''),
-  color: satisfied ? 'success' : 'grey',
-  prependIcon: satisfied ? mdiCheck : mdiProgressHelper,
-  class: satisfied ? 'font-weight-medium' : undefined,
-  density: 'comfortable',
-})
-
 /** Task output information. */
 const outputs = computed(() => props.task?.node?.outputs || {})
+
+function setOutput (label) {
+  workflowService.mutate('set', props.task.id, { outputs: [label] })
+}
 
 /** Task output completion expression stuff. */
 const completion = computed(() => props.task?.node?.runtime.completion)
