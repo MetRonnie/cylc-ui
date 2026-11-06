@@ -159,6 +159,7 @@ class WorkflowService {
     // TODO: this assumes all workflows use the same schema which is and
     //       isn't necessarily true, not quite sure, come back to this later.
     let response
+    // await new Promise(resolve => setTimeout(resolve, 2e3))
     try {
       response = await this.apolloClient.query({
         query: getIntrospectionQuery(),

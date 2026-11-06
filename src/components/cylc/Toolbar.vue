@@ -52,49 +52,94 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           style="font-size: 120%; padding-right: 0.3em;"
         />
 
-        <v-btn
-          id="workflow-mutate-button"
-          v-command-menu="currentWorkflow"
-          :icon="icons.mdiMicrosoftXboxControllerMenu"
-          size="small"
-          density="comfortable"
-        />
+        <v-defaults-provider
+          :defaults="{
+            VBtn: {
+              size: 'small',
+              density: 'comfortable',
+              rounded: 'lg',
+              class: 'mr-1',
+            },
+          }"
+        >
+          <v-btn
+            id="workflow-mutate-button"
+            v-command-menu="currentWorkflow"
+            :icon="icons.mdiMicrosoftXboxControllerMenu"
+          />
 
-        <v-btn
-          id="workflow-play-button"
-          :icon="icons.run"
-          :disabled="!enabled.playToggle"
-          v-if="!isRunning"
-          @click="onClickPlay"
-          size="small"
-          density="comfortable"
-        />
+          <v-btn
+            v-if="!isRunning"
+            id="workflow-play-button"
+            :icon="icons.run"
+            :disabled="!enabled.playToggle"
+            @click="onClickPlay"
+          />
 
-        <v-btn
-          id="workflow-play-pause-button"
-          :icon="isPaused ? icons.run : icons.hold"
-          :disabled="!enabled.pauseToggle"
-          v-if="isRunning"
-          @click="onClickReleaseHold"
-          size="small"
-          density="comfortable"
-        />
+          <v-btn
+            v-if="isRunning"
+            id="workflow-play-pause-button"
+            :icon="isPaused ? icons.run : icons.hold"
+            :disabled="!enabled.pauseToggle"
+            @click="onClickReleaseHold"
+          />
+        </v-defaults-provider>
 
-        <v-btn
-          id="workflow-stop-button"
-          :icon="icons.stop"
-          :disabled="!enabled.stopToggle"
-          @click="onClickStop"
+        <v-btn-group
           size="small"
-          density="comfortable"
-        />
+          variant="outlined"
+          divided
+          rounded="lg"
+        >
+          <v-btn
+            id="workflow-stop-button"
+            :icon="icons.stop"
+            :disabled="!enabled.stopToggle"
+            @click="onClickStop"
+          />
+          <v-btn
+            id="workflow-stop-dropdown-button"
+            :icon="icons.mdiChevronDown"
+          />
+          <v-menu
+            activator="#workflow-stop-dropdown-button"
+            max-width="200"
+            target="#workflow-stop-button"
+          >
+            <v-card>
+              <v-skeleton-loader
+                v-if="!stopOptions"
+                type="list-item-two-line@4"
+              />
+              <v-list
+                v-else
+                density="compact"
+              >
+                <v-list-subheader>Choose stop mode</v-list-subheader>
+                <v-list-item
+                  v-for="item in stopOptions"
+                  :key="item.name"
+                  :title="item.name"
+                  @click="() => {}"
+                >
+                  <template #append>
+                    <v-icon
+                      :icon="icons.mdiHelpCircleOutline"
+                      v-tooltip="markdown.render(item.description)"
+                    />
+                  </template>
+                </v-list-item>
+              </v-list>
+            </v-card>
+          </v-menu>
+        </v-btn-group>
       </div>
 
       <!-- n-window selector -->
       <v-btn
         :disabled="isStopped"
         variant="tonal"
-        rounded
+        rounded="lg"
         size="small"
         data-cy="n-win-selector"
       >
@@ -254,7 +299,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 </template>
 
 <script>
-import { computed } from 'vue'
+import { computed, inject } from 'vue'
+import { computedAsync } from '@vueuse/core'
 import { useRoute } from 'vue-router'
 import { mapState } from 'vuex'
 import { useDisplay } from 'vuetify'
@@ -271,6 +317,7 @@ import {
   mdiInformationOutline,
   mdiMenuOpen,
   mdiMenuClose,
+  mdiHelpCircleOutline,
 } from '@mdi/js'
 import { startCase } from 'lodash'
 import { until } from '@/utils/reactivity'
@@ -278,6 +325,7 @@ import { useDrawer, toolbarHeight } from '@/utils/toolbar'
 import WorkflowState from '@/model/WorkflowState.model'
 import { useGraphQL } from '@/mixins/graphql'
 import {
+  findByName,
   mutationStatus,
 } from '@/utils/aotf'
 import subscriptionComponentMixin from '@/mixins/subscriptionComponent'
@@ -288,6 +336,7 @@ import { upperFirst } from 'lodash-es'
 import WarningIcon from '@/components/cylc/WarningIcon.vue'
 import { useUserService } from '@/services/user.service'
 import { workflowViews } from '@/views/views'
+import MarkdownIt from 'markdown-it'
 
 const QUERY = gql(`
 subscription Workflow ($workflowID: ID) {
@@ -338,6 +387,8 @@ export default {
   setup (props) {
     const route = useRoute()
 
+    const workflowService = inject('workflowService')
+
     const { user, versionInfo } = useUserService()
 
     const { variables, workflowName, workflowID } = useGraphQL()
@@ -349,6 +400,13 @@ export default {
 
     const { mdAndDown } = useDisplay()
     const { drawer, drawerEnabled, toggleDrawer } = useDrawer()
+
+    const stopOptions = computedAsync(async () => {
+      const { types } = await workflowService.introspection
+      return findByName(types, 'WorkflowStopMode').enumValues
+    })
+
+    const markdown = new MarkdownIt()
 
     return {
       user,
@@ -364,6 +422,8 @@ export default {
       workflowID,
       versionInfo,
       workflowViews,
+      stopOptions,
+      markdown,
       icons: {
         add: mdiPlusBoxMultiple,
         hold: mdiPause,
@@ -377,6 +437,7 @@ export default {
         mdiAccount,
         mdiChevronDown,
         mdiArrowULeftTop,
+        mdiHelpCircleOutline,
       },
     }
   },
