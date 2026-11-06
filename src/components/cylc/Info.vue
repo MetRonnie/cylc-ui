@@ -44,7 +44,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <!-- The task information -->
     <v-expansion-panels
       multiple
-      v-model="panelExpansionModel"
+      v-model="panelExpansion"
       flat
       static
       color="blue-grey-lighten-3"
@@ -127,7 +127,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
               Inheritance
               <v-icon
                 v-if="expanded"
-                :icon="icons.mdiHelpCircleOutline"
+                :icon="mdiHelpCircleOutline"
                 class="ml-2"
                 v-tooltip="{
                   text: 'Shows the linearised family inheritance hierarchy for this task. The order of precedence is determined by the C3 algorithm used in Python.',
@@ -263,7 +263,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
   </div>
 </template>
 
-<script>
+<script setup>
 import { computed } from 'vue'
 import { useJobTheme } from '@/composables/localStorage'
 import GraphNode from '@/components/cylc/GraphNode.vue'
@@ -281,120 +281,73 @@ import {
 import { cloneDeep } from 'lodash-es'
 import { formatDatetime } from '@/utils/datetime'
 
-export default {
-  name: 'InfoComponent',
-
-  components: {
-    GraphNode,
+const props = defineProps({
+  task: {
+    required: true,
   },
+})
 
-  props: {
-    task: {
-      required: true,
-    },
-    panelExpansion: {
-      required: false,
-      default: ['metadata'],
-    },
-  },
+const panelExpansion = defineModel({
+  required: false,
+  default: ['metadata'],
+})
 
-  setup (props, { emit }) {
-    const inheritance = computed(
-      () => props.task?.node?.namespace?.slice(1) ?? []
+const inheritance = computed(
+  () => props.task?.node?.namespace?.slice(1) ?? []
+)
+
+const jobTheme = useJobTheme()
+
+/** Default task metadata sections (title, description, URL) */
+const taskMetadata = computed(() => props.task?.node?.task?.meta || {})
+
+/** Used-defined task metadata sections */
+const customMetadata = computed(() => props.task?.node?.task?.meta.userDefined || {})
+
+/** Task prerequisite information. */
+const prerequisites = computed(() => props.task?.node?.prerequisites || {})
+
+/** Task output information. */
+const outputs = computed(() => props.task?.node?.outputs || {})
+
+/** Task output completion expression stuff. */
+const completion = computed(() => props.task?.node?.runtime.completion)
+
+/** Task Run Mode icon. */
+const runModeIcon = computed(() => {
+  switch (props.task?.node?.runtime.runMode) {
+    case 'Skip': return mdiSkipForward
+    case 'Live': return mdiPlay
+    case 'Simulation': return mdiGhostOutline
+    case 'Dummy': return mdiDramaMasks
+    default: return mdiChatQuestion
+  }
+})
+
+/** Task Run Mode. */
+const runMode = computed(() => props.task?.node?.runtime.runMode)
+
+const xtriggers = computed(() => {
+  const xtriggers = props.task?.node?.xtriggers?.map((item) => {
+    const xtrigger = cloneDeep(item)
+    xtrigger.satisfactionIcon = xtrigger.satisfied ? mdiCheckboxOutline : mdiCheckboxBlankOutline
+    // Extract the trigger time from the ID
+    // Since we've created this date from a Unix timestamp, we can safely assume it is in UTC:
+    xtrigger.id = xtrigger.id.replace(
+      /trigger_time=(?<unixTime>[0-9.]+)/,
+      (match, p1) => `trigger_time=${formatDatetime(new Date(p1 * 1000))}`
     )
-
-    return {
-      inheritance,
-      jobTheme: useJobTheme(),
-      icons: {
-        mdiHelpCircleOutline,
-      },
+    return xtrigger
+  })
+  // Sort the xtriggers by label, then by ID:
+  xtriggers.sort(function (a, b) {
+    if (a.label === b.label) {
+      return a.id > b.id ? 1 : -1
     }
-  },
-
-  computed: {
-    panelExpansionModel: {
-      get () {
-        return this.panelExpansion
-      },
-      set (value) {
-        this.$emit('update:panelExpansion', value)
-      },
-    },
-
-    taskMetadata () {
-      // Default task metadata sections (title, description, URL)
-      return this.task?.node?.task?.meta || {}
-    },
-
-    customMetadata () {
-      // Used-defined task metadata sections
-      return this.task?.node?.task?.meta.userDefined || {}
-    },
-
-    prerequisites () {
-      // Task prerequisite information.
-      return this.task?.node?.prerequisites || {}
-    },
-
-    outputs () {
-      // Task output information.
-      return this.task?.node?.outputs || {}
-    },
-
-    completion () {
-      // Task output completion expression stuff.
-      return this.task?.node?.runtime.completion
-    },
-
-    runModeIcon () {
-      // Task Run Mode:
-      if (this.task?.node?.runtime.runMode === 'Skip') {
-        return mdiSkipForward
-      } else if (this.task?.node?.runtime.runMode === 'Live') {
-        return mdiPlay
-      } else if (this.task?.node?.runtime.runMode === 'Simulation') {
-        return mdiGhostOutline
-      } else if (this.task?.node?.runtime.runMode === 'Dummy') {
-        return mdiDramaMasks
-      }
-      return mdiChatQuestion
-    },
-
-    runMode () {
-      // Task Run Mode:
-      return this.task?.node?.runtime.runMode
-    },
-
-    xtriggers () {
-      const xtriggers = this.task?.node?.xtriggers?.map((item) => {
-        const xtrigger = cloneDeep(item)
-        xtrigger.satisfactionIcon = xtrigger.satisfied ? mdiCheckboxOutline : mdiCheckboxBlankOutline
-        // Extract the trigger time from the ID
-        // Since we've created this date from a Unix timestamp, we can safely assume it is in UTC:
-        xtrigger.id = xtrigger.id.replace(
-          /trigger_time=(?<unixTime>[0-9.]+)/,
-          (match, p1) => `trigger_time=${formatDatetime(new Date(p1 * 1000))}`
-        )
-        return xtrigger
-      })
-      // Sort the xtriggers by label, then by ID:
-      xtriggers.sort(function (a, b) {
-        if (a.label === b.label) {
-          return a.id > b.id ? 1 : -1
-        }
-        return a.label > b.label ? 1 : -1
-      })
-      return xtriggers
-    },
-
-  },
-
-  methods: {
-    formatCompletion,
-  },
-
-}
+    return a.label > b.label ? 1 : -1
+  })
+  return xtriggers
+})
 </script>
 
 <style scoped lang="scss">
