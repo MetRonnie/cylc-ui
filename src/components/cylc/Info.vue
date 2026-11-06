@@ -183,25 +183,21 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
           </v-expansion-panel-title>
           <v-expansion-panel-text>
             <ul>
-              <li v-for="prereq in prerequisites" :key="prereq.expression">
-                <span
-                  class="prerequisite-alias condition"
-                  :class="{satisfied: prereq.satisfied}"
-                >{{ prereq.expression.replace(/c/g, '') }}</span>
+              <li
+                v-for="prereq in prereqs"
+                :key="prereq.expression"
+                class="my-1"
+              >
+                <v-chip v-bind="prereqChipProps(prereq.expression, prereq.satisfied)"/>
                 <ul>
                   <li
                     v-for="condition in prereq.conditions"
                     :key="condition.taskAlias"
+                    class="my-1"
                   >
-                    <span
-                      class="prerequisite-alias condition"
-                      :class="{satisfied: condition.satisfied}"
-                    >
-                      {{ condition.exprAlias.replace(/c/, '') }}
-
-                      <span style="margin-left: 0.5em; color: rgb(0,0,0)">
-                        {{ condition.taskId }}:{{ condition.reqState }}
-                      </span>
+                    <v-chip v-bind="prereqChipProps(condition.exprAlias, condition.satisfied)"/>
+                    <span style="margin-left: 0.5em; font-size: 0.9em;">
+                      {{ condition.taskId }}:{{ condition.reqState }}
                     </span>
                   </li>
                 </ul>
@@ -276,6 +272,7 @@ import { useJobTheme } from '@/composables/localStorage'
 import GraphNode from '@/components/cylc/GraphNode.vue'
 import { formatCompletion } from '@/utils/outputs'
 import {
+  mdiCheck,
   mdiCheckCircleOutline,
   mdiProgressHelper,
   mdiSkipForward,
@@ -314,7 +311,15 @@ const taskMetadata = computed(() => props.task?.node?.task?.meta || {})
 const customMetadata = computed(() => props.task?.node?.task?.meta.userDefined || {})
 
 /** Task prerequisite information. */
-const prerequisites = computed(() => props.task?.node?.prerequisites || {})
+const prereqs = computed(() => props.task?.node?.prerequisites || {})
+
+const prereqChipProps = (expression, satisfied) => ({
+  text: expression.replace(/c/g, ''),
+  color: satisfied ? 'success' : 'grey',
+  prependIcon: satisfied ? mdiCheck : mdiProgressHelper,
+  class: satisfied ? 'font-weight-medium' : undefined,
+  density: 'comfortable',
+})
 
 /** Task output information. */
 const outputs = computed(() => props.task?.node?.outputs || {})
