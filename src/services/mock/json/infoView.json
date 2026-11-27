@@ -56,6 +56,42 @@
                   "satisfied": true
                 }
               ]
+            },
+            {
+              "satisfied": true,
+              "expression": "c0 | c1",
+              "conditions": [
+                {
+                  "taskId": "20000102T0000Z/foo",
+                  "reqState": "succeeded",
+                  "exprAlias": "c0",
+                  "satisfied": true
+                },
+                {
+                  "taskId": "20000102T0000Z/bar",
+                  "reqState": "succeeded",
+                  "exprAlias": "c1",
+                  "satisfied": false
+                }
+              ]
+            },
+            {
+              "satisfied": false,
+              "expression": "c0 & c1",
+              "conditions": [
+                {
+                  "taskId": "20000102T0000Z/a",
+                  "reqState": "succeeded",
+                  "exprAlias": "c0",
+                  "satisfied": true
+                },
+                {
+                  "taskId": "20000102T0000Z/b",
+                  "reqState": "succeeded",
+                  "exprAlias": "c1",
+                  "satisfied": false
+                }
+              ]
             }
           ],
 
@@ -100,7 +136,7 @@
             },
             {
               "label": "clock xtrigger",
-              "id": "wall_clock(trigger_time=440121600)",
+              "id": "wall_clock(trigger_time=1795793340)",
               "satisfied": true
             }
           ]
